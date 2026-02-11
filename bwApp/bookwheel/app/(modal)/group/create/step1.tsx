@@ -1,18 +1,16 @@
 import { View, Text, TouchableOpacity } from "react-native";
+import { common } from "@/styles/common";
 import { router } from "expo-router";
-import { common } from "../../styles/common";
 
-export default function Signup() {
+export default function Step1() {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ fontSize: 24, marginBottom: 30 }}>회원가입</Text>
-
-      {/* 회원가입 */}
+      {/* 다음 */}
       <TouchableOpacity
         style={[common.button, { marginBottom: 16 }]}
-        onPress={() => router.replace("/auth/profile")}
+        onPress={() => router.replace("./step2")}
       >
-        <Text>회원가입</Text>
+        <Text>다음</Text>
       </TouchableOpacity>
     </View>
   );
