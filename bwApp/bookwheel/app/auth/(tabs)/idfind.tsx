@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { common } from "../../../styles/common";
+import { common } from "@/styles/common";
 
 export default function IdFind() {
   return (
