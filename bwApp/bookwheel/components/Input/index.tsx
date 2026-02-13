@@ -4,6 +4,8 @@ import {
   View,
   Text,
   TouchableOpacity,
+  TextStyle,
+  ViewStyle,
 } from "react-native";
 
 type InputProps = {
@@ -18,6 +20,8 @@ type InputProps = {
     onPress: () => void;
     disabled?: boolean;
   };
+  editable?: boolean;
+  style?: TextStyle;
 };
 
 export default function Input({
@@ -28,6 +32,8 @@ export default function Input({
   keyboardType = "default",
   error,
   rightButton,
+  editable = true,
+  style,
 }: InputProps) {
   return (
     <View style={styles.wrapper}>
@@ -38,8 +44,9 @@ export default function Input({
           placeholder={placeholder}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
-          style={styles.input}
+          editable={editable}
           placeholderTextColor="#aaa"
+          style={[styles.input, style, !editable && { color: "#513A11" }]}
         />
 
         {rightButton && (

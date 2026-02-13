@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, StyleSheet } from "react-native";
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  color?: string; // 배경색 옵션
+  color?: string;
 }
 
 export default function Button({ title, onPress, color }: ButtonProps) {
@@ -26,6 +26,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#E4A54E",
     width: 317,
     alignItems: "center",
+    borderColor: "#513A11",
+    borderWidth: 1,
   },
   text: {
     color: "#513A11",
