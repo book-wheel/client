@@ -22,6 +22,7 @@ type InputProps = {
   };
   editable?: boolean;
   style?: TextStyle;
+  multiline?: boolean;
 };
 
 export default function Input({
@@ -34,6 +35,7 @@ export default function Input({
   rightButton,
   editable = true,
   style,
+  multiline,
 }: InputProps) {
   return (
     <View style={styles.wrapper}>
@@ -47,6 +49,7 @@ export default function Input({
           editable={editable}
           placeholderTextColor="#aaa"
           style={[styles.input, style, !editable && { color: "#513A11" }]}
+          multiline={multiline}
         />
 
         {rightButton && (

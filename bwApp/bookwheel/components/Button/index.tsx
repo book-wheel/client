@@ -5,6 +5,7 @@ interface ButtonProps {
   onPress: () => void;
   color?: string;
   style?: ViewStyle;
+  textStyle?: any;
 }
 
 export default function Button({ title, onPress, color, style }: ButtonProps) {

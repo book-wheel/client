@@ -17,6 +17,24 @@ export default function RootLayout() {
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />
 
         <Stack.Screen name="auth/profile" options={{ headerShown: false }} />
+
+        <Stack.Screen
+          name="(modal)/group/explore"
+          options={{ title: "탐색" }}
+        />
+
+        <Stack.Screen
+          name="(modal)/group/create/step1"
+          options={{ title: "모임 생성" }}
+        />
+        <Stack.Screen
+          name="(modal)/group/create/step2"
+          options={{ title: "모임 생성" }}
+        />
+        <Stack.Screen
+          name="(modal)/group/create/step3"
+          options={{ title: "모임 생성" }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
