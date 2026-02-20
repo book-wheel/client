@@ -1,4 +1,5 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { Tabs } from "expo-router";
 import Home from "./home";
 import State from "./state";
 import Setting from "./setting";
@@ -16,5 +17,16 @@ export default function GroupTopTabs() {
         options={{ title: "세팅" }}
       />
     </Tab.Navigator>
+
+    // <Tabs
+    //   screenOptions={{
+    //     headerShown: false,
+    //     tabBarPosition: "top", // 상단 탭
+    //   }}
+    // >
+    //   <Tabs.Screen name="home" options={{ title: "홈" }} />
+    //   <Tabs.Screen name="state" options={{ title: "상태" }} />
+    //   <Tabs.Screen name="setting" options={{ title: "세팅" }} />
+    // </Tabs>
   );
 }

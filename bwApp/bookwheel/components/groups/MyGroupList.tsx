@@ -30,9 +30,12 @@ export default function GroupList({ group }: Props) {
     <Pressable
       style={styles.row}
       onPress={() =>
-        router.push({
+        router.replace({
           pathname: "/(tabs)/group/[id]/(top)/home",
-          params: { id: group.id },
+          params: {
+            id: group.id,
+            name: group.title,
+          },
         })
       }
     >
