@@ -12,6 +12,14 @@ export default function Profile() {
   const [nickname, setNickname] = React.useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
 
+  const [nicknameChecked, setNicknameChecked] = useState(false);
+
+  // 닉네임 중복확인 로직
+  const checkNickname = () => {
+    console.log("Checking nickname:", nickname);
+    setNicknameChecked(true);
+  };
+
   useEffect(() => {
     // 예시_ 나중엔 서버에서 가져온 값으로
     const savedNickname = "티티";
@@ -43,14 +51,19 @@ export default function Profile() {
             console.log("사진 선택");
           }}
         />
-        {/* 인풋박스 */}
+
         <Input
           value={nickname}
-          editable={false}
           onChangeText={(text) => {
             setNickname(text);
+            setNicknameChecked(false); // 닉네임 바뀌면 다시
           }}
           placeholder="닉네임"
+          rightButton={{
+            label: nicknameChecked ? "사용가능" : "중복확인",
+            onPress: checkNickname,
+            disabled: nicknameChecked,
+          }}
         />
 
         <Input
