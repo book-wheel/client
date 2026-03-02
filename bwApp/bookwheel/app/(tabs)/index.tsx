@@ -167,6 +167,12 @@ export default function Index() {
                   title={room.book}
                   author={room.author}
                   owner={room.owner}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/group/[id]/state",
+                      params: { id: 3 },
+                    })
+                  }
                 />
               </View>
             ))}

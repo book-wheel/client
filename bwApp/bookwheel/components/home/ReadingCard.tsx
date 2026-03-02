@@ -7,10 +7,18 @@ type Props = {
   title: string;
   author: string;
   owner: string;
+  buttonText?: string;
   onPress?: () => void;
 };
 
-export default function ReadingCard({ image, title, author, owner }: Props) {
+export default function ReadingCard({
+  image,
+  title,
+  author,
+  owner,
+  buttonText,
+  onPress,
+}: Props) {
   return (
     <>
       <View style={styles.card}>
@@ -31,16 +39,13 @@ export default function ReadingCard({ image, title, author, owner }: Props) {
           <Text style={styles.value}>{author}</Text>
 
           {/* 완독 인증 버튼 */}
-          <Button
-            title="완독 인증 하기"
-            style={{ width: 220, marginTop: 20 }}
-            onPress={() =>
-              router.push({
-                pathname: "/group/[id]/state",
-                params: { id: "3" },
-              })
-            }
-          />
+          {onPress && (
+            <Button
+              title={buttonText ?? "완독 인증 하기"}
+              style={{ width: 220, marginTop: 20 }}
+              onPress={onPress}
+            />
+          )}
         </View>
       </View>
 

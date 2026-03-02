@@ -22,13 +22,13 @@ export default function Signup() {
     setShowCodeInput(true);
   };
 
-  const [nicknameChecked, setNicknameChecked] = useState(false);
+  // const [nicknameChecked, setNicknameChecked] = useState(false);
 
-  // 닉네임 중복확인 로직
-  const checkNickname = () => {
-    console.log("Checking nickname:", nickname);
-    setNicknameChecked(true);
-  };
+  // // 닉네임 중복확인 로직
+  // const checkNickname = () => {
+  //   console.log("Checking nickname:", nickname);
+  //   setNicknameChecked(true);
+  // };
 
   const isPasswordMatch = password === passwordCheck;
 
@@ -110,7 +110,7 @@ export default function Signup() {
           placeholder="비밀번호 확인"
           secureTextEntry
         />
-        <Input
+        {/* <Input
           value={nickname}
           onChangeText={(text) => {
             setNickname(text);
@@ -122,7 +122,7 @@ export default function Signup() {
             onPress: checkNickname,
             disabled: nicknameChecked,
           }}
-        />
+        /> */}
 
         {/* 약관동의------------------------ */}
         <View style={{ width: 317, marginTop: 30 }}>
