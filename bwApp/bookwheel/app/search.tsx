@@ -3,22 +3,27 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { common } from "@/styles/common";
 
 export default function Search() {
-  const { from, id: rawId } = useLocalSearchParams();
+  const { from, id: rawId } = useLocalSearchParams<{
+    from?: string;
+    id?: string;
+  }>();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
   const handleSelectBook = (bookId: string) => {
-    if (from === "add") {
-      router.push({
-        pathname: "/group/[id]/add-book",
-        params: { id, bookId },
-      });
-    }
+    switch (from) {
+      case "add":
+        router.push({
+          pathname: "/group/[id]/add-book",
+          params: { id, bookId },
+        });
+        break;
 
-    if (from === "books") {
-      router.push({
-        pathname: "/book-detail/[bookId]/info",
-        params: { bookId },
-      });
+      case "books":
+        router.push({
+          pathname: "/book-detail/[bookId]/info",
+          params: { bookId },
+        });
+        break;
     }
   };
 
