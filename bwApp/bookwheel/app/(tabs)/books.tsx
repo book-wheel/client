@@ -19,7 +19,7 @@ export default function Books() {
 
       {/* 지금 읽는 책 */}
       <Text>지금 읽는 책</Text>
-      <TouchableOpacity onPress={() => router.push("/group/3/state")}>
+      <TouchableOpacity onPress={() => router.push("/book-detail/1/info")}>
         <Text style={[common.button, { marginTop: 20 }]}>지금읽는 책1</Text>
       </TouchableOpacity>
 
