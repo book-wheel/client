@@ -38,7 +38,7 @@ export default function BookDetailTabsLayout() {
 
                     {/* 배지를 이미지 바로 아래에 배치 */}
                     <View style={styles.infoBadge}>
-                        <Text style={styles.bookTitle}>내 남편을 팝니다</Text>
+                        <Text style={styles.bookTitle}>&lt; 내 남편을 팝니다 &gt;</Text>
                         <View style={styles.subInfoRow}>
                             {/* 작가 이름 배지 */}
                             <View style={styles.smallBadge}>
