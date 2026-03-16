@@ -100,7 +100,7 @@ export default function Info() {
             {/* 모임 연동 섹션 */}
             <View style={styles.section}>
                 <Text style={styles.groupTitle}>이 책을 읽기로 한 모임이 있어요!</Text>
-                <View style={{ marginTop: 20 }}>
+                <View style={{ marginTop: 10 }}>
                     {data.relatedGroups.map((g) => (
                         <GroupListExtended key={g.id} group={g} />
                     ))}
@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     },
     section: {
         padding: 20,
+        marginTop: 4,
     },
     sectionTitle: {
         fontSize: 16,
