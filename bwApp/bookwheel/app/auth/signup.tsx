@@ -5,32 +5,91 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
+import { signup } from "@/api/auth";
+import { sendEmail, verifyEmail } from "@/api/auth";
+
 export default function Signup() {
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordCheck, setPasswordCheck] = useState("");
-  const [nickname, setNickname] = useState("");
 
   const [emailVerified, setEmailVerified] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [emailCode, setEmailCode] = useState("");
 
   //메일 인증요청 로직
-  const requestEmailVerification = () => {
-    console.log("Requesting email verification for:", email);
-    setShowCodeInput(true);
+  const requestEmailVerification = async () => {
+    try {
+      const res = await sendEmail(email);
+
+      if (res.data.success) {
+        setShowCodeInput(true);
+        console.log("메일 발송 성공:", res.data.data);
+      } else {
+        console.log("실패:", res.data.error.message);
+      }
+    } catch (error) {
+      console.log("요청 실패:", error);
+    }
   };
 
-  // const [nicknameChecked, setNicknameChecked] = useState(false);
+  //메일 인증확인 로직
+  const handleVerifyEmail = async () => {
+    try {
+      const res = await verifyEmail(email, emailCode);
 
-  // // 닉네임 중복확인 로직
-  // const checkNickname = () => {
-  //   console.log("Checking nickname:", nickname);
-  //   setNicknameChecked(true);
-  // };
+      if (res.data.success) {
+        setEmailVerified(true);
+        setShowCodeInput(false);
+      } else {
+        console.log(res.data.error.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  //비밀번호 일치 여부
   const isPasswordMatch = password === passwordCheck;
+
+  //회원가입 로직
+  const handleSignup = async () => {
+    if (!emailVerified) {
+      console.log("이메일 인증 필요");
+      return;
+    }
+
+    if (!isPasswordMatch) {
+      console.log("비밀번호 불일치");
+      return;
+    }
+
+    if (!agreeTerms || !agreePrivacy) {
+      console.log("약관 동의 필요");
+      return;
+    }
+
+    try {
+      // const res = await signup({
+      //   userId,
+      //   mail: email,
+      //   password,
+      //  });
+
+      // console.log(res.data);
+      router.push({
+        pathname: "/auth/profile",
+        params: {
+          userId,
+          email,
+          password,
+        },
+      });
+    } catch (error: any) {
+      console.log(error.response?.data);
+    }
+  };
 
   // 약관 동의 상태----------------------------
   const [agreeAll, setAgreeAll] = useState(false);
@@ -68,6 +127,7 @@ export default function Signup() {
         <Input
           value={email}
           onChangeText={setEmail}
+          editable={!emailVerified}
           placeholder="이메일"
           keyboardType="email-address"
           rightButton={{
@@ -88,12 +148,7 @@ export default function Signup() {
             keyboardType="numeric"
             rightButton={{
               label: "확인",
-              onPress: () => {
-                console.log("입력한 코드:", emailCode);
-
-                setEmailVerified(true);
-                setShowCodeInput(false);
-              },
+              onPress: handleVerifyEmail,
             }}
           />
         )}
@@ -110,19 +165,6 @@ export default function Signup() {
           placeholder="비밀번호 확인"
           secureTextEntry
         />
-        {/* <Input
-          value={nickname}
-          onChangeText={(text) => {
-            setNickname(text);
-            setNicknameChecked(false); // 닉네임 바뀌면 다시
-          }}
-          placeholder="닉네임"
-          rightButton={{
-            label: nicknameChecked ? "사용가능" : "중복확인",
-            onPress: checkNickname,
-            disabled: nicknameChecked,
-          }}
-        /> */}
 
         {/* 약관동의------------------------ */}
         <View style={{ width: 317, marginTop: 30 }}>
@@ -165,10 +207,7 @@ export default function Signup() {
 
         {/* 회원가입------------------------ */}
         <View style={{ marginTop: 10 }} />
-        <Button
-          title="회원가입"
-          onPress={() => router.replace("/auth/profile")}
-        />
+        <Button title="회원가입" onPress={handleSignup} />
       </View>
     </>
   );
