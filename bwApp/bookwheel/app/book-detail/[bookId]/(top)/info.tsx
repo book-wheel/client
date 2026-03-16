@@ -146,9 +146,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#F9F9F9",
     },
     tocBox: {
-        backgroundColor: "#FAFAFA",
-        padding: 16,
-        borderRadius: 8,
+        paddingVertical: 4,
     },
     tocItem: {
         fontSize: 14,

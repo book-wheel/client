@@ -16,7 +16,7 @@ export default function BookDetailTabsLayout() {
         <View style={styles.container}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* 상단 베이지 구역 (헤더 + 이미지) */}
+            {/* 상단 하얀색 구역 (헤더 + 이미지) */}
             <View style={[styles.topSection, { paddingTop: insets.top }]}>
 
                 {/* 1. 네비게이션 바 */}
@@ -24,25 +24,30 @@ export default function BookDetailTabsLayout() {
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={24} color="#333" />
                     </TouchableOpacity>
+                    {/* 타이틀을 왼쪽으로 밀착 */}
                     <Text style={styles.navTitle}>도서 검색</Text>
-                    <View style={{ width: 40 }} />
                 </View>
 
                 {/* 2. 도서 비주얼 구역 */}
                 <View style={styles.visualSection}>
                     <Image
-                        source={{ uri: 'https://via.placeholder.com/150x220' }}
+                        source={require("@/assets/images/book.png")}
                         style={styles.bookImage}
                         resizeMode="cover"
                     />
 
-                    {/* 배지를 이미지 바로 아래에 배치 (겹침 효과 포함) */}
+                    {/* 배지를 이미지 바로 아래에 배치 */}
                     <View style={styles.infoBadge}>
                         <Text style={styles.bookTitle}>내 남편을 팝니다</Text>
                         <View style={styles.subInfoRow}>
-                            <Text style={styles.authorText}>고요한</Text>
-                            <View style={styles.dotSeparator} />
-                            <Text style={styles.pageText}>236p</Text>
+                            {/* 작가 이름 배지 */}
+                            <View style={styles.smallBadge}>
+                                <Text style={styles.smallBadgeText}>고요한</Text>
+                            </View>
+                            {/* 페이지 수 배지 */}
+                            <View style={styles.smallBadge}>
+                                <Text style={styles.smallBadgeText}>236p</Text>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -57,8 +62,6 @@ export default function BookDetailTabsLayout() {
                         tabBarIndicatorStyle: {
                             backgroundColor: '#513A11',
                             height: 2.5,
-                            width: 40,
-                            marginLeft: (width / 3 - 40) / 2,
                         },
                         tabBarLabelStyle: { fontSize: 14, fontWeight: 'bold' },
                         tabBarStyle: {
@@ -66,7 +69,8 @@ export default function BookDetailTabsLayout() {
                             elevation: 0,
                             shadowOpacity: 0,
                             borderBottomWidth: 1,
-                            borderColor: '#F0E6D8'
+                            borderColor: '#F0E6D8',
+                            paddingTop: 5,
                         },
                     }}
                 >
@@ -82,24 +86,26 @@ export default function BookDetailTabsLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFF', // 기본 배경은 흰색
+        backgroundColor: '#FFF',
     },
     topSection: {
-        backgroundColor: '#F6F4EE', // 상단 전체 베이지색
-        paddingBottom: 20,
+        backgroundColor: '#FFF',
+        paddingBottom: 10,
+        zIndex: 10,
     },
     navBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         paddingHorizontal: 16,
         height: 50,
     },
     backButton: {
         padding: 4,
+        marginRight: 4,
     },
     navTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
@@ -111,50 +117,36 @@ const styles = StyleSheet.create({
         width: 130,
         height: 185,
         borderRadius: 6,
-        // 그림자
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
         elevation: 5,
     },
     infoBadge: {
-        backgroundColor: '#FFF',
-        marginTop: -25, // 이미지와 겹치게 위로 올림
+        marginTop: 10,
         paddingHorizontal: 24,
-        paddingVertical: 12,
+        paddingVertical: 10,
         borderRadius: 30,
         alignItems: 'center',
-        // 배지 그림자 (떠 있는 느낌)
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 8,
     },
     bookTitle: {
         fontSize: 17,
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: 4,
+        marginBottom: 8,
     },
     subInfoRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
     },
-    authorText: {
-        fontSize: 13,
-        color: '#777',
+    smallBadge: {
+        backgroundColor: '#F3F0EB',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
     },
-    dotSeparator: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: '#DDD',
-        marginHorizontal: 8,
-    },
-    pageText: {
-        fontSize: 13,
-        color: '#777',
+    smallBadgeText: {
+        fontSize: 12,
+        color: '#7A6F5C',
+        fontWeight: '600',
     },
 });
