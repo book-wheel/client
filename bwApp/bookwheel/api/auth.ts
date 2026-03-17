@@ -10,8 +10,11 @@ export const signup = (data: {
   return api.post("/users/signup", data);
 };
 
-export const login = (data: any) => {
-  return api.post("/auth/login", data);
+export const login = (userId: string, password: string) => {
+  return api.post("/auth/login", {
+    userId,
+    password,
+  });
 };
 
 // 이메일 인증 요청

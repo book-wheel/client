@@ -8,9 +8,41 @@ import Input from "@/components/Input";
 import SocialButton from "@/components/Button/SocialButton";
 import AuthCard from "@/components/card";
 
+import { login } from "@/api/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (loading) return;
+
+    if (!userId || !password) {
+      console.log("아이디/비밀번호 입력 필요");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await login(userId, password);
+
+      alert(res.data.error.message);
+
+      const { accessToken, refreshToken } = res.data.data;
+
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("refreshToken", refreshToken);
+
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      console.log("login error:", error.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View
@@ -33,10 +65,10 @@ export default function Login() {
         </Text>
         {/* 인풋박스 */}
         <Input
-          value={email}
-          onChangeText={setEmail}
-          placeholder="이메일"
-          keyboardType="email-address"
+          value={userId}
+          onChangeText={setUserId}
+          placeholder="아이디"
+          keyboardType="default"
         />
         <Input
           value={password}
@@ -64,7 +96,7 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
         {/* 회원가입/로그인 버튼 */}
-        <Button title="로그인" onPress={() => router.replace("../(tabs)")} />
+        <Button title="로그인" onPress={handleLogin} />
         <Button
           title="회원가입"
           onPress={() => router.push("/auth/signup")}
