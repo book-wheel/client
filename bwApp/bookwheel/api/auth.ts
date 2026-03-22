@@ -1,20 +1,24 @@
 import api from "./axios";
 
 export const signup = (data: {
-  userId: string;
+  loginId: string;
   password: string;
-  nickname?: string;
   mail: string;
-  comment?: string;
 }) => {
-  return api.post("/users/signup", data);
+  return api.post("/auth/signup", data);
 };
 
-export const login = (userId: string, password: string) => {
-  return api.post("/auth/login", {
-    userId,
-    password,
-  });
+//프로필 설정
+export const setupProfile = (data: {
+  profileImageKey?: string;
+  nickname: string;
+  comment: string;
+}) => {
+  return api.patch("/users/setup-profile", data);
+};
+
+export const login = (data: { loginId: string; password: string }) => {
+  return api.post("/auth/login", data);
 };
 
 // 이메일 인증 요청

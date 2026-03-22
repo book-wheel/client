@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
-import { signup } from "@/api/auth";
+import { signup, login } from "@/api/auth";
 import { sendEmail, verifyEmail } from "@/api/auth";
+import api from "@/api/axios";
 
 export default function Signup() {
-  const [userId, setUserId] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordCheck, setPasswordCheck] = useState("");
@@ -55,6 +56,8 @@ export default function Signup() {
 
   //회원가입 로직
   const handleSignup = async () => {
+    console.log("회원가입 버튼 클릭");
+
     if (!emailVerified) {
       console.log("이메일 인증 필요");
       return;
@@ -71,23 +74,44 @@ export default function Signup() {
     }
 
     try {
-      // const res = await signup({
-      //   userId,
-      //   mail: email,
-      //   password,
-      //  });
+      console.log("📤 signup request");
 
-      // console.log(res.data);
-      router.push({
-        pathname: "/auth/profile",
-        params: {
-          userId,
-          email,
-          password,
-        },
+      const signupRes = await signup({
+        loginId,
+        password,
+        mail: email,
       });
+
+      console.log("📥 signup response:", signupRes.data);
+
+      if (!signupRes.data.success) {
+        console.log("signup 실패");
+        return;
+      }
+
+      console.log("자동 로그인 시도");
+
+      const loginRes = await login({
+        loginId,
+        password,
+      });
+
+      console.log("📥 login response:", loginRes.data);
+
+      const { accessToken, refreshToken, isProfileSet } = loginRes.data.data;
+
+      // axios 기본 헤더에 토큰 설정
+      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+      console.log("토큰 설정 완료");
+
+      if (!isProfileSet) {
+        router.replace("/auth/profile");
+      } else {
+        router.replace("/");
+      }
     } catch (error: any) {
-      console.log(error.response?.data);
+      console.log("signup/login error:", error.response?.data);
     }
   };
 
@@ -119,8 +143,8 @@ export default function Signup() {
 
         {/* 인풋박스 */}
         <Input
-          value={userId}
-          onChangeText={setUserId}
+          value={loginId}
+          onChangeText={setLoginId}
           placeholder="아이디"
           keyboardType="default"
         />

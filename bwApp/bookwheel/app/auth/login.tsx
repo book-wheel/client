@@ -10,6 +10,7 @@ import AuthCard from "@/components/card";
 
 import { login } from "@/api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "@/api/axios";
 
 export default function Login() {
   const [userId, setUserId] = useState("");
@@ -27,16 +28,26 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await login(userId, password);
+      const res = await login({
+        loginId: userId,
+        password,
+      });
 
-      alert(res.data.error.message);
+      if (!res.data.success) {
+        alert(res.data.error.message);
+        return;
+      }
 
-      const { accessToken, refreshToken } = res.data.data;
+      const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
       await AsyncStorage.setItem("accessToken", accessToken);
       await AsyncStorage.setItem("refreshToken", refreshToken);
 
-      router.replace("/(tabs)");
+      if (isProfileSet) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/auth/profile");
+      }
     } catch (error: any) {
       console.log("login error:", error.response?.data);
     } finally {

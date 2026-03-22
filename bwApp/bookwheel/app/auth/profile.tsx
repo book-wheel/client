@@ -1,30 +1,32 @@
 import { View, Text, TouchableOpacity } from "react-native";
 
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
 import ProfileImage from "@/components/profile/image";
-import { signup } from "@/api/auth";
+import { setupProfile } from "@/api/auth";
+import api from "@/api/axios";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Profile() {
-  const params = useLocalSearchParams();
-
-  const userId = Array.isArray(params.userId)
-    ? params.userId[0]
-    : params.userId;
-  const email = Array.isArray(params.email) ? params.email[0] : params.email;
-  const password = Array.isArray(params.password)
-    ? params.password[0]
-    : params.password;
-
   const [comment, setComment] = useState("");
   const [nickname, setNickname] = React.useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem("accessToken");
+      console.log("TOKEN:", token);
+    };
+
+    checkToken();
+  }, []);
 
   // 닉네임 중복확인 로직
   const checkNickname = () => {
@@ -33,38 +35,48 @@ export default function Profile() {
   };
 
   //회원가입(프로필저장)로직
-  const handleSignup = async () => {
-    try {
-      await signup({
-        userId,
-        password,
-        mail: email,
-        nickname,
-        comment,
-      });
-
-      router.replace("/auth/login");
-    } catch (e) {
-      console.log(e);
+  const handleSetupProfile = async () => {
+    if (!nickname.trim()) {
+      console.log("닉네임 입력 필요");
+      return;
     }
 
-    //콘솔확인
+    if (!nicknameChecked) {
+      console.log("닉네임 중복 확인 필요");
+      return;
+    }
+
+    const payload: any = {
+      nickname,
+      comment: comment || "",
+    };
+
+    if (imageUri) {
+      payload.profileImageKey = imageUri;
+    }
+
+    console.log("📤 setup-profile payload:", payload);
+
     try {
-      const payload = {
-        userId,
-        password,
-        mail: email,
-        nickname,
-        comment,
-      };
+      const res = await setupProfile(payload);
+      console.log("HEADER:", api.defaults.headers);
 
-      console.log("signup payload:", payload);
+      console.log("📥 setup-profile response:", res.data);
 
-      const res = await signup(payload);
-
-      console.log("signup response:", res.data);
+      if (res.data.success) {
+        router.replace("/");
+      } else {
+        console.log("서버 에러:", res.data.error);
+      }
     } catch (error: any) {
-      console.log("signup error:", error.response?.data);
+      console.log("setup-profile error");
+
+      if (error.response) {
+        console.log("status:", error.response.status);
+        console.log("data:", error.response.data);
+      } else {
+        console.log(error);
+      }
     }
   };
 
@@ -117,7 +129,7 @@ export default function Profile() {
 
         {/* 버튼 */}
         <View style={{ width: 317, marginTop: 30 }}>
-          <Button title="저장" onPress={handleSignup} />
+          <Button title="저장" onPress={handleSetupProfile} />
         </View>
       </AuthCard>
     </View>
