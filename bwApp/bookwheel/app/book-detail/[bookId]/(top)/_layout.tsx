@@ -1,32 +1,24 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { withLayoutContext, Stack, useRouter } from "expo-router";
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Tab.Navigator);
-const { width } = Dimensions.get('window');
 
 export default function BookDetailTabsLayout() {
-    const router = useRouter();
-    const insets = useSafeAreaInsets(); // 기기별 노치/상태바 높이를 가져옴
 
     return (
         <View style={styles.container}>
-            <Stack.Screen options={{ headerShown: false }} />
+            {/* 1. 네비게이션 바 */}
+            <Stack.Screen options={{
+                headerShown: true,
+                title: "도서 검색",
+                }}
+            />
 
             {/* 상단 하얀색 구역 (헤더 + 이미지) */}
-            <View style={[styles.topSection, { paddingTop: insets.top }]}>
-
-                {/* 1. 네비게이션 바 */}
-                <View style={styles.navBar}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#333" />
-                    </TouchableOpacity>
-                    {/* 타이틀을 왼쪽으로 밀착 */}
-                    <Text style={styles.navTitle}>도서 검색</Text>
-                </View>
+            <View style={styles.topSection}>
 
                 {/* 2. 도서 비주얼 구역 */}
                 <View style={styles.visualSection}>
@@ -92,22 +84,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         paddingBottom: 10,
         zIndex: 10,
-    },
-    navBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingHorizontal: 16,
-        height: 50,
-    },
-    backButton: {
-        padding: 4,
-        marginRight: 4,
-    },
-    navTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
     },
     visualSection: {
         alignItems: 'center',
