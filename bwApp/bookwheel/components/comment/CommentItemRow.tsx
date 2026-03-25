@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { getRelativeTime } from '@/components/utils/date';
 
@@ -15,10 +15,49 @@ interface CommentItem {
 interface Props {
     item: CommentItem;
     onDelete: (id: string) => void;
+    onReport?: (id: string) => void;
 }
 
+export default function CommentItemRow({ item, onDelete, onReport }: Props) {
+    const handlePressDelete = () => {
+        Alert.alert(
+            '댓글 삭제',
+            '댓글을 삭제하시겠습니까?',
+            [
+                { text: '취소', style: 'cancel' },
+                {
+                    text: '삭제',
+                    style: 'destructive',
+                    onPress: () => onDelete(item.id),
+                },
+            ],
+            { cancelable: true }
+        );
+    };
 
-export default function CommentItemRow({ item, onDelete }: Props) {
+    const handlePressReport = () => {
+        if (onReport) {
+            onReport(item.id);
+            return;
+        }
+
+        Alert.alert(
+            '댓글 신고',
+            '이 댓글을 신고하시겠습니까?',
+            [
+                { text: '취소', style: 'cancel' },
+                {
+                    text: '신고',
+                    style: 'destructive',
+                    onPress: () => {
+                        Alert.alert('신고 완료', '댓글이 신고되었습니다.');
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
     return (
         <View style={styles.commentRow}>
             <Image source={item.profileImage} style={styles.profileImage} />
@@ -29,17 +68,22 @@ export default function CommentItemRow({ item, onDelete }: Props) {
                         <ThemedText style={styles.authorName} type="defaultSemiBold">
                             {item.author}
                         </ThemedText>
-                        <ThemedText style={styles.dot}>·</ThemedText>
                         <ThemedText style={styles.commentTime}>
                             {getRelativeTime(item.createdAt)}
                         </ThemedText>
                     </View>
 
-                    {item.isMine && (
-                        <TouchableOpacity onPress={() => onDelete(item.id)}>
-                            <ThemedText style={styles.deleteText}>삭제</ThemedText>
-                        </TouchableOpacity>
-                    )}
+                    <View style={styles.actionRow}>
+                        {item.isMine ? (
+                            <TouchableOpacity onPress={handlePressDelete} activeOpacity={0.7}>
+                                <ThemedText style={styles.actionText}>삭제</ThemedText>
+                            </TouchableOpacity>
+                        ) : (
+                            <TouchableOpacity onPress={handlePressReport} activeOpacity={0.7}>
+                                <ThemedText style={styles.actionText}>신고</ThemedText>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
 
                 <ThemedText style={styles.commentText}>{item.content}</ThemedText>
@@ -51,52 +95,53 @@ export default function CommentItemRow({ item, onDelete }: Props) {
 const styles = StyleSheet.create({
     commentRow: {
         flexDirection: 'row',
-        marginBottom: 20,
+        marginBottom: 28,
     },
     profileImage: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         backgroundColor: '#F0F0F0',
         marginRight: 12,
     },
     commentContent: {
         flex: 1,
-        justifyContent: 'center',
+        paddingTop: 2,
     },
     commentTopRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 4,
+        marginBottom: 10,
     },
     commentMetaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
-        paddingRight: 12,
+        flexShrink: 1,
     },
     authorName: {
         fontSize: 14,
-        color: '#333333',
-    },
-    dot: {
-        fontSize: 12,
-        color: '#A0A0A0',
-        marginHorizontal: 4,
+        color: '#9A8562',
+        marginRight: 10,
     },
     commentTime: {
-        fontSize: 12,
-        color: '#A0A0A0',
+        fontSize: 13,
+        color: '#8E7A59',
     },
-    deleteText: {
-        fontSize: 12,
-        color: '#A0A0A0',
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 12,
+    },
+    actionText: {
+        fontSize: 13,
+        color: '#A79372',
         textDecorationLine: 'underline',
     },
     commentText: {
-        fontSize: 14,
-        color: '#555555',
-        lineHeight: 20,
+        fontSize: 15,
+        color: '#7A5C33',
+        lineHeight: 24,
+        paddingLeft: 2,
     },
 });
