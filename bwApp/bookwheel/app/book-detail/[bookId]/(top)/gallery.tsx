@@ -55,7 +55,7 @@ export default function Gallery() {
             return;
         }
 
-        router.push(`/book-detail/${bookId}/add-review`);
+        router.push(`/books`);
     };
 
     const renderItem = ({ item }: { item: GalleryItem }) => {
