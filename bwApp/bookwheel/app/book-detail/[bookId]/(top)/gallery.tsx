@@ -1,6 +1,14 @@
 import React from "react";
-import {View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions, Alert} from "react-native";
-import {Link, router, useGlobalSearchParams } from "expo-router";
+import {View,
+    StyleSheet,
+    FlatList,
+    Image,
+    TouchableOpacity,
+    Dimensions,
+    Alert,
+    Text,
+} from "react-native";
+import { router, useGlobalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 
@@ -11,15 +19,30 @@ const itemSize = (width - gap * (numColumns - 1)) / numColumns;
 
 interface GalleryItem {
     id: string;
-    imageUrl: string;
+    imageUrls: string[];
 }
 
 const DUMMY_GALLERY_DATA: GalleryItem[] = [
-    { id: "1", imageUrl: "https://picsum.photos/id/10/300/300" },
-    { id: "2", imageUrl: "https://picsum.photos/id/11/300/300" },
-    { id: "3", imageUrl: "https://picsum.photos/id/12/300/300" },
-    { id: "4", imageUrl: "https://picsum.photos/id/13/300/300" },
-    { id: "5", imageUrl: "https://picsum.photos/id/14/300/300" },
+    {
+        id: "1",
+        imageUrls: [
+            "https://picsum.photos/id/10/300/300",
+            "https://picsum.photos/id/11/300/300",
+            "https://picsum.photos/id/12/300/300",
+            "https://picsum.photos/id/13/300/300",
+        ],
+    },
+    {
+        id: "2",
+        imageUrls: ["https://picsum.photos/id/14/300/300"],
+    },
+    {
+        id: "3",
+        imageUrls: [
+            "https://picsum.photos/id/15/300/300",
+            "https://picsum.photos/id/16/300/300",
+        ],
+    },
 ];
 
 export default function Gallery() {
@@ -35,27 +58,37 @@ export default function Gallery() {
         router.push(`/book-detail/${bookId}/add-review`);
     };
 
-    const renderItem = ({ item }: { item: GalleryItem }) => (
-        <TouchableOpacity
-            style={styles.imageContainer}
-            activeOpacity={0.8}
-            onPress={() =>
-                router.push({
-                    pathname: "../[galleryId]/post",
-                    params: {
-                        bookId,
-                        galleryId: item.id,
-                    },
-                })
-            }
-        >
-            <Image source={{ uri: item.imageUrl }} style={styles.image} />
-        </TouchableOpacity>
-    );
+    const renderItem = ({ item }: { item: GalleryItem }) => {
+        const thumbnail = item.imageUrls[0];
+        const extraCount = item.imageUrls.length - 1;
+
+        return (
+            <TouchableOpacity
+                style={styles.imageContainer}
+                activeOpacity={0.8}
+                onPress={() =>
+                    router.push({
+                        pathname: "../[galleryId]/post",
+                        params: {
+                            bookId,
+                            galleryId: item.id,
+                        },
+                    })
+                }
+            >
+                <Image source={{ uri: thumbnail }} style={styles.image} />
+
+                {extraCount > 0 && (
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>+{extraCount}</Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <View style={styles.container}>
-            {/* 갤러리 3열 그리드 */}
             <FlatList
                 data={galleryData}
                 renderItem={renderItem}
@@ -66,7 +99,6 @@ export default function Gallery() {
                 showsVerticalScrollIndicator={false}
             />
 
-            {/* 리뷰 작성 버튼 (+) */}
             <TouchableOpacity
                 style={styles.fab}
                 activeOpacity={0.8}
@@ -78,9 +110,6 @@ export default function Gallery() {
     );
 }
 
-// ==========================================
-// 스타일 시트
-// ==========================================
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -90,20 +119,38 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     columnWrapper: {
-        gap: gap,
+        gap,
         marginBottom: gap,
     },
     imageContainer: {
         width: itemSize,
         height: itemSize,
         backgroundColor: "#E0E0E0",
+        position: "relative",
+        overflow: "hidden",
     },
     image: {
         width: "100%",
         height: "100%",
         resizeMode: "cover",
     },
-    // 화면 위에 강제로 띄우는 플로팅 버튼 스타일
+    countBadge: {
+        position: "absolute",
+        top: 8,
+        right: 8,
+        minWidth: 34,
+        height: 28,
+        paddingHorizontal: 8,
+        borderRadius: 10,
+        backgroundColor: "rgba(252,245,215,0.92)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    countBadgeText: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#8A6A2F",
+    },
     fab: {
         position: "absolute",
         bottom: 30,
