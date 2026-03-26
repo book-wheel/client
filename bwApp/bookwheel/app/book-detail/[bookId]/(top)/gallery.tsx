@@ -26,21 +26,21 @@ const DUMMY_GALLERY_DATA: GalleryItem[] = [
     {
         id: "1",
         imageUrls: [
-            "https://picsum.photos/id/10/300/300",
-            "https://picsum.photos/id/11/300/300",
-            "https://picsum.photos/id/12/300/300",
-            "https://picsum.photos/id/13/300/300",
+            "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
+            "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
+            "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
+            "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
         ],
     },
     {
         id: "2",
-        imageUrls: ["https://picsum.photos/id/14/300/300"],
+        imageUrls: ["https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg"],
     },
     {
         id: "3",
         imageUrls: [
-            "https://picsum.photos/id/15/300/300",
-            "https://picsum.photos/id/16/300/300",
+            "https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg",
+            "https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg",
         ],
     },
 ];
@@ -142,14 +142,14 @@ const styles = StyleSheet.create({
         height: 28,
         paddingHorizontal: 8,
         borderRadius: 10,
-        backgroundColor: "rgba(252,245,215,0.92)",
+        backgroundColor: "rgba(235, 225, 192, 0.52)",
         justifyContent: "center",
         alignItems: "center",
     },
     countBadgeText: {
-        fontSize: 13,
-        fontWeight: "600",
-        color: "#8A6A2F",
+        fontSize: 12,
+        fontWeight: "500",
+        color: "rgba(138,106,47,0.78)",
     },
     fab: {
         position: "absolute",
