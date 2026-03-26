@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet } from "react-native";
+import * as Linking from "expo-linking";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -53,6 +54,12 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 소셜 로그인 핸들러
+  const handleSocialLogin = (provider: "google" | "kakao") => {
+    const url = `https://http://43.200.65.32:8080/api/v1/auth/authorize/${provider}`;
+    Linking.openURL(url);
   };
 
   return (
@@ -115,8 +122,14 @@ export default function Login() {
         />
         {/* 소셜로그인 */}
         <View style={styles.socialRow}>
-          <SocialButton type="google" onPress={() => {}} />
-          <SocialButton type="kakao" onPress={() => {}} />
+          <SocialButton
+            type="google"
+            onPress={() => handleSocialLogin("google")}
+          />
+          <SocialButton
+            type="kakao"
+            onPress={() => handleSocialLogin("kakao")}
+          />
         </View>
       </AuthCard>
     </View>
