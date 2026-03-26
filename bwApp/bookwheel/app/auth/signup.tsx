@@ -183,6 +183,17 @@ export default function Signup() {
           placeholder="비밀번호"
           secureTextEntry
         />
+
+        <Text
+          style={{
+            fontSize: 12,
+            color: "#777",
+            marginBottom: 10,
+            width: "80%",
+          }}
+        >
+          비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.
+        </Text>
         <Input
           value={passwordCheck}
           onChangeText={setPasswordCheck}
