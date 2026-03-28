@@ -19,6 +19,7 @@ export default function Profile() {
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
+  //토큰확인차...!
   useEffect(() => {
     const checkToken = async () => {
       const token = await AsyncStorage.getItem("accessToken");
