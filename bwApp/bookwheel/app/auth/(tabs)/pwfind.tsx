@@ -52,8 +52,10 @@ export default function PwFind() {
     try {
       const res = await verifyRecoveryPassword(email, emailCode);
 
+      console.log("verify response:", res.data);
+
       if (res.data.success) {
-        const token = res.data?.data?.resetToken;
+        const token = res.data?.data;
 
         if (!token) {
           console.log("토큰 발급 실패");
@@ -188,6 +190,7 @@ export default function PwFind() {
 
             {/* 새 비밀번호 확인 */}
             <Input
+              key="newPasswordCheck"
               value={newPasswordCheck}
               onChangeText={(text) => {
                 setNewPasswordCheck(text);
