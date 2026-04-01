@@ -36,7 +36,10 @@ export default function PwFind() {
         console.log("메일 발송 성공");
       }
     } catch (error: any) {
-      console.log("비밀번호 재설정 실패:", error?.response?.data || error);
+      const message =
+        error?.response?.data?.error?.message || "이메일 인증 요청 실패";
+
+      setErrorMessage(message);
     }
   };
 
@@ -50,7 +53,7 @@ export default function PwFind() {
       const res = await verifyRecoveryPassword(email, emailCode);
 
       if (res.data.success) {
-        const token = res.data?.data;
+        const token = res.data?.data?.resetToken;
 
         if (!token) {
           console.log("토큰 발급 실패");
@@ -62,7 +65,18 @@ export default function PwFind() {
         setShowCodeInput(false);
       }
     } catch (error: any) {
-      console.log("비밀번호 재설정 실패:", error?.response?.data || error);
+      const message =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        "요청 중 오류가 발생했습니다";
+
+      setErrorMessage(message);
+
+      // 인증번호 만료 시 입력창 초기화
+      if (message === "인증번호가 만료되었습니다") {
+        setShowCodeInput(false);
+        setEmailCode("");
+      }
     }
   };
 
@@ -94,10 +108,10 @@ export default function PwFind() {
         router.replace("/auth/login");
       }
     } catch (error: any) {
-      console.log("비밀번호 재설정 실패:", error?.response?.data || error);
-      setErrorMessage(
-        error?.response?.data?.error?.message || "요청 중 오류가 발생했습니다",
-      );
+      const message =
+        error?.response?.data?.error?.message || "인증번호 확인 실패";
+
+      setErrorMessage(message);
     }
   };
 
@@ -115,7 +129,7 @@ export default function PwFind() {
             {errorMessage !== "" && (
               <Text
                 style={{
-                  color: "#D11A2A",
+                  color: "#E4A54E",
                   marginBottom: 8,
                   width: "80%",
                   fontSize: 13,
@@ -161,16 +175,6 @@ export default function PwFind() {
           </>
         ) : (
           <>
-            <Text
-              style={{
-                fontSize: 12,
-                color: "#777",
-                marginBottom: 10,
-                width: "80%",
-              }}
-            >
-              비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.
-            </Text>
             {/* 새 비밀번호 입력 단계 */}
             <Input
               value={newPassword}
@@ -182,6 +186,7 @@ export default function PwFind() {
               secureTextEntry
             />
 
+            {/* 새 비밀번호 확인 */}
             <Input
               value={newPasswordCheck}
               onChangeText={(text) => {
@@ -191,6 +196,19 @@ export default function PwFind() {
               placeholder="새 비밀번호 확인"
               secureTextEntry
             />
+
+            {errorMessage !== "" && (
+              <Text
+                style={{
+                  color: "#E4A54E",
+                  marginBottom: 28,
+                  width: "75%",
+                  fontSize: 13,
+                }}
+              >
+                {errorMessage}
+              </Text>
+            )}
 
             {/* 버튼---------------------------------------- */}
             <Button title="저장" onPress={handleResetPassword} />

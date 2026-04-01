@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
 
@@ -17,6 +17,16 @@ export default function Login() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // 로그인 시 기존 토큰 제거
+  useEffect(() => {
+    const clearToken = async () => {
+      await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+    };
+
+    clearToken();
+  }, []);
 
   const handleLogin = async () => {
     if (loading) return;
@@ -35,7 +45,10 @@ export default function Login() {
       });
 
       if (!res.data.success) {
-        alert(res.data.error.message);
+        setErrorMessage(
+          res.data.error?.message || "아이디 또는 비밀번호가 올바르지 않습니다",
+        );
+        setLoading(false);
         return;
       }
 
@@ -50,7 +63,9 @@ export default function Login() {
         router.replace("/auth/profile");
       }
     } catch (error: any) {
-      console.log("login error:", error.response?.data);
+      const message = "아이디 또는 비밀번호가 올바르지 않습니다";
+
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -58,7 +73,7 @@ export default function Login() {
 
   // 소셜 로그인 핸들러
   const handleSocialLogin = (provider: "google" | "kakao") => {
-    const url = `https://http://43.200.65.32:8080/api/v1/auth/authorize/${provider}`;
+    const url = `http://43.200.65.32:8080/api/v1/auth/authorize/${provider}`;
     Linking.openURL(url);
   };
 
@@ -90,10 +105,26 @@ export default function Login() {
         />
         <Input
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            setErrorMessage("");
+          }}
           placeholder="비밀번호"
           secureTextEntry
         />
+
+        {errorMessage !== "" && (
+          <Text
+            style={{
+              color: "#E4A54E",
+              fontSize: 13,
+              width: "80%",
+              marginBottom: 20,
+            }}
+          >
+            {errorMessage}
+          </Text>
+        )}
         {/* 아이디/비번 찾기 */}
         <TouchableOpacity
           style={{
