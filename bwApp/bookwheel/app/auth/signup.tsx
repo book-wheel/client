@@ -5,69 +5,117 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
+import { signup, login, sendEmail, verifyEmail } from "@/api/auth";
+import api from "@/api/axios";
+
+import useSignupForm from "@/hooks/useSignupForm";
+import { validateSignup } from "@/utils/signupValidation";
+
 export default function Signup() {
-  const [userId, setUserId] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordCheck, setPasswordCheck] = useState("");
-  const [nickname, setNickname] = useState("");
+  const { form, errors, setErrors, handleChange } = useSignupForm();
 
   const [emailVerified, setEmailVerified] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const [emailCode, setEmailCode] = useState("");
 
-  //메일 인증요청 로직
-  const requestEmailVerification = () => {
-    console.log("Requesting email verification for:", email);
-    setShowCodeInput(true);
-  };
-
-  // const [nicknameChecked, setNicknameChecked] = useState(false);
-
-  // // 닉네임 중복확인 로직
-  // const checkNickname = () => {
-  //   console.log("Checking nickname:", nickname);
-  //   setNicknameChecked(true);
-  // };
-
-  const isPasswordMatch = password === passwordCheck;
-
-  // 약관 동의 상태----------------------------
   const [agreeAll, setAgreeAll] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
-  useEffect(() => {
-    if (agreeTerms && agreePrivacy) {
-      setAgreeAll(true);
-    } else {
-      setAgreeAll(false);
+  // 이메일 인증 요청
+  const requestEmailVerification = async () => {
+    try {
+      const res = await sendEmail(form.email);
+
+      if (res.data.success) {
+        setShowCodeInput(true);
+      } else {
+        setErrors({ email: res.data.error.message });
+      }
+    } catch (error) {
+      console.log(error);
     }
+  };
+
+  // 이메일 인증 확인
+  const handleVerifyEmail = async () => {
+    try {
+      const res = await verifyEmail(form.email, form.emailCode);
+
+      if (res.data.success) {
+        setEmailVerified(true);
+        setShowCodeInput(false);
+      } else {
+        setErrors({ emailCode: res.data.error.message });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // 회원가입
+  const handleSignup = async () => {
+    const validationErrors = validateSignup({
+      emailVerified,
+      password: form.password,
+      passwordCheck: form.passwordCheck,
+      agreeTerms,
+      agreePrivacy,
+    });
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    try {
+      const signupRes = await signup({
+        loginId: form.loginId,
+        password: form.password,
+        mail: form.email,
+      });
+
+      if (!signupRes.data.success) return;
+
+      const loginRes = await login({
+        loginId: form.loginId,
+        password: form.password,
+      });
+
+      const { accessToken, isProfileSet } = loginRes.data.data;
+
+      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+      router.replace(isProfileSet ? "/" : "/auth/profile");
+    } catch (error: any) {
+      console.log(error.response?.data);
+    }
+  };
+
+  // 전체동의 자동체크
+  useEffect(() => {
+    setAgreeAll(agreeTerms && agreePrivacy);
   }, [agreeTerms, agreePrivacy]);
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: "회원가입",
-        }}
-      />
+      <Stack.Screen options={{ title: "회원가입" }} />
 
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ fontSize: 24, marginBottom: 30, color: "#513A11" }}>
-          회원가입
-        </Text>
+      <View style={styles.container}>
+        <Text style={styles.title}>회원가입</Text>
 
-        {/* 인풋박스 */}
+        {/* 아이디 */}
         <Input
-          value={userId}
-          onChangeText={setUserId}
+          value={form.loginId}
+          onChangeText={(text) => handleChange("loginId", text)}
           placeholder="아이디"
-          keyboardType="default"
         />
+
+        {/* 이메일 */}
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         <Input
-          value={email}
-          onChangeText={setEmail}
+          value={form.email}
+          onChangeText={(text) => handleChange("email", text)}
+          editable={!emailVerified}
           placeholder="이메일"
           keyboardType="email-address"
           rightButton={{
@@ -80,53 +128,54 @@ export default function Signup() {
             disabled: emailVerified,
           }}
         />
-        {showCodeInput && (
-          <Input
-            value={emailCode}
-            onChangeText={setEmailCode}
-            placeholder="인증번호 입력"
-            keyboardType="numeric"
-            rightButton={{
-              label: "확인",
-              onPress: () => {
-                console.log("입력한 코드:", emailCode);
 
-                setEmailVerified(true);
-                setShowCodeInput(false);
-              },
-            }}
-          />
+        {/* 인증코드 */}
+        {showCodeInput && (
+          <>
+            {errors.emailCode && (
+              <Text style={styles.errorText}>{errors.emailCode}</Text>
+            )}
+
+            <Input
+              value={form.emailCode}
+              onChangeText={(text) => handleChange("emailCode", text)}
+              placeholder="인증번호 입력"
+              keyboardType="numeric"
+              rightButton={{
+                label: "확인",
+                onPress: handleVerifyEmail,
+              }}
+            />
+          </>
+        )}
+
+        {/* 비밀번호 */}
+        {errors.password && (
+          <Text style={styles.errorText}>{errors.password}</Text>
         )}
 
         <Input
-          value={password}
-          onChangeText={setPassword}
+          value={form.password}
+          onChangeText={(text) => handleChange("password", text)}
           placeholder="비밀번호"
           secureTextEntry
         />
+
+        {/* 비밀번호 확인 */}
+        {errors.passwordCheck && (
+          <Text style={styles.errorText}>{errors.passwordCheck}</Text>
+        )}
+
         <Input
-          value={passwordCheck}
-          onChangeText={setPasswordCheck}
+          value={form.passwordCheck}
+          onChangeText={(text) => handleChange("passwordCheck", text)}
           placeholder="비밀번호 확인"
           secureTextEntry
         />
-        {/* <Input
-          value={nickname}
-          onChangeText={(text) => {
-            setNickname(text);
-            setNicknameChecked(false); // 닉네임 바뀌면 다시
-          }}
-          placeholder="닉네임"
-          rightButton={{
-            label: nicknameChecked ? "사용가능" : "중복확인",
-            onPress: checkNickname,
-            disabled: nicknameChecked,
-          }}
-        /> */}
 
-        {/* 약관동의------------------------ */}
-        <View style={{ width: 317, marginTop: 30 }}>
-          {/* 전체동의 */}
+        {/* 약관 동의 */}
+
+        <View style={styles.termsBox}>
           <TouchableOpacity
             style={styles.checkRow}
             onPress={() => {
@@ -140,41 +189,56 @@ export default function Signup() {
             <Text style={styles.checkText}>전체 동의</Text>
           </TouchableOpacity>
 
-          {/* 이용약관 */}
           <TouchableOpacity
             style={styles.checkRow}
-            onPress={() => {
-              setAgreeTerms(!agreeTerms);
-            }}
+            onPress={() => setAgreeTerms(!agreeTerms)}
           >
             <View style={[styles.checkbox, agreeTerms && styles.checked]} />
             <Text style={styles.checkText}>이용약관 동의 (필수)</Text>
           </TouchableOpacity>
 
-          {/* 개인정보 */}
           <TouchableOpacity
             style={styles.checkRow}
-            onPress={() => {
-              setAgreePrivacy(!agreePrivacy);
-            }}
+            onPress={() => setAgreePrivacy(!agreePrivacy)}
           >
             <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
             <Text style={styles.checkText}>개인정보 처리방침 동의 (필수)</Text>
           </TouchableOpacity>
+
+          {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
         </View>
 
-        {/* 회원가입------------------------ */}
-        <View style={{ marginTop: 10 }} />
-        <Button
-          title="회원가입"
-          onPress={() => router.replace("/auth/profile")}
-        />
+        <Button title="회원가입" onPress={handleSignup} />
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  title: {
+    fontSize: 24,
+    marginBottom: 30,
+    color: "#513A11",
+  },
+
+  errorText: {
+    color: "#E4A54E",
+    width: "80%",
+    marginBottom: 4,
+  },
+
+  termsBox: {
+    width: 317,
+    marginTop: 30,
+    marginBottom: 20,
+  },
+
   checkRow: {
     flexDirection: "row",
     alignItems: "center",

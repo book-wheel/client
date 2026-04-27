@@ -4,17 +4,57 @@ import React from "react";
 
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { sendRecoveryCode, verifyRecoveryId } from "@/api/auth";
 
 export default function IdFind() {
   const [email, setEmail] = React.useState("");
   const [emailVerified, setEmailVerified] = React.useState(false);
   const [showCodeInput, setShowCodeInput] = React.useState(false);
   const [emailCode, setEmailCode] = React.useState("");
+  const [loginId, setLoginId] = React.useState<string>("");
 
   //메일 인증요청 로직
-  const requestEmailVerification = () => {
-    console.log("Requesting email verification for:", email);
-    setShowCodeInput(true);
+  const requestEmailVerification = async () => {
+    if (!email) {
+      console.log("이메일 입력 필요");
+      return;
+    }
+
+    try {
+      const res = await sendRecoveryCode(email);
+
+      if (res.data.success) {
+        setShowCodeInput(true);
+        console.log("메일 발송 성공");
+      } else {
+        console.log(res.data.error.message);
+      }
+    } catch (error: any) {
+      console.log("아이디 찾기 실패:", error?.response?.data || error);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!emailCode) {
+      console.log("인증번호 입력 필요");
+      return;
+    }
+
+    try {
+      const res = await verifyRecoveryId(email, emailCode);
+
+      const loginId = res.data?.data?.loginId;
+
+      if (loginId) {
+        setLoginId(loginId);
+        setEmailVerified(true);
+        setShowCodeInput(false);
+      } else {
+        console.log(res.data.error.message);
+      }
+    } catch (error: any) {
+      console.log("아이디 찾기 실패:", error?.response?.data || error);
+    }
   };
 
   return (
@@ -51,12 +91,7 @@ export default function IdFind() {
                 keyboardType="numeric"
                 rightButton={{
                   label: "확인",
-                  onPress: () => {
-                    console.log("입력한 코드:", emailCode);
-
-                    setEmailVerified(true);
-                  },
-                  disabled: emailVerified,
+                  onPress: handleVerifyEmail,
                 }}
               />
             )}
@@ -74,10 +109,9 @@ export default function IdFind() {
                 borderWidth: 1,
               }}
             >
-              {/* 임시로 해둠 */}
               <Text style={{ fontSize: 16, color: "#513A11" }}>
                 회원님의 아이디는{" "}
-                <Text style={{ fontWeight: "bold" }}>ttt123</Text> 입니다
+                <Text style={{ fontWeight: "bold" }}>{loginId}</Text>
               </Text>
             </View>
 
