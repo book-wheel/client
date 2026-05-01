@@ -1,5 +1,8 @@
 import api from "./axios";
 
+// ==================== AUTH ====================
+
+//회원가입
 export const signup = (data: {
   loginId: string;
   password: string;
@@ -8,15 +11,7 @@ export const signup = (data: {
   return api.post("/auth/signup", data);
 };
 
-//프로필 설정
-export const setupProfile = (data: {
-  profileImageKey?: string;
-  nickname: string;
-  comment: string;
-}) => {
-  return api.patch("/users/setup-profile", data);
-};
-
+//로그인
 export const login = (data: { loginId: string; password: string }) => {
   return api.post("/auth/login", data);
 };
@@ -34,6 +29,17 @@ export const verifyEmail = (email: string, code: string) => {
     email,
     code,
   });
+};
+
+// ==================== USERS ====================
+
+//프로필 설정
+export const setupProfile = (data: {
+  profileImageKey?: string;
+  nickname: string;
+  comment: string;
+}) => {
+  return api.patch("/users/setup-profile", data);
 };
 
 // 아이디 찾기 - 인증번호 발송
@@ -69,5 +75,17 @@ export const resetPassword = (resetToken: string, newPassword: string) => {
 
 //로그아웃
 export const logout = () => {
-  return api.post("/auth/logout");
+  return api.post("/users/logout");
+};
+
+//내 정보 조회
+export const getMyInfo = () => {
+  return api.get("/users/me");
+};
+
+//회원탈퇴
+export const deleteAccount = (password: string) => {
+  return api.delete("/users/me", {
+    data: { password },
+  });
 };

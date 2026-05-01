@@ -8,11 +8,14 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
+
   console.log("token:", token);
 
-  if (token && token !== "null" && token !== "undefined") {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers?.set("Authorization", `Bearer ${token}`);
   }
+
+  console.log("Authorization:", config.headers?.get("Authorization"));
 
   return config;
 });
