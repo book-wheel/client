@@ -1,18 +1,17 @@
 import { View, Text, TouchableOpacity } from "react-native";
 import { common } from "@/styles/common";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useGroupCreateStore } from "@/store/groupCreateStore";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
-export default function Step1() {
+export default function Step2() {
   const steps = ["정보입력", "운영방식", "기타"];
-  const currentStep = 1; // Step1
+  const currentStep = 1; // Step2
 
-  const [rule, setRule] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
-  const [password, setPassword] = useState("");
+  const { groupRule, groupPublic, groupPassword, setField } =
+    useGroupCreateStore();
 
   return (
     <View style={{ flex: 1 }}>
@@ -72,8 +71,8 @@ export default function Step1() {
         </Text>
 
         <Input
-          value={rule}
-          onChangeText={(t) => t.length <= 100 && setRule(t)}
+          value={groupRule}
+          onChangeText={(t) => t.length <= 100 && setField("groupRule", t)}
           placeholder="예) 기간 내 완독하기"
           multiline
         />
@@ -85,32 +84,32 @@ export default function Step1() {
         <View style={{ flexDirection: "row", gap: 12, marginHorizontal: 24 }}>
           <Button
             title="공개"
-            onPress={() => setIsPublic(true)}
+            onPress={() => setField("groupPublic", true)}
             style={{
               flex: 1,
-              backgroundColor: isPublic ? "#E4A54E" : "#FDF9EA",
+              backgroundColor: groupPublic ? "#E4A54E" : "#FDF9EA",
             }}
-            textStyle={{ color: isPublic ? "#FFF" : "#FDF9EA" }}
+            textStyle={{ color: groupPublic ? "#FFF" : "#FDF9EA" }}
           />
 
           <Button
             title="비공개"
-            onPress={() => setIsPublic(false)}
+            onPress={() => setField("groupPublic", false)}
             style={{
               flex: 1,
-              backgroundColor: !isPublic ? "#E4A54E" : "#FDF9EA",
+              backgroundColor: !groupPublic ? "#E4A54E" : "#FDF9EA",
             }}
-            textStyle={{ color: !isPublic ? "#FFF" : "#FDF9EA" }}
+            textStyle={{ color: !groupPublic ? "#FFF" : "#FDF9EA" }}
           />
         </View>
-        {!isPublic && (
+        {!groupPublic && (
           <>
             <Text style={{ marginLeft: 46, marginBottom: 6, color: "#513A11" }}>
               비밀번호
             </Text>
             <Input
-              value={password}
-              onChangeText={setPassword}
+              value={groupPassword}
+              onChangeText={(t) => setField("groupPassword", t)}
               placeholder="비밀번호 입력"
               secureTextEntry
             />

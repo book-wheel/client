@@ -74,7 +74,7 @@ export default function GroupListExtended({ group, onJoin, isPending }: Props) {
 
           <Text style={styles.people}>
             <Text style={styles.count}>
-              {group.total} / {group.maxPeople}
+              {group.current} / {group.maxPeople}
             </Text>
 
             {group.startDate && (
