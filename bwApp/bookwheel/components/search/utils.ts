@@ -92,8 +92,21 @@ export const getFilterChipLabel = (
   return `~${pageRange.max}쪽`;
 };
 
-const getDateTime = (year: number, month: number, day: number) =>
-  new Date(year, month - 1, day).getTime();
+const getDateTime = (
+  year: number,
+  month: number,
+  day: number,
+  endOfDay = false,
+) =>
+  new Date(
+    year,
+    month - 1,
+    day,
+    endOfDay ? 23 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 59 : 0,
+    endOfDay ? 999 : 0,
+  ).getTime();
 
 export const matchesPublishedAtFilter = (
   book: BookSearchItem,
@@ -109,7 +122,10 @@ export const matchesPublishedAtFilter = (
   );
   const endDate = getDateTime(range.endYear, range.endMonth, range.endDay);
   const minDate = Math.min(startDate, endDate);
-  const maxDate = Math.max(startDate, endDate);
+  const maxDate =
+    startDate <= endDate
+      ? getDateTime(range.endYear, range.endMonth, range.endDay, true)
+      : getDateTime(range.startYear, range.startMonth, range.startDay, true);
 
   return bookDate >= minDate && bookDate <= maxDate;
 };
