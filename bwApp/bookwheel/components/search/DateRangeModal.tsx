@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from "react-native";
 
 import {
@@ -203,19 +201,26 @@ type WheelColumnProps = {
 
 function WheelColumn({ options, value, onChange }: WheelColumnProps) {
   const listRef = useRef<FlatList<WheelOption>>(null);
+  const isMomentumScrollingRef = useRef(false);
+  const dragEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedIndex = Math.max(
     0,
     options.findIndex((option) => option.value === value),
   );
 
-  const handleScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
+  const clearDragEndTimer = () => {
+    if (dragEndTimerRef.current) {
+      clearTimeout(dragEndTimerRef.current);
+      dragEndTimerRef.current = null;
+    }
+  };
+
+  const handleScrollEnd = (offsetY: number) => {
     const nextIndex = Math.max(
       0,
       Math.min(
         options.length - 1,
-        Math.round(event.nativeEvent.contentOffset.y / wheelItemHeight),
+        Math.round(offsetY / wheelItemHeight),
       ),
     );
     const nextValue = options[nextIndex]?.value;
@@ -235,6 +240,14 @@ function WheelColumn({ options, value, onChange }: WheelColumnProps) {
 
     return () => clearTimeout(timer);
   }, [options.length, selectedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (dragEndTimerRef.current) {
+        clearTimeout(dragEndTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <FlatList
@@ -259,8 +272,27 @@ function WheelColumn({ options, value, onChange }: WheelColumnProps) {
           });
         }, 50);
       }}
-      onMomentumScrollEnd={handleScrollEnd}
-      onScrollEndDrag={handleScrollEnd}
+      onMomentumScrollBegin={() => {
+        isMomentumScrollingRef.current = true;
+        clearDragEndTimer();
+      }}
+      onMomentumScrollEnd={(event) => {
+        isMomentumScrollingRef.current = false;
+        clearDragEndTimer();
+        handleScrollEnd(event.nativeEvent.contentOffset.y);
+      }}
+      onScrollEndDrag={(event) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+
+        clearDragEndTimer();
+        dragEndTimerRef.current = setTimeout(() => {
+          dragEndTimerRef.current = null;
+
+          if (!isMomentumScrollingRef.current) {
+            handleScrollEnd(offsetY);
+          }
+        }, 50);
+      }}
       renderItem={({ item }) => {
         const active = item.value === value;
 
