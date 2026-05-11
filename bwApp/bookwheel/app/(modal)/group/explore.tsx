@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, ScrollView } from "react-native";
 import SearchInput from "@/components/Input/search";
 import FilterBar from "@/components/Filter/FilterBar";
 import OfflineRegionSheet from "@/components/Filter/OfflineRegionSheet";
@@ -7,6 +7,7 @@ import AdvancedFilterSheet from "@/components/Filter/AdvancedFilterSheet";
 import GroupListExtended, {
   ExtendedGroup,
 } from "@/components/groups/GroupListExtended";
+
 import GroupJoinModal from "@/components/groups/GroupJoinModal";
 import { filterGroups } from "@/utils/filterGroups";
 import { mapGroups } from "@/utils/mapGroups";
@@ -177,7 +178,15 @@ export default function Explore() {
           setAdvancedOpen(false);
         }}
       />
-      <View style={{ flex: 1, alignItems: "center", marginTop: 26 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingTop: 26,
+          paddingBottom: 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ width: "100%", paddingHorizontal: 16 }}>
           {filteredGroups.map((g) => (
             <GroupListExtended
@@ -200,7 +209,7 @@ export default function Explore() {
           joinedIds={joinedIds}
           setJoinedIds={setJoinedIds}
         />
-      </View>
+      </ScrollView>
     </>
   );
 }
