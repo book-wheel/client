@@ -46,20 +46,26 @@ export default function OfflineRegionSheet({
 
   const toggle = (r: string) => {
     if (r === "전체") {
-      setSelected(["전체", ...allRegions]);
-    } else {
-      setSelected((prev) => {
-        const next = prev.includes(r)
-          ? prev.filter((x) => x !== r)
-          : [...prev, r];
+      // 이미 전체 선택 상태면 해제
+      if (selected.includes("전체")) {
+        setSelected([]);
+      } else {
+        setSelected(["전체", ...allRegions]);
+      }
 
-        const withoutAll = next.filter((x) => x !== "전체");
-
-        return withoutAll.length === allRegions.length
-          ? ["전체", ...allRegions]
-          : withoutAll;
-      });
+      return;
     }
+
+    setSelected((prev) => {
+      const exists = prev.includes(r);
+
+      const next = exists
+        ? prev.filter((x) => x !== r && x !== "전체")
+        : [...prev.filter((x) => x !== "전체"), r];
+
+      // 전부 선택되면 전체 자동 활성화
+      return next.length === allRegions.length ? ["전체", ...allRegions] : next;
+    });
   };
 
   return (

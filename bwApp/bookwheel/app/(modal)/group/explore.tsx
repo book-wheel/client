@@ -8,52 +8,51 @@ import GroupListExtended, {
   ExtendedGroup,
 } from "@/components/groups/GroupListExtended";
 import GroupJoinModal from "@/components/groups/GroupJoinModal";
+import { filterGroups } from "@/utils/filterGroups";
+import { mapGroups } from "@/utils/mapGroups";
 
 import { getGroups } from "@/api/group";
 
 export default function Explore() {
+  //지역 매핑
+  const REGION_MAP: Record<string, string> = {
+    서울: "SEOUL",
+    경기: "GYEONGGI",
+    인천: "INCHEON",
+    강원: "GANGWON",
+    충북: "CHUNG_BUK",
+    충남: "CHUNG_NAM",
+    대전: "DAEJEON",
+    세종: "SEJONG",
+    전북: "JEON_BUK",
+    전남: "JEON_NAM",
+    광주: "GWANGJU",
+    경북: "GYEONG_BUK",
+    경남: "GYEONG_NAM",
+    대구: "DAEGU",
+    울산: "ULSAN",
+    부산: "BUSAN",
+    제주: "JEJU",
+  };
+
   //검색창
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   //그룹 리스트 가져오기
-  const fetchGroups = async (keyword: string = "") => {
+  const fetchGroups = async (
+    keyword: string = "",
+    type?: "ONLINE" | "OFFLINE",
+  ) => {
     try {
       setIsLoading(true);
 
       const response = await getGroups({
         keyword,
+        type,
       });
 
-      const mappedGroups: ExtendedGroup[] = response.data.content.map(
-        (g: any) => ({
-          id: g.groupId,
-          title: g.groupName,
-          description: g.groupComment,
-
-          isOffline: g.groupOffline,
-
-          region: g.groupRegion,
-
-          // 공개/비공개
-          isPrivate: !g.groupPublic,
-
-          // 상태 매핑
-          status:
-            g.groupState === "RECRUITING"
-              ? "scheduled"
-              : g.groupState === "IN_PROGRESS"
-                ? "progress"
-                : "complete",
-
-          total: g.groupRoundCount,
-          current: g.currentMembers,
-          maxPeople: g.maxMembers,
-
-          dday: g.dday,
-          startDate: g.startDate,
-        }),
-      );
+      const mappedGroups = mapGroups(response.data.content);
 
       setGroups(mappedGroups);
     } catch (error) {
@@ -83,10 +82,17 @@ export default function Explore() {
   });
 
   const [groups, setGroups] = useState<ExtendedGroup[]>([]);
-
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<ExtendedGroup | null>(
     null,
   );
+
+  const filteredGroups = filterGroups({
+    groups,
+    filter,
+    advancedFilter,
+    selectedRegions,
+  });
 
   //그 외 상태관리
   const [open, setOpen] = useState(false);
@@ -110,8 +116,16 @@ export default function Explore() {
   const [joinedIds, setJoinedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchGroups();
-  }, []);
+    if (filter === "online") {
+      fetchGroups(query, "ONLINE");
+    } else if (filter === "offline") {
+      fetchGroups(query, "OFFLINE");
+    } else if (filter === "advanced") {
+      fetchGroups(query);
+    } else {
+      fetchGroups(query);
+    }
+  }, [filter, advancedFilter, query]);
 
   return (
     <>
@@ -127,7 +141,13 @@ export default function Explore() {
       <FilterBar
         options={groupFilters}
         value={filter}
-        onChange={setFilter}
+        onChange={(value) => {
+          setFilter(value);
+
+          if (value === "all") {
+            setSelectedRegions([]);
+          }
+        }}
         onOpenSubFilter={(key) => {
           if (key === "offline") setOfflineOpen(true);
           if (key === "advanced") setAdvancedOpen(true);
@@ -136,8 +156,13 @@ export default function Explore() {
       <OfflineRegionSheet
         visible={offlineOpen}
         onClose={() => setOfflineOpen(false)}
-        onSelect={(region) => {
-          console.log("선택한 지역:", region);
+        onSelect={(regions) => {
+          const filtered = regions.filter((r) => r !== "전체");
+
+          const mapped = filtered.map((r) => REGION_MAP[r]);
+
+          setSelectedRegions(mapped);
+
           setFilter("offline");
           setOfflineOpen(false);
         }}
@@ -154,7 +179,7 @@ export default function Explore() {
       />
       <View style={{ flex: 1, alignItems: "center", marginTop: 26 }}>
         <View style={{ width: "100%", paddingHorizontal: 16 }}>
-          {groups.map((g) => (
+          {filteredGroups.map((g) => (
             <GroupListExtended
               key={g.id}
               group={g}
