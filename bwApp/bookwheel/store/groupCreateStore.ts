@@ -17,6 +17,7 @@ type GroupCreateState = {
   maxMembers: number;
 
   setField: (field: string, value: any) => void;
+  reset: () => void;
 };
 
 export const useGroupCreateStore = create<GroupCreateState>((set) => ({
@@ -34,6 +35,24 @@ export const useGroupCreateStore = create<GroupCreateState>((set) => ({
   startDate: "",
 
   maxMembers: 0,
+
+  reset: () =>
+    set({
+      groupName: "",
+      groupComment: "",
+      groupRule: "",
+
+      groupPublic: true,
+      groupPassword: "",
+
+      groupOffline: true,
+      groupRegion: null,
+
+      readingPeriod: 0,
+      startDate: "",
+
+      maxMembers: 0,
+    }),
 
   setField: (field, value) =>
     set((state) => ({

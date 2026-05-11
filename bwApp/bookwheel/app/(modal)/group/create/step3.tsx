@@ -28,6 +28,7 @@ export default function Step3() {
     maxMembers,
 
     setField,
+    reset,
   } = useGroupCreateStore();
 
   const [regionOpen, setRegionOpen] = useState(false);
@@ -72,6 +73,8 @@ export default function Step3() {
       });
 
       const groupId = response.data.groupId;
+
+      reset();
 
       router.replace(`/group/${groupId}/home`);
     } catch (error: any) {
