@@ -147,6 +147,11 @@ export default function Explore() {
 
           if (value === "all") {
             setSelectedRegions([]);
+
+            setAdvancedFilter({
+              months: 3,
+              maxMembers: 10,
+            });
           }
         }}
         onOpenSubFilter={(key) => {
