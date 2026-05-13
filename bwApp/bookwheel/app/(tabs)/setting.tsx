@@ -7,21 +7,6 @@ import { Alert } from "react-native";
 import ProfileImage from "@/components/profile/image";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 
-//로그아웃----------------------------------------
-const handleLogout = async () => {
-  try {
-    await logout();
-  } catch (e) {
-    console.log("서버 로그아웃 실패", e);
-  } finally {
-    //프론트에선 무조건 토큰 제거
-    await AsyncStorage.removeItem("accessToken");
-    await AsyncStorage.removeItem("refreshToken");
-
-    router.replace("/auth/login");
-  }
-};
-
 export default function Settings() {
   const [user, setUser] = useState<any>(null);
   const [password, setPassword] = useState("");
@@ -42,6 +27,22 @@ export default function Settings() {
     fetchMyInfo();
   }, []);
 
+  //로그아웃----------------------------------------
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.log("서버 로그아웃 실패", e);
+    } finally {
+      //프론트에선 무조건 토큰 제거
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+
+      router.replace("/auth/login");
+    }
+  };
+
+  //회원탈퇴--------------------------------------
   const handleDelete = async () => {
     try {
       await deleteAccount(password);
@@ -61,7 +62,27 @@ export default function Settings() {
     ]);
   };
 
-  if (!user) return <Text>로딩중...</Text>;
+  if (!user) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
+        <Text>유저 정보를 불러올 수 없어요</Text>
+
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={{
+            marginTop: 20,
+            padding: 16,
+            backgroundColor: "#000",
+            borderRadius: 12,
+          }}
+        >
+          <Text style={{ color: "#fff", textAlign: "center" }}>
+            강제 로그아웃
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View

@@ -3,6 +3,7 @@ import { common } from "@/styles/common";
 import { router } from "expo-router";
 import { Modal } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useGroupCreateStore } from "@/store/groupCreateStore";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -12,11 +13,10 @@ export default function Step1() {
   const steps = ["정보입력", "운영방식", "기타"];
   const currentStep = 0; // Step1
 
-  const [groupTitle, setGroupTitle] = useState("");
-  const [coment, setComent] = useState("");
-  const [people, setPeople] = useState<number | null>(null);
+  const { groupName, groupComment, maxMembers, startDate, setField } =
+    useGroupCreateStore();
+
   const [peopleOpen, setPeopleOpen] = useState(false);
-  const [date, setDate] = useState<Date | null>(null);
   const [dateOpen, setDateOpen] = useState(false);
 
   return (
@@ -81,20 +81,20 @@ export default function Step1() {
             color: "#513A11",
           }}
         >
-          모임 이름 ({groupTitle.length}/10)
+          모임 이름 ({groupName.length}/10)
         </Text>
         <Input
-          value={groupTitle}
-          onChangeText={(t) => t.length <= 10 && setGroupTitle(t)}
+          value={groupName}
+          onChangeText={(t) => t.length <= 10 && setField("groupName", t)}
           placeholder="책바퀴독서모임"
         />
 
         <Text style={{ marginLeft: 46, marginBottom: 6, color: "#513A11" }}>
-          코멘트 ({coment.length}/50)
+          코멘트 ({groupComment.length}/50)
         </Text>
         <Input
-          value={coment}
-          onChangeText={(t) => t.length <= 50 && setComent(t)}
+          value={groupComment}
+          onChangeText={(t) => t.length <= 50 && setField("groupComment", t)}
           placeholder="독서 초보도 환영하는 느긋한 독서 모임~"
         />
 
@@ -105,7 +105,7 @@ export default function Step1() {
         <TouchableOpacity onPress={() => setPeopleOpen(true)}>
           <View pointerEvents="none">
             <Input
-              value={people ? `${people}명` : ""}
+              value={maxMembers ? `${maxMembers}명` : ""}
               placeholder="선택하세요"
               editable={false}
               onChangeText={() => {}}
@@ -134,7 +134,7 @@ export default function Step1() {
                   key={n}
                   style={{ paddingVertical: 10 }}
                   onPress={() => {
-                    setPeople(n);
+                    setField("maxMembers", n);
                     setPeopleOpen(false);
                   }}
                 >
@@ -160,7 +160,7 @@ export default function Step1() {
         <TouchableOpacity onPress={() => setDateOpen(true)}>
           <View pointerEvents="none">
             <Input
-              value={date ? date.toISOString().slice(0, 10) : ""}
+              value={startDate ? new Date(startDate).toLocaleDateString() : ""}
               placeholder="날짜 선택"
               editable={false}
               onChangeText={() => {}}
@@ -170,11 +170,11 @@ export default function Step1() {
 
         {dateOpen && (
           <DateTimePicker
-            value={date || new Date()}
+            value={startDate ? new Date(startDate) : new Date()}
             mode="date"
             display="spinner"
             onChange={(e, d) => {
-              if (d) setDate(d);
+              if (d) setField("startDate", d.toISOString().slice(0, 10));
               setDateOpen(false);
             }}
           />

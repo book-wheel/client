@@ -1,14 +1,5 @@
-import { useState } from "react";
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  TouchableWithoutFeedback,
-  StyleSheet,
-} from "react-native";
-import { common } from "@/styles/common";
+import { useEffect, useState } from "react";
+import { View, ScrollView } from "react-native";
 import SearchInput from "@/components/Input/search";
 import FilterBar from "@/components/Filter/FilterBar";
 import OfflineRegionSheet from "@/components/Filter/OfflineRegionSheet";
@@ -17,16 +8,56 @@ import GroupListExtended, {
   ExtendedGroup,
 } from "@/components/groups/GroupListExtended";
 
+import GroupJoinModal from "@/components/groups/GroupJoinModal";
+import { filterGroups } from "@/utils/filterGroups";
+import { mapGroups } from "@/utils/mapGroups";
+
+import { getGroups } from "@/api/group";
+
 export default function Explore() {
+  //지역 매핑
+  const REGION_MAP: Record<string, string> = {
+    서울: "SEOUL",
+    경기: "GYEONGGI",
+    인천: "INCHEON",
+    강원: "GANGWON",
+    충북: "CHUNG_BUK",
+    충남: "CHUNG_NAM",
+    대전: "DAEJEON",
+    세종: "SEJONG",
+    전북: "JEON_BUK",
+    전남: "JEON_NAM",
+    광주: "GWANGJU",
+    경북: "GYEONG_BUK",
+    경남: "GYEONG_NAM",
+    대구: "DAEGU",
+    울산: "ULSAN",
+    부산: "BUSAN",
+    제주: "JEJU",
+  };
+
   //검색창
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchGroups = async (keyword: string) => {
+  //그룹 리스트 가져오기
+  const fetchGroups = async (
+    keyword: string = "",
+    type?: "ONLINE" | "OFFLINE",
+  ) => {
     try {
       setIsLoading(true);
-      console.log("검색어:", keyword);
-      // TODO: API 호출
+
+      const response = await getGroups({
+        keyword,
+        type,
+      });
+
+      const mappedGroups = mapGroups(response.data.content);
+
+      setGroups(mappedGroups);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -51,41 +82,18 @@ export default function Explore() {
     maxMembers: 10,
   });
 
-  //더미데이터
-  const DUMMY_GROUPS: ExtendedGroup[] = [
-    {
-      id: "1",
-      title: "독서모임1",
-      description: "느긋하게 독서합니다",
-      isOffline: false,
-      region: undefined,
-      isPrivate: true,
-      status: "scheduled",
-      total: 3,
-      current: 3,
-      maxPeople: 8,
-      dday: 5,
-      startDate: "26/4/25",
-    },
-    {
-      id: "2",
-      title: "독서모임",
-      description: "한 달 한 권",
-      isOffline: true,
-      region: "서울",
-      isPrivate: false,
-      status: "scheduled",
-      total: 1,
-      current: 1,
-      maxPeople: 6,
-      dday: 12,
-      startDate: "26/3/20",
-    },
-  ];
-
+  const [groups, setGroups] = useState<ExtendedGroup[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<ExtendedGroup | null>(
     null,
   );
+
+  const filteredGroups = filterGroups({
+    groups,
+    filter,
+    advancedFilter,
+    selectedRegions,
+  });
 
   //그 외 상태관리
   const [open, setOpen] = useState(false);
@@ -108,6 +116,18 @@ export default function Explore() {
   };
   const [joinedIds, setJoinedIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    if (filter === "online") {
+      fetchGroups(query, "ONLINE");
+    } else if (filter === "offline") {
+      fetchGroups(query, "OFFLINE");
+    } else if (filter === "advanced") {
+      fetchGroups(query);
+    } else {
+      fetchGroups(query);
+    }
+  }, [filter, advancedFilter]);
+
   return (
     <>
       {/* 검색창 */}
@@ -122,7 +142,18 @@ export default function Explore() {
       <FilterBar
         options={groupFilters}
         value={filter}
-        onChange={setFilter}
+        onChange={(value) => {
+          setFilter(value);
+
+          if (value === "all") {
+            setSelectedRegions([]);
+
+            setAdvancedFilter({
+              months: 3,
+              maxMembers: 10,
+            });
+          }
+        }}
         onOpenSubFilter={(key) => {
           if (key === "offline") setOfflineOpen(true);
           if (key === "advanced") setAdvancedOpen(true);
@@ -131,8 +162,15 @@ export default function Explore() {
       <OfflineRegionSheet
         visible={offlineOpen}
         onClose={() => setOfflineOpen(false)}
-        onSelect={(region) => {
-          console.log("선택한 지역:", region);
+        onSelect={(regions) => {
+          const filtered = regions.filter((r) => r !== "전체");
+
+          const mapped = filtered
+            .map((r) => REGION_MAP[r])
+            .filter(Boolean) as string[];
+
+          setSelectedRegions(mapped);
+
           setFilter("offline");
           setOfflineOpen(false);
         }}
@@ -147,9 +185,17 @@ export default function Explore() {
           setAdvancedOpen(false);
         }}
       />
-      <View style={{ flex: 1, alignItems: "center", marginTop: 26 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          alignItems: "center",
+          paddingTop: 26,
+          paddingBottom: 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ width: "100%", paddingHorizontal: 16 }}>
-          {DUMMY_GROUPS.map((g) => (
+          {filteredGroups.map((g) => (
             <GroupListExtended
               key={g.id}
               group={g}
@@ -160,162 +206,17 @@ export default function Explore() {
         </View>
 
         {/* 가입 모달------------------------------------------------ */}
-        <Modal visible={open} transparent animationType="fade">
-          <TouchableWithoutFeedback onPress={() => setOpen(false)}>
-            <View style={joinStyles.overlay}>
-              <TouchableWithoutFeedback>
-                <View style={joinStyles.sheet}>
-                  {step === 1 && (
-                    <>
-                      <Text style={joinStyles.title}>
-                        {selectedGroup?.title}
-                      </Text>
-                      <Text style={joinStyles.subtitle}>
-                        비밀번호를 입력해주세요
-                      </Text>
 
-                      <TextInput
-                        style={joinStyles.input}
-                        secureTextEntry
-                        placeholderTextColor="#CCC"
-                      />
-
-                      <View style={joinStyles.buttonRow}>
-                        <TouchableOpacity
-                          style={[joinStyles.btn, joinStyles.cancel]}
-                          onPress={() => setOpen(false)}
-                        >
-                          <Text style={joinStyles.cancelText}>취소</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[joinStyles.btn, joinStyles.apply]}
-                          onPress={() => setStep(2)}
-                        >
-                          <Text style={joinStyles.applyText}>확인</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
-                  )}
-
-                  {step === 2 && (
-                    <>
-                      <Text style={joinStyles.title}>
-                        {selectedGroup?.title}
-                      </Text>
-                      <Text style={joinStyles.subtitle}>
-                        가입메시지를 입력해주세요
-                      </Text>
-
-                      <TextInput
-                        style={[joinStyles.input, joinStyles.textarea]}
-                        placeholder="입력하시길 바랍니다"
-                        placeholderTextColor="#CCC"
-                        multiline
-                        textAlignVertical="top"
-                      />
-
-                      <View style={joinStyles.buttonRow}>
-                        <TouchableOpacity
-                          style={[joinStyles.btn, joinStyles.cancel]}
-                          onPress={() => setOpen(false)}
-                        >
-                          <Text style={joinStyles.cancelText}>취소</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[joinStyles.btn, joinStyles.apply]}
-                          onPress={() => {
-                            if (selectedGroup) {
-                              setJoinedIds((prev) => [
-                                ...prev,
-                                selectedGroup.id,
-                              ]);
-                            }
-                            setOpen(false);
-                          }}
-                        >
-                          <Text style={joinStyles.applyText}>가입</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-      </View>
+        <GroupJoinModal
+          open={open}
+          setOpen={setOpen}
+          step={step}
+          setStep={setStep}
+          selectedGroup={selectedGroup}
+          joinedIds={joinedIds}
+          setJoinedIds={setJoinedIds}
+        />
+      </ScrollView>
     </>
   );
 }
-
-const joinStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "#0005",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sheet: {
-    width: "80%",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 6,
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#999",
-    marginBottom: 20,
-  },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#EEE",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: "#333",
-    backgroundColor: "#FAFAFA",
-  },
-  textarea: {
-    height: 110,
-    paddingTop: 12,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 20,
-    width: "100%",
-  },
-  btn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancel: {
-    backgroundColor: "#F0F0F0",
-  },
-  apply: {
-    backgroundColor: "#E4A54E",
-  },
-  cancelText: {
-    color: "#888",
-    fontWeight: "600",
-  },
-  applyText: {
-    color: "#FFF",
-    fontWeight: "700",
-  },
-});
