@@ -55,6 +55,24 @@ export default function Step3() {
 
   // 그룹 생성 API 호출
   const handleCreateGroup = async () => {
+    // 모임명 검사
+    if (!groupName.trim()) {
+      alert("모임명을 입력해주세요.");
+      return;
+    }
+
+    // 오프라인인데 지역 선택 안한 경우
+    if (groupOffline && !groupRegion) {
+      alert("지역을 선택해주세요.");
+      return;
+    }
+
+    // 비공개인데 비밀번호 없음
+    if (!groupPublic && !groupPassword.trim()) {
+      alert("비밀번호를 입력해주세요.");
+      return;
+    }
+
     try {
       const response = await makingGroup({
         groupName,

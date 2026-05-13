@@ -126,7 +126,7 @@ export default function Explore() {
     } else {
       fetchGroups(query);
     }
-  }, [filter, advancedFilter, query]);
+  }, [filter, advancedFilter]);
 
   return (
     <>
@@ -165,7 +165,9 @@ export default function Explore() {
         onSelect={(regions) => {
           const filtered = regions.filter((r) => r !== "전체");
 
-          const mapped = filtered.map((r) => REGION_MAP[r]);
+          const mapped = filtered
+            .map((r) => REGION_MAP[r])
+            .filter(Boolean) as string[];
 
           setSelectedRegions(mapped);
 

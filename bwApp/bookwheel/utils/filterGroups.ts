@@ -27,10 +27,23 @@ export const filterGroups = ({
             ? g.isOffline
             : true;
 
+    // 지역 필터 (오프라인 때만)
+    const regionCondition =
+      filter !== "offline"
+        ? true
+        : selectedRegions.length === 0
+          ? true
+          : selectedRegions.includes(g.region ?? "");
+
+    // advanced 아닐 땐 무조건 통과
+    if (filter !== "advanced") {
+      return typeCondition && regionCondition;
+    }
+
     // 최대 인원 필터
     const memberCondition = g.maxPeople <= advancedFilter.maxMembers;
 
-    // 시작 개월 수 필터
+    // 시작일 없으면 제외
     if (!g.startDate) return false;
 
     const startDate = new Date(g.startDate);
@@ -42,11 +55,6 @@ export const filterGroups = ({
 
     const monthCondition = diffMonth <= advancedFilter.months;
 
-    const regionCondition =
-      selectedRegions.length === 0 || selectedRegions.includes(g.region ?? "");
-
-    return (
-      typeCondition && memberCondition && monthCondition && regionCondition
-    );
+    return typeCondition && memberCondition && monthCondition;
   });
 };
