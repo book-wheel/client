@@ -122,11 +122,14 @@ export default function Books() {
           headerShown: true,
           headerRight: () => (
             <TouchableOpacity
-              onPress={handleSearch}
+              accessibilityLabel="도서 검색"
+              accessibilityRole="button"
               activeOpacity={0.7}
+              hitSlop={8}
+              onPress={handleSearch}
               style={styles.headerSearchButton}
             >
-              <Ionicons name="search" size={25} color="#513A11" />
+              <Ionicons name="search-outline" size={25} color="#513A11" />
             </TouchableOpacity>
           ),
         }}
@@ -208,12 +211,15 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 28,
+    paddingTop: 18,
     paddingBottom: 48,
   },
   headerSearchButton: {
-    marginRight: 20,
-    padding: 6,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
   },
   horizontalList: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { Stack, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function TabsLayout() {
@@ -23,6 +23,22 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#E4A54E",
         tabBarInactiveTintColor: "#513A11",
         headerShown: false,
+        headerTitleAlign: "left",
+        headerTitleStyle: {
+          color: "#513A11",
+          fontSize: 24,
+          fontWeight: "900",
+        },
+        headerStyle: {
+          backgroundColor: "#FFFFFF",
+        },
+        headerShadowVisible: false,
+        headerRightContainerStyle: {
+          paddingRight: 16,
+        },
+        headerLeftContainerStyle: {
+          paddingLeft: 16,
+        },
       })}
     >
       <Tabs.Screen name="index" options={{ title: "홈", headerShown: true }} />
