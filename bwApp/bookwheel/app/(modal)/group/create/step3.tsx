@@ -74,13 +74,13 @@ export default function Step3() {
     }
 
     try {
-      const response = await makingGroup({
+      const payload = {
         groupName,
         groupComment,
         groupRule,
 
         groupPublic,
-        groupPassword: groupPublic ? null : groupPassword,
+        groupPassword: groupPublic ? "" : groupPassword,
 
         groupOffline,
         groupRegion: groupOffline ? REGION_MAP[groupRegion ?? ""] : null,
@@ -88,7 +88,11 @@ export default function Step3() {
         readingPeriod,
         startDate,
         maxMembers,
-      });
+      };
+
+      console.log(payload);
+
+      const response = await makingGroup(payload);
 
       const groupId = response.data.groupId;
 

@@ -1,29 +1,32 @@
 import { ExtendedGroup } from "@/components/groups/GroupListExtended";
 
 export const mapGroups = (content: any[]): ExtendedGroup[] => {
-  return content.map((g) => ({
-    id: g.groupId,
-    title: g.groupName,
-    description: g.groupComment,
+  return content.map((g) => {
+    console.log(g.groupName, g.groupPublic);
 
-    isOffline: g.groupOffline,
-    region: g.groupRegion,
+    return {
+      id: g.groupId,
+      title: g.groupName,
+      description: g.groupComment,
 
-    isPrivate: !g.groupPublic,
+      isOffline: g.groupOffline,
+      region: g.groupRegion,
 
-    // 상태 매핑
-    status:
-      g.groupState === "RECRUITING"
-        ? "scheduled"
-        : g.groupState === "IN_PROGRESS"
-          ? "active"
-          : "done",
+      isPrivate: !g.groupPublic,
 
-    total: g.groupRoundCount,
-    current: g.currentMembers,
-    maxPeople: g.maxMembers,
+      status:
+        g.groupState === "RECRUITING"
+          ? "scheduled"
+          : g.groupState === "IN_PROGRESS"
+            ? "active"
+            : "done",
 
-    dday: g.dday,
-    startDate: g.startDate,
-  }));
+      total: g.groupRoundCount,
+      current: g.currentMembers,
+      maxPeople: g.maxMembers,
+
+      dday: g.dday,
+      startDate: g.startDate,
+    };
+  });
 };

@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  Alert,
 } from "react-native";
+import { joinGroup } from "@/api/group";
 
 import { ExtendedGroup } from "./GroupListExtended";
+import { useState } from "react";
 
 type Props = {
   open: boolean;
@@ -19,7 +22,6 @@ type Props = {
 
   selectedGroup: ExtendedGroup | null;
 
-  joinedIds: string[];
   setJoinedIds: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
@@ -29,12 +31,21 @@ export default function GroupJoinModal({
   step,
   setStep,
   selectedGroup,
-  joinedIds,
   setJoinedIds,
 }: Props) {
+  const [password, setPassword] = useState("");
+  const [joinMent, setJoinMent] = useState("");
+
+  const handleClose = () => {
+    setPassword("");
+    setJoinMent("");
+    setStep(1);
+    setOpen(false);
+  };
+
   return (
     <Modal visible={open} transparent animationType="fade">
-      <TouchableWithoutFeedback onPress={() => setOpen(false)}>
+      <TouchableWithoutFeedback onPress={() => handleClose()}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.sheet}>
@@ -48,12 +59,14 @@ export default function GroupJoinModal({
                     style={styles.input}
                     secureTextEntry
                     placeholderTextColor="#CCC"
+                    value={password}
+                    onChangeText={setPassword}
                   />
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                       style={[styles.btn, styles.cancel]}
-                      onPress={() => setOpen(false)}
+                      onPress={() => handleClose()}
                     >
                       <Text style={styles.cancelText}>취소</Text>
                     </TouchableOpacity>
@@ -80,24 +93,46 @@ export default function GroupJoinModal({
                     placeholderTextColor="#CCC"
                     multiline
                     textAlignVertical="top"
+                    value={joinMent}
+                    onChangeText={setJoinMent}
                   />
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                       style={[styles.btn, styles.cancel]}
-                      onPress={() => setOpen(false)}
+                      onPress={() => handleClose()}
                     >
                       <Text style={styles.cancelText}>취소</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={[styles.btn, styles.apply]}
-                      onPress={() => {
-                        if (selectedGroup) {
-                          setJoinedIds((prev) => [...prev, selectedGroup.id]);
-                        }
+                      onPress={async () => {
+                        if (!selectedGroup) return;
 
-                        setOpen(false);
+                        try {
+                          console.log(selectedGroup.id);
+                          console.log(selectedGroup.title);
+
+                          await joinGroup(selectedGroup.id, {
+                            password: selectedGroup?.isPrivate
+                              ? password
+                              : undefined,
+                            joinMent,
+                          });
+
+                          setJoinedIds((prev) => [...prev, selectedGroup.id]);
+
+                          handleClose();
+                        } catch (error: any) {
+                          const message =
+                            error.response?.data?.error?.message ||
+                            "가입 요청에 실패했습니다.";
+
+                          Alert.alert("오류", message);
+
+                          handleClose();
+                        }
                       }}
                     >
                       <Text style={styles.applyText}>가입</Text>

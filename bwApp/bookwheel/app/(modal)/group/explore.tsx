@@ -213,7 +213,6 @@ export default function Explore() {
           step={step}
           setStep={setStep}
           selectedGroup={selectedGroup}
-          joinedIds={joinedIds}
           setJoinedIds={setJoinedIds}
         />
       </ScrollView>

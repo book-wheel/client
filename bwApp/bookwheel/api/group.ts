@@ -1,12 +1,13 @@
 import axios from "./axios";
 
+//그룹 만들기
 export const makingGroup = async (data: {
   groupName: string;
   groupComment: string;
   groupRule: string;
 
   groupPublic: boolean;
-  groupPassword: string | null;
+  groupPassword?: string;
 
   groupOffline: boolean;
   groupRegion: string | null;
@@ -49,6 +50,7 @@ type GetGroupsParams = {
   size?: number;
 };
 
+//그룹 리스트 가져오기
 export const getGroups = async ({
   state,
   type,
@@ -68,6 +70,19 @@ export const getGroups = async ({
       sort: "startDate,DESC",
     },
   });
+
+  return response.data;
+};
+
+//그룹 가입
+export const joinGroup = async (
+  groupId: string,
+  data: {
+    password?: string;
+    joinMent?: string;
+  },
+) => {
+  const response = await axios.post(`/groups/${groupId}/join`, data);
 
   return response.data;
 };
