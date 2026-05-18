@@ -1,12 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { withLayoutContext, Stack, useRouter } from "expo-router";
-import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Stack, withLayoutContext } from "expo-router";
+import { useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const Tab = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Tab.Navigator);
 
 export default function BookDetailTabsLayout() {
+    const [isInterested, setIsInterested] = useState(false);
 
     return (
         <View style={styles.container}>
@@ -22,11 +24,26 @@ export default function BookDetailTabsLayout() {
 
                 {/* 2. 도서 비주얼 구역 */}
                 <View style={styles.visualSection}>
-                    <Image
-                        source={require("@/assets/images/book.png")}
-                        style={styles.bookImage}
-                        resizeMode="cover"
-                    />
+                    <View style={styles.bookImageWrap}>
+                        <Image
+                            source={require("@/assets/images/book.png")}
+                            style={styles.bookImage}
+                            resizeMode="cover"
+                        />
+                        <TouchableOpacity
+                            accessibilityLabel={isInterested ? "관심도서 해제" : "관심도서 등록"}
+                            accessibilityRole="button"
+                            activeOpacity={0.75}
+                            onPress={() => setIsInterested((prev) => !prev)}
+                            style={styles.interestButton}
+                        >
+                            <Ionicons
+                                name={isInterested ? "heart" : "heart-outline"}
+                                size={24}
+                                color={isInterested ? "#E4A54E" : "#513A11"}
+                            />
+                        </TouchableOpacity>
+                    </View>
 
                     {/* 배지를 이미지 바로 아래에 배치 */}
                     <View style={styles.infoBadge}>
@@ -89,11 +106,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
     },
+    bookImageWrap: {
+        position: 'relative',
+    },
     bookImage: {
         width: 130,
         height: 185,
         borderRadius: 6,
         elevation: 5,
+    },
+    interestButton: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.14,
+        shadowRadius: 5,
+        elevation: 4,
     },
     infoBadge: {
         marginTop: 10,
