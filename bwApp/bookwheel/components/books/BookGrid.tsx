@@ -5,12 +5,20 @@ import type { BookItem } from "./types";
 const numColumns = 3;
 const itemWidth = 96;
 
+type InterestToggleProps =
+  | {
+      getIsInterested: (book: BookItem) => boolean;
+      onToggleInterest: (book: BookItem) => void;
+    }
+  | {
+      getIsInterested?: undefined;
+      onToggleInterest?: undefined;
+    };
+
 type Props = {
   books: BookItem[];
   onPressBook: (book: BookItem) => void;
-  getIsInterested?: (book: BookItem) => boolean;
-  onToggleInterest?: (book: BookItem) => void;
-};
+} & InterestToggleProps;
 
 export default function BookGrid({
   books,
@@ -31,13 +39,7 @@ export default function BookGrid({
           book={item}
           width={itemWidth}
           onPressBook={() => onPressBook(item)}
-          isInterested={
-            getIsInterested
-              ? getIsInterested(item)
-              : onToggleInterest
-                ? true
-                : undefined
-          }
+          isInterested={getIsInterested?.(item)}
           onToggleInterest={
             onToggleInterest ? () => onToggleInterest(item) : undefined
           }
