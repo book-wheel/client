@@ -8,9 +8,16 @@ const itemWidth = 96;
 type Props = {
   books: BookItem[];
   onPressBook: (book: BookItem) => void;
+  getIsInterested?: (book: BookItem) => boolean;
+  onToggleInterest?: (book: BookItem) => void;
 };
 
-export default function BookGrid({ books, onPressBook }: Props) {
+export default function BookGrid({
+  books,
+  onPressBook,
+  getIsInterested,
+  onToggleInterest,
+}: Props) {
   return (
     <FlatList
       data={books}
@@ -24,6 +31,16 @@ export default function BookGrid({ books, onPressBook }: Props) {
           book={item}
           width={itemWidth}
           onPressBook={() => onPressBook(item)}
+          isInterested={
+            getIsInterested
+              ? getIsInterested(item)
+              : onToggleInterest
+                ? true
+                : undefined
+          }
+          onToggleInterest={
+            onToggleInterest ? () => onToggleInterest(item) : undefined
+          }
         />
       )}
     />
