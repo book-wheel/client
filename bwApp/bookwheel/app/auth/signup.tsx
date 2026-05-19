@@ -136,10 +136,14 @@ export default function Signup() {
 
       router.replace(isProfileSet ? "/" : "/auth/profile");
     } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error?.message ||
+        "회원가입에 실패했습니다.";
+
       setErrors({
         ...errors,
-        loginId:
-          error.response?.data?.error?.message || "회원가입에 실패했습니다.",
+        loginId: errorMessage,
       });
     } finally {
       setIsSigningUp(false);
@@ -159,6 +163,10 @@ export default function Signup() {
         <Text style={styles.title}>회원가입</Text>
 
         {/* 아이디 */}
+        {errors.loginId && (
+          <Text style={styles.errorText}>{errors.loginId}</Text>
+        )}
+
         <Input
           value={form.loginId}
           onChangeText={(text) => handleChange("loginId", text)}
