@@ -21,6 +21,8 @@ export default function Signup() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
+  const [emailMessage, setEmailMessage] = useState("");
+
   // 로딩 상태
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -41,23 +43,26 @@ export default function Signup() {
         setShowCodeInput(true);
         setCooldown(300);
 
-        setErrors({
-          ...errors,
-          email: "인증번호가 전송되었습니다.",
-        });
+        setEmailMessage("인증번호가 전송되었습니다.");
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          email: "",
+        }));
       } else {
-        setErrors({
-          ...errors,
+        setErrors((prev: typeof errors) => ({
+          ...prev,
           email: res.data.error.message,
-        });
+        }));
       }
     } catch (error: any) {
-      setErrors({
-        ...errors,
+      setEmailMessage("");
+
+      setErrors((prev: typeof errors) => ({
+        ...prev,
         email:
           error.response?.data?.error?.message ||
           "이메일 인증 요청에 실패했습니다.",
-      });
+      }));
 
       console.log(error.response?.data);
     } finally {
@@ -85,12 +90,17 @@ export default function Signup() {
         setEmailVerified(true);
         setShowCodeInput(false);
 
-        setErrors({
-          ...errors,
-          email: "이메일 인증이 완료되었습니다.",
-        });
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          email: "",
+        }));
+
+        setEmailMessage("이메일 인증이 완료되었습니다.");
       } else {
-        setErrors({ emailCode: res.data.error.message });
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          emailCode: res.data.error.message,
+        }));
       }
     } catch (error) {
       console.log(error);
@@ -141,10 +151,10 @@ export default function Signup() {
         error.response?.data?.error?.message ||
         "회원가입에 실패했습니다.";
 
-      setErrors({
-        ...errors,
+      setErrors((prev: typeof errors) => ({
+        ...prev,
         loginId: errorMessage,
-      });
+      }));
     } finally {
       setIsSigningUp(false);
     }
@@ -175,6 +185,8 @@ export default function Signup() {
 
         {/* 이메일 */}
         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+        {emailMessage && <Text style={styles.successText}>{emailMessage}</Text>}
         <Input
           value={form.email}
           onChangeText={(text) => {
