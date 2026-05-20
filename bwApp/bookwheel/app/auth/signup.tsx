@@ -21,20 +21,65 @@ export default function Signup() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
+  const [emailMessage, setEmailMessage] = useState("");
+
+  // 로딩 상태
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+
+  // 이메일 재전송 쿨다운 (초)
+  const [cooldown, setCooldown] = useState(0);
+
   // 이메일 인증 요청
   const requestEmailVerification = async () => {
+    if (isSendingEmail) return;
+
     try {
+      setIsSendingEmail(true);
+
       const res = await sendEmail(form.email);
 
       if (res.data.success) {
         setShowCodeInput(true);
+        setCooldown(300);
+
+        setEmailMessage("인증번호가 전송되었습니다.");
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          email: "",
+        }));
       } else {
-        setErrors({ email: res.data.error.message });
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          email: res.data.error.message,
+        }));
       }
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      setEmailMessage("");
+
+      setErrors((prev: typeof errors) => ({
+        ...prev,
+        email:
+          error.response?.data?.error?.message ||
+          "이메일 인증 요청에 실패했습니다.",
+      }));
+
+      console.log(error.response?.data);
+    } finally {
+      setIsSendingEmail(false);
     }
   };
+
+  // 쿨다운 타이머
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   // 이메일 인증 확인
   const handleVerifyEmail = async () => {
@@ -44,8 +89,18 @@ export default function Signup() {
       if (res.data.success) {
         setEmailVerified(true);
         setShowCodeInput(false);
+
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          email: "",
+        }));
+
+        setEmailMessage("이메일 인증이 완료되었습니다.");
       } else {
-        setErrors({ emailCode: res.data.error.message });
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          emailCode: res.data.error.message,
+        }));
       }
     } catch (error) {
       console.log(error);
@@ -62,12 +117,16 @@ export default function Signup() {
       agreePrivacy,
     });
 
+    if (isSigningUp) return;
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
     try {
+      setIsSigningUp(true);
+
       const signupRes = await signup({
         loginId: form.loginId,
         password: form.password,
@@ -87,7 +146,17 @@ export default function Signup() {
 
       router.replace(isProfileSet ? "/" : "/auth/profile");
     } catch (error: any) {
-      console.log(error.response?.data);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error?.message ||
+        "회원가입에 실패했습니다.";
+
+      setErrors((prev: typeof errors) => ({
+        ...prev,
+        loginId: errorMessage,
+      }));
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -104,6 +173,10 @@ export default function Signup() {
         <Text style={styles.title}>회원가입</Text>
 
         {/* 아이디 */}
+        {errors.loginId && (
+          <Text style={styles.errorText}>{errors.loginId}</Text>
+        )}
+
         <Input
           value={form.loginId}
           onChangeText={(text) => handleChange("loginId", text)}
@@ -112,20 +185,30 @@ export default function Signup() {
 
         {/* 이메일 */}
         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+        {emailMessage && <Text style={styles.successText}>{emailMessage}</Text>}
         <Input
           value={form.email}
-          onChangeText={(text) => handleChange("email", text)}
-          editable={!emailVerified}
+          onChangeText={(text) => {
+            handleChange("email", text);
+
+            setEmailVerified(false);
+            setShowCodeInput(false);
+          }}
           placeholder="이메일"
           keyboardType="email-address"
           rightButton={{
             label: emailVerified
               ? "인증완료"
-              : showCodeInput
-                ? "재전송"
-                : "인증요청",
+              : isSendingEmail
+                ? "전송중..."
+                : cooldown > 0
+                  ? `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}`
+                  : showCodeInput
+                    ? "재전송"
+                    : "인증요청",
             onPress: requestEmailVerification,
-            disabled: emailVerified,
+            disabled: emailVerified || isSendingEmail || cooldown > 0,
           }}
         />
 
@@ -208,7 +291,10 @@ export default function Signup() {
           {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
         </View>
 
-        <Button title="회원가입" onPress={handleSignup} />
+        <Button
+          title={isSigningUp ? "가입 중..." : "회원가입"}
+          onPress={handleSignup}
+        />
       </View>
     </>
   );
@@ -231,6 +317,10 @@ const styles = StyleSheet.create({
     color: "#E4A54E",
     width: "80%",
     marginBottom: 4,
+  },
+
+  successText: {
+    color: "green",
   },
 
   termsBox: {
