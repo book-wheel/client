@@ -1,9 +1,8 @@
 import { router } from "expo-router";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { logout, deleteAccount, getMyInfo } from "@/api/auth";
 import { useState, useEffect } from "react";
-import { Alert } from "react-native";
 import ProfileImage from "@/components/profile/image";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 
@@ -11,6 +10,7 @@ export default function Settings() {
   const [user, setUser] = useState<any>(null);
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMyInfo = async () => {
@@ -21,6 +21,8 @@ export default function Settings() {
         }
       } catch (e) {
         console.log(e);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -62,24 +64,31 @@ export default function Settings() {
     ]);
   };
 
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text>불러오는 중...</Text>
+      </View>
+    );
+  }
+
   if (!user) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+        }}
+      >
         <Text>유저 정보를 불러올 수 없어요</Text>
-
-        <TouchableOpacity
-          onPress={handleLogout}
-          style={{
-            marginTop: 20,
-            padding: 16,
-            backgroundColor: "#000",
-            borderRadius: 12,
-          }}
-        >
-          <Text style={{ color: "#fff", textAlign: "center" }}>
-            강제 로그아웃
-          </Text>
-        </TouchableOpacity>
       </View>
     );
   }
