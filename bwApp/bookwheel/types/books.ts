@@ -1,8 +1,4 @@
-export type ApiResponse<T> = {
-  success: boolean;
-  data: T;
-  error: string | null;
-};
+import type { ApiResponse } from "@/types/api";
 
 export type CursorPage<T> = {
   content: T[];
