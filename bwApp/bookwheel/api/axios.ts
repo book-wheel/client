@@ -1,5 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
+import { router } from "expo-router";
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -19,5 +21,30 @@ api.interceptors.request.use(async (config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    if (error.response?.status === 401) {
+      console.log("401 에러 발생!");
+
+      await AsyncStorage.removeItem("accessToken");
+
+      Alert.alert(
+        "세션 만료",
+        "로그인이 만료되었습니다.\n다시 로그인해주세요.",
+        [
+          {
+            text: "확인",
+            onPress: () => router.replace("/auth/login"),
+          },
+        ],
+      );
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 export default api;
