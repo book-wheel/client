@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 
 import { setupProfile } from "@/api/auth";
-import api from "@/api/axios";
 import { uploadImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -88,7 +87,11 @@ export default function Profile() {
         payload.profileImageKey = profileImageKey;
       }
 
+      console.log("📤 setup-profile payload:", payload);
+
       const res = await setupProfile(payload);
+
+      console.log("📥 setup-profile response:", res.data);
 
       if (res.data.success) {
         router.replace("/");
@@ -105,30 +108,6 @@ export default function Profile() {
         "프로필 설정 실패",
         error.message ?? "프로필 설정 중 오류가 발생하였습니다.",
       );
-    }
-
-    console.log("📤 setup-profile payload:", payload);
-
-    try {
-      const res = await setupProfile(payload);
-      console.log("HEADER:", api.defaults.headers);
-
-      console.log("📥 setup-profile response:", res.data);
-
-      if (res.data.success) {
-        router.replace("/");
-      } else {
-        console.log("서버 에러:", res.data.error);
-      }
-    } catch (error: any) {
-      console.log("setup-profile error");
-
-      if (error.response) {
-        console.log("status:", error.response.status);
-        console.log("data:", error.response.data);
-      } else {
-        console.log(error);
-      }
     }
   };
 
