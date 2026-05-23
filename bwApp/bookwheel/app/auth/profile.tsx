@@ -1,14 +1,16 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { Alert, Text, View } from "react-native";
 
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 
+import { setupProfile } from "@/api/auth";
+import api from "@/api/axios";
+import { uploadImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
 import ProfileImage from "@/components/profile/image";
-import { setupProfile } from "@/api/auth";
-import api from "@/api/axios";
+import * as ImagePicker from "expo-image-picker";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -35,6 +37,26 @@ export default function Profile() {
     setNicknameChecked(true);
   };
 
+  const handlePickProfileImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("알림", "사진 접근 권한이 필요합니다.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    setImageUri(result.assets[0].uri);
+  };
+
   //회원가입(프로필저장)로직
   const handleSetupProfile = async () => {
     if (!nickname.trim()) {
@@ -52,8 +74,37 @@ export default function Profile() {
       comment: comment || "",
     };
 
-    if (imageUri) {
-      payload.profileImageKey = imageUri;
+    try {
+      if (imageUri) {
+        const fileName = `profile_${Date.now()}.jpg`;
+
+        const profileImageKey = await uploadImage(
+          imageUri,
+          fileName,
+          "profiles",
+          "image/jpeg",
+        );
+
+        payload.profileImageKey = profileImageKey;
+      }
+
+      const res = await setupProfile(payload);
+
+      if (res.data.success) {
+        router.replace("/");
+      } else {
+        Alert.alert(
+          "프로필 설정 실패",
+          res.data.error?.message ?? "프로필 설정에 실패하였습니다.",
+        );
+      }
+    } catch (error: any) {
+      console.log("프로필 설정 에러:", error);
+
+      Alert.alert(
+        "프로필 설정 실패",
+        error.message ?? "프로필 설정 중 오류가 발생하였습니다.",
+      );
     }
 
     console.log("📤 setup-profile payload:", payload);
@@ -100,12 +151,7 @@ export default function Profile() {
         >
           프로필 설정
         </Text>
-        <ProfileImage
-          uri={imageUri}
-          onCameraPress={() => {
-            console.log("사진 선택");
-          }}
-        />
+        <ProfileImage uri={imageUri} onCameraPress={handlePickProfileImage} />
 
         <Input
           value={nickname}
