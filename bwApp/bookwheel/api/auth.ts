@@ -42,6 +42,13 @@ export const setupProfile = (data: {
   return api.patch("/users/setup-profile", data);
 };
 
+// 닉네임 중복 확인
+export const checkNicknameDuplicate = (nickname: string) => {
+  return api.get("/users/check-nickname", {
+    params: { nickname },
+  });
+};
+
 // 아이디 찾기 - 인증번호 발송
 export const sendRecoveryCode = (mail: string) => {
   return api.post("/users/recovery/send-code", {
