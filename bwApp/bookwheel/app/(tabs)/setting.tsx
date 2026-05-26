@@ -16,6 +16,9 @@ export default function Settings() {
     const fetchMyInfo = async () => {
       try {
         const res = await getMyInfo();
+
+        console.log("유저정보:", res.data.data);
+
         if (res.data.success) {
           setUser(res.data.data);
         }
@@ -104,7 +107,7 @@ export default function Settings() {
     >
       {/* 프로필 */}
       <View style={{ alignItems: "center", marginBottom: 40 }}>
-        <ProfileImage uri={user.profileImageUrl} showCamera={false} size={90} />
+        <ProfileImage uri={user.profileImageKey} showCamera={false} size={90} />
 
         <Text style={{ fontSize: 20, fontWeight: "600", marginTop: 1 }}>
           {user.nickname}

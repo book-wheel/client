@@ -1,9 +1,15 @@
-import { Alert, Text, View } from "react-native";
+import {
+  Alert,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import { setupProfile } from "@/api/auth";
+import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
 import { uploadImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -11,29 +17,40 @@ import AuthCard from "@/components/card";
 import ProfileImage from "@/components/profile/image";
 import * as ImagePicker from "expo-image-picker";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 export default function Profile() {
   const [comment, setComment] = useState("");
   const [nickname, setNickname] = React.useState("");
+  const [nicknameMessage, setNicknameMessage] = useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
-  //토큰확인차...!
-  useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem("accessToken");
-      console.log("TOKEN:", token);
-    };
-
-    checkToken();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   // 닉네임 중복확인 로직
-  const checkNickname = () => {
-    console.log("Checking nickname:", nickname);
-    setNicknameChecked(true);
+  const checkNickname = async () => {
+    if (!nickname.trim()) {
+      setNicknameMessage("닉네임을 입력해주세요.");
+      setNicknameChecked(false);
+      return;
+    }
+
+    try {
+      await checkNicknameDuplicate(nickname);
+
+      setNicknameChecked(true);
+      setNicknameMessage("사용 가능한 닉네임입니다.");
+    } catch (error: any) {
+      console.log(error);
+
+      setNicknameChecked(false);
+
+      if (error.response?.status === 400) {
+        setNicknameMessage("이미 사용 중인 닉네임입니다.");
+      } else {
+        setNicknameMessage("닉네임 확인 중 오류가 발생했습니다.");
+      }
+    }
   };
 
   const handlePickProfileImage = async () => {
@@ -58,6 +75,8 @@ export default function Profile() {
 
   //회원가입(프로필저장)로직
   const handleSetupProfile = async () => {
+    if (loading) return;
+
     if (!nickname.trim()) {
       console.log("닉네임 입력 필요");
       return;
@@ -67,6 +86,8 @@ export default function Profile() {
       console.log("닉네임 중복 확인 필요");
       return;
     }
+
+    setLoading(true);
 
     const payload: any = {
       nickname,
@@ -94,7 +115,12 @@ export default function Profile() {
       console.log("📥 setup-profile response:", res.data);
 
       if (res.data.success) {
-        router.replace("/");
+        Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
+          {
+            text: "확인",
+            onPress: () => router.replace("/"),
+          },
+        ]);
       } else {
         Alert.alert(
           "프로필 설정 실패",
@@ -106,58 +132,81 @@ export default function Profile() {
 
       Alert.alert(
         "프로필 설정 실패",
-        error.message ?? "프로필 설정 중 오류가 발생하였습니다.",
+        error.response?.data?.error?.message ??
+          "프로필 설정 중 오류가 발생하였습니다.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#F7EDE0",
-      }}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <AuthCard>
-        <Text
-          style={{
-            fontSize: 30,
-            marginBottom: 40,
-            color: "#513A11",
-          }}
-        >
-          프로필 설정
-        </Text>
-        <ProfileImage uri={imageUri} onCameraPress={handlePickProfileImage} />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#F7EDE0",
+        }}
+      >
+        <AuthCard>
+          <Text
+            style={{
+              fontSize: 30,
+              marginBottom: 40,
+              color: "#513A11",
+            }}
+          >
+            프로필 설정
+          </Text>
+          <ProfileImage uri={imageUri} onCameraPress={handlePickProfileImage} />
 
-        <Input
-          value={nickname}
-          onChangeText={(text) => {
-            setNickname(text);
-            setNicknameChecked(false); // 닉네임 바뀌면 다시
-          }}
-          placeholder="닉네임"
-          rightButton={{
-            label: nicknameChecked ? "사용가능" : "중복확인",
-            onPress: checkNickname,
-            disabled: nicknameChecked,
-          }}
-        />
+          {nicknameMessage && (
+            <Text
+              style={{
+                color: nicknameChecked ? "#6BA368" : "#E4A54E",
+                width: 317,
+                marginBottom: 4,
+              }}
+            >
+              {nicknameMessage}
+            </Text>
+          )}
+          <Input
+            value={nickname}
+            onChangeText={(text) => {
+              setNickname(text);
+              setNicknameChecked(false); // 닉네임 바뀌면 다시
+              setNicknameMessage(""); // 메시지도 초기화
+            }}
+            placeholder="닉네임"
+            rightButton={{
+              label: nicknameChecked ? "사용가능" : "중복확인",
+              onPress: checkNickname,
+              disabled: nicknameChecked,
+            }}
+          />
 
-        <Input
-          style={{ height: 93 }}
-          value={comment}
-          onChangeText={setComment}
-          placeholder="나와 나의 독서 취향을 한 줄로 적어보세요!"
-        />
+          <Input
+            style={{ height: 93 }}
+            value={comment}
+            onChangeText={setComment}
+            placeholder="나와 나의 독서 취향을 한 줄로 적어보세요!"
+          />
 
-        {/* 버튼 */}
-        <View style={{ width: 317, marginTop: 30 }}>
-          <Button title="저장" onPress={handleSetupProfile} />
-        </View>
-      </AuthCard>
-    </View>
+          {/* 버튼 */}
+          <View style={{ width: 317, marginTop: 30 }}>
+            <Button
+              title={loading ? "저장 중..." : "저장"}
+              onPress={handleSetupProfile}
+            />
+          </View>
+        </AuthCard>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
