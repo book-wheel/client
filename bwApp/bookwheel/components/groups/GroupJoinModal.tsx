@@ -21,8 +21,6 @@ type Props = {
   setStep: (v: 1 | 2) => void;
 
   selectedGroup: ExtendedGroup | null;
-
-  setJoinedIds: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
 export default function GroupJoinModal({
@@ -31,7 +29,6 @@ export default function GroupJoinModal({
   step,
   setStep,
   selectedGroup,
-  setJoinedIds,
 }: Props) {
   const [password, setPassword] = useState("");
   const [joinMent, setJoinMent] = useState("");
@@ -120,8 +117,6 @@ export default function GroupJoinModal({
                               : undefined,
                             joinMent,
                           });
-
-                          setJoinedIds((prev) => [...prev, selectedGroup.id]);
 
                           handleClose();
                         } catch (error: any) {

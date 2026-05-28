@@ -1,48 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { Group } from "@/components/groups/MyGroupList";
+
+import { getMyGroups } from "@/api/group";
+import { mapMyGroups } from "@/utils/mapMyGroups";
 
 export function useGroups() {
   const [open, setOpen] = useState(false);
 
-  const groups: Group[] = [
-    {
-      id: "1",
-      isOffline: true,
-      region: "서울",
-      status: "active",
-      dday: 5,
-      title: "책바퀴 독서모임",
-      current: 4,
-      total: 7,
-      maxPeople: 10,
-    },
-    {
-      id: "2",
-      isOffline: false,
-      status: "scheduled",
-      title: "소설 애독가들",
-      current: 0,
-      total: 2,
-      maxPeople: 8,
-      startDate: "2026/3/21",
-    },
-    {
-      id: "3",
-      isOffline: true,
-      region: "부산",
-      status: "done",
-      title: "교독교독",
-      current: 8,
-      total: 8,
-      maxPeople: 8,
-    },
-  ];
+  const [groups, setGroups] = useState<Group[]>([]);
 
-  const activeGroups = groups.filter((g) => g.status === "active");
+  useEffect(() => {
+    const fetchMyGroups = async () => {
+      try {
+        const response = await getMyGroups();
 
-  const otherGroups = groups.filter(
-    (g) => g.status === "scheduled" || g.status === "done",
+        console.log(JSON.stringify(response.data, null, 2));
+
+        const mappedGroups = mapMyGroups(response);
+
+        setGroups(mappedGroups);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMyGroups();
+  }, []);
+
+  const activeGroups = groups.filter(
+    (g) => g.status === "RECRUITING" || g.status === "IN_PROGRESS",
   );
+
+  const otherGroups = groups.filter((g) => g.status === "COMPLETE");
 
   return {
     open,

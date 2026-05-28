@@ -14,12 +14,7 @@ export const mapGroups = (content: any[]): ExtendedGroup[] => {
 
       isPrivate: !g.groupPublic,
 
-      status:
-        g.groupState === "RECRUITING"
-          ? "scheduled"
-          : g.groupState === "IN_PROGRESS"
-            ? "active"
-            : "done",
+      status: g.groupState,
 
       total: g.groupRoundCount,
       current: g.currentMembers,
@@ -27,6 +22,8 @@ export const mapGroups = (content: any[]): ExtendedGroup[] => {
 
       dday: g.dday,
       startDate: g.startDate,
+
+      bottomButtonType: g.bottomButtonType,
     };
   });
 };

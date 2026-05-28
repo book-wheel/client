@@ -88,12 +88,11 @@ export default function Explore() {
     null,
   );
 
-  const filteredGroups = filterGroups({
-    groups,
-    filter,
-    advancedFilter,
-    selectedRegions,
-  });
+  const filteredGroups = groups.filter(
+    (g) =>
+      g.bottomButtonType !== "JOINED" &&
+      g.bottomButtonType !== "LEADER_SETTING",
+  );
 
   //그 외 상태관리
   const [open, setOpen] = useState(false);
@@ -200,7 +199,9 @@ export default function Explore() {
               key={g.id}
               group={g}
               onJoin={(group) => openJoin(group)}
-              isPending={joinedIds.includes(g.id)}
+              isPending={g.bottomButtonType === "PENDING"}
+              isJoined={g.bottomButtonType === "JOINED"}
+              isOwner={g.bottomButtonType === "LEADER_SETTING"}
             />
           ))}
         </View>
@@ -213,7 +214,6 @@ export default function Explore() {
           step={step}
           setStep={setStep}
           selectedGroup={selectedGroup}
-          setJoinedIds={setJoinedIds}
         />
       </ScrollView>
     </>

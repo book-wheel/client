@@ -86,3 +86,10 @@ export const joinGroup = async (
 
   return response.data;
 };
+
+//내 모임 조회
+export const getMyGroups = async () => {
+  const response = await axios.get("/groups/my");
+
+  return response.data.data;
+};
