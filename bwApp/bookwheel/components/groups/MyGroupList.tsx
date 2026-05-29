@@ -35,6 +35,7 @@ export default function GroupList({ group }: Props) {
           params: {
             id: group.id,
             name: group.title,
+            role: group.role,
           },
         })
       }

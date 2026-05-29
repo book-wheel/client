@@ -93,3 +93,33 @@ export const getMyGroups = async () => {
 
   return response.data.data;
 };
+
+// 그룹 멤버 조회
+export const getGroupMembers = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}/members`);
+
+  return response.data.data;
+};
+
+// 가입 요청 목록 조회
+export const getGroupRequests = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}/members/requests`);
+
+  return response.data.data;
+};
+
+// 가입 요청 승인/거절
+export const updateMemberStatus = async (
+  groupId: string,
+  memberId: string,
+  status: "APPROVED" | "REJECTED",
+) => {
+  const response = await axios.patch(
+    `/groups/${groupId}/members/${memberId}/status`,
+    {
+      status,
+    },
+  );
+
+  return response.data.data;
+};

@@ -4,9 +4,13 @@ import { Applicant } from "@/hooks/useGroupHome";
 
 type Props = {
   applicants: Applicant[];
+  onSelectApplicant: (applicant: Applicant) => void;
 };
 
-export default function ApplicantList({ applicants }: Props) {
+export default function ApplicantList({
+  applicants,
+  onSelectApplicant,
+}: Props) {
   return (
     <View style={{ width: "100%", paddingHorizontal: 20 }}>
       <Text
@@ -46,7 +50,7 @@ export default function ApplicantList({ applicants }: Props) {
             <MemberRow
               name={member.name}
               buttonText="보기"
-              onPress={() => console.log(member.name)}
+              onPress={() => onSelectApplicant(member)}
               variant="home"
             />
           </View>
