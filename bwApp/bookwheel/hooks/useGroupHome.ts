@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 
-import { getGroupMembers, getGroupRequests } from "@/api/group";
+import { getGroupMembers, getGroupRequests, getGroupDetail } from "@/api/group";
 
 export type Applicant = {
   id: string;
@@ -13,7 +13,12 @@ export type Applicant = {
 
 export type GroupInfo = {
   intro: string;
-  rules: string[];
+  rules: string;
+
+  currentMembers: number;
+  maxMembers: number;
+
+  isOffline: boolean;
 };
 
 export function useGroupHome() {
@@ -27,10 +32,36 @@ export function useGroupHome() {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLeader, setIsLeader] = useState(false);
 
+  // 화면 타이틀
   useEffect(() => {
     navigation.getParent()?.setOptions({ title: name });
     navigation.getParent()?.getParent()?.setOptions({ title: name });
   }, [name]);
+
+  // 그룹 상세 정보 조회
+  useEffect(() => {
+    const fetchGroupDetail = async () => {
+      try {
+        const data = await getGroupDetail(id);
+
+        setGroupInfo({
+          intro: data.groupComment,
+          rules: data.groupRule,
+
+          currentMembers: data.currentMembers,
+          maxMembers: data.maxMembers,
+
+          isOffline: data.groupOffline,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (id) {
+      fetchGroupDetail();
+    }
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -75,15 +106,15 @@ export function useGroupHome() {
     fetchGroupData();
   }, [id]);
 
-  // 아직 mock 유지
-  const groupInfo: GroupInfo = {
-    intro: "추리소설 위주의 독서 모임입니다.",
-    rules: [
-      "책을 깨끗하게 사용해주세요",
-      "모임 날짜를 꼭 지켜주세요",
-      "서로의 감상을 존중해주세요",
-    ],
-  };
+  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
+    intro: "",
+    rules: "",
+
+    currentMembers: 0,
+    maxMembers: 0,
+
+    isOffline: false,
+  });
 
   return {
     id,

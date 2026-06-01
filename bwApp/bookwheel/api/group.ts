@@ -123,3 +123,10 @@ export const updateMemberStatus = async (
 
   return response.data.data;
 };
+
+// 그룹 상세 조회
+export const getGroupDetail = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}`);
+
+  return response.data.data;
+};

@@ -35,7 +35,7 @@ export default function Home() {
     try {
       await updateMemberStatus(id, selectedApplicant.id, status);
 
-      // UI에서 제거
+      // 상태 업데이트 후, 해당 신청자는 목록에서 제거
       setApplicants((prev) =>
         prev.filter((a) => a.id !== selectedApplicant.id),
       );
@@ -57,7 +57,13 @@ export default function Home() {
       }}
     >
       <View>
-        <GroupIntro intro={groupInfo.intro} rules={groupInfo.rules} />
+        <GroupIntro
+          intro={groupInfo.intro}
+          rules={groupInfo.rules}
+          currentMembers={groupInfo.currentMembers}
+          maxMembers={groupInfo.maxMembers}
+          isOffline={groupInfo.isOffline}
+        />
       </View>
 
       <View style={{ paddingBottom: 12, alignItems: "center" }}>
