@@ -17,10 +17,12 @@ type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
 
-  step: 1 | 2;
-  setStep: (v: 1 | 2) => void;
+  step: 1 | 2 | 3;
+  setStep: (v: 1 | 2 | 3) => void;
 
   selectedGroup: ExtendedGroup | null;
+
+  onJoinSuccess?: (groupId: string) => void;
 };
 
 export default function GroupJoinModal({
@@ -29,6 +31,7 @@ export default function GroupJoinModal({
   step,
   setStep,
   selectedGroup,
+  onJoinSuccess,
 }: Props) {
   const [password, setPassword] = useState("");
   const [joinMent, setJoinMent] = useState("");
@@ -118,7 +121,11 @@ export default function GroupJoinModal({
                             joinMent,
                           });
 
-                          handleClose();
+                          console.log("API 성공");
+                          onJoinSuccess?.(selectedGroup.id);
+                          console.log("리스트 제거 성공");
+
+                          setStep(3);
                         } catch (error: any) {
                           const message =
                             error.response?.data?.error?.message ||
@@ -133,6 +140,29 @@ export default function GroupJoinModal({
                       <Text style={styles.applyText}>가입</Text>
                     </TouchableOpacity>
                   </View>
+                </>
+              )}
+              {step === 3 && (
+                <>
+                  <Text style={styles.title}>가입 요청을 보냈어요!</Text>
+
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "#777",
+                      lineHeight: 22,
+                      marginBottom: 24,
+                    }}
+                  >
+                    모임장이 가입 요청을 확인한 후 승인 여부를 결정합니다.
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.btn, styles.apply, { width: "100%" }]}
+                    onPress={() => handleClose()}
+                  >
+                    <Text style={styles.applyText}>확인</Text>
+                  </TouchableOpacity>
                 </>
               )}
             </View>
@@ -201,7 +231,7 @@ const styles = StyleSheet.create({
   },
 
   btn: {
-    flex: 1,
+    // flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
