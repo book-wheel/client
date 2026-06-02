@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import Button from "@/components/Button";
@@ -49,12 +49,14 @@ export default function Home() {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#FFF",
+    <ScrollView
+      style={{ flex: 1, backgroundColor: "#FFF" }}
+      contentContainerStyle={{
+        flexGrow: 1,
         justifyContent: "space-between",
+        paddingBottom: 20,
       }}
+      showsVerticalScrollIndicator={false}
     >
       <View>
         <GroupIntro
@@ -91,6 +93,6 @@ export default function Home() {
           color="#FCF5D7"
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
