@@ -18,6 +18,15 @@ export default function ApplicantDetailModal({
 }: Props) {
   if (!applicant) return null;
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}.${String(date.getDate()).padStart(2, "0")}`;
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -42,7 +51,9 @@ export default function ApplicantDetailModal({
               <Text style={styles.name}>{applicant.name}</Text>
 
               <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>{applicant.requestDate}</Text>
+                <Text style={styles.dateText}>
+                  {formatDate(applicant.requestDate)}
+                </Text>
               </View>
             </View>
           </View>
