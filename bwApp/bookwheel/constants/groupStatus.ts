@@ -1,20 +1,20 @@
 export const STATUS_CONFIG = {
-  active: {
+  RECRUITING: {
     label: (dday?: number) => (dday ? `D-${dday}` : "교환중"),
     bg: "#FCF5D7",
     text: "#513A11",
     showProgress: true,
   },
-  scheduled: {
-    label: () => "예정",
-    bg: "#E5E5E5",
-    text: "#513A11",
-    showProgress: false,
+  IN_PROGRESS: {
+    label: () => "진행 중",
+    bg: "#D4EDDA",
+    text: "#155724",
+    showProgress: true,
   },
-  done: {
+  COMPLETE: {
     label: () => "종료",
-    bg: "#513A11",
-    text: "#FCF5D7",
+    bg: "#C3C3C3",
+    text: "#333",
     showProgress: false,
   },
 } as const;

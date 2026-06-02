@@ -8,27 +8,45 @@ import { Group as BaseGroup } from "./MyGroupList";
 export type ExtendedGroup = BaseGroup & {
   description: string;
   isPrivate: boolean;
+
+  bottomButtonType?: "JOIN" | "PENDING" | "JOINED" | "LEADER_SETTING";
 };
 
 type Props = {
   group: ExtendedGroup;
   onJoin?: (group: ExtendedGroup) => void;
+
   isPending?: boolean;
+  isJoined?: boolean;
+  isOwner?: boolean;
 };
 
-export default function GroupListExtended({ group, onJoin, isPending }: Props) {
+export default function GroupListExtended({
+  group,
+  onJoin,
+  isPending,
+  isJoined,
+  isOwner,
+}: Props) {
   const config = STATUS_CONFIG[group.status];
   const statusText = config.label(group.dday);
 
   return (
     <Pressable
       style={styles.row}
-      onPress={() =>
+      onPress={() => {
+        if (
+          group.bottomButtonType === "JOINED" ||
+          group.bottomButtonType === "LEADER_SETTING"
+        ) {
+          return;
+        }
+
         router.push({
           pathname: "/(tabs)/group/[id]/(top)/home",
           params: { id: group.id },
-        })
-      }
+        });
+      }}
     >
       <View style={styles.left}>
         {/* 뱃지 줄 */}
@@ -91,13 +109,28 @@ export default function GroupListExtended({ group, onJoin, isPending }: Props) {
       <View style={styles.right}>
         <View style={styles.joinBox}>
           <Pressable
-            style={[styles.joinBtn, isPending && styles.pendingBtn]}
+            style={[
+              styles.joinBtn,
+              isPending && styles.pendingBtn,
+              (isJoined || isOwner) && styles.joinedBtn,
+            ]}
             onPress={(e) => {
               e.stopPropagation();
-              if (!isPending) onJoin?.(group);
+
+              if (isPending || isJoined || isOwner) return;
+
+              onJoin?.(group);
             }}
           >
-            <Text style={styles.joinText}>{isPending ? "신청중" : "가입"}</Text>
+            <Text style={styles.joinText}>
+              {isOwner
+                ? "내 모임"
+                : isJoined
+                  ? "가입됨"
+                  : isPending
+                    ? "신청중"
+                    : "가입"}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -221,6 +254,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
     paddingVertical: 8,
     borderRadius: 5,
+  },
+
+  joinedBtn: {
+    backgroundColor: "#E5E5E5",
   },
 
   joinText: {

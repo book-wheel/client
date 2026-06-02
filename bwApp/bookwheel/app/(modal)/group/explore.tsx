@@ -88,17 +88,16 @@ export default function Explore() {
     null,
   );
 
-  const filteredGroups = filterGroups({
-    groups,
-    filter,
-    advancedFilter,
-    selectedRegions,
-  });
+  const filteredGroups = groups.filter(
+    (g) =>
+      g.bottomButtonType !== "JOINED" &&
+      g.bottomButtonType !== "LEADER_SETTING",
+  );
 
   //그 외 상태관리
   const [open, setOpen] = useState(false);
   const [isPrivate, setIsPrivate] = useState(true); // 그룹 타입
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const openJoin = (group: ExtendedGroup) => {
     setSelectedGroup(group);
@@ -114,7 +113,6 @@ export default function Explore() {
       setOpen(true);
     }
   };
-  const [joinedIds, setJoinedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (filter === "online") {
@@ -127,6 +125,11 @@ export default function Explore() {
       fetchGroups(query);
     }
   }, [filter, advancedFilter]);
+
+  // 그룹 가입 성공 시 해당 그룹을 리스트에서 제거
+  const handleJoinSuccess = (groupId: string) => {
+    setGroups((prev) => prev.filter((g) => g.id !== groupId));
+  };
 
   return (
     <>
@@ -200,7 +203,9 @@ export default function Explore() {
               key={g.id}
               group={g}
               onJoin={(group) => openJoin(group)}
-              isPending={joinedIds.includes(g.id)}
+              isPending={g.bottomButtonType === "PENDING"}
+              isJoined={g.bottomButtonType === "JOINED"}
+              isOwner={g.bottomButtonType === "LEADER_SETTING"}
             />
           ))}
         </View>
@@ -213,8 +218,7 @@ export default function Explore() {
           step={step}
           setStep={setStep}
           selectedGroup={selectedGroup}
-          joinedIds={joinedIds}
-          setJoinedIds={setJoinedIds}
+          onJoinSuccess={handleJoinSuccess}
         />
       </ScrollView>
     </>

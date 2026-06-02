@@ -1,12 +1,13 @@
 import axios from "./axios";
 
+//그룹 만들기
 export const makingGroup = async (data: {
   groupName: string;
   groupComment: string;
   groupRule: string;
 
   groupPublic: boolean;
-  groupPassword: string | null;
+  groupPassword?: string;
 
   groupOffline: boolean;
   groupRegion: string | null;
@@ -49,6 +50,7 @@ type GetGroupsParams = {
   size?: number;
 };
 
+//그룹 리스트 가져오기
 export const getGroups = async ({
   state,
   type,
@@ -70,4 +72,61 @@ export const getGroups = async ({
   });
 
   return response.data;
+};
+
+//그룹 가입
+export const joinGroup = async (
+  groupId: string,
+  data: {
+    password?: string;
+    joinMent?: string;
+  },
+) => {
+  const response = await axios.post(`/groups/${groupId}/join`, data);
+
+  return response.data;
+};
+
+//내 모임 조회
+export const getMyGroups = async () => {
+  const response = await axios.get("/groups/my");
+
+  return response.data.data;
+};
+
+// 그룹 멤버 조회
+export const getGroupMembers = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}/members`);
+
+  return response.data.data;
+};
+
+// 가입 요청 목록 조회
+export const getGroupRequests = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}/members/requests`);
+
+  return response.data.data;
+};
+
+// 가입 요청 승인/거절
+export const updateMemberStatus = async (
+  groupId: string,
+  memberId: string,
+  status: "APPROVED" | "REJECTED",
+) => {
+  const response = await axios.patch(
+    `/groups/${groupId}/members/${memberId}/status`,
+    {
+      status,
+    },
+  );
+
+  return response.data.data;
+};
+
+// 그룹 상세 조회
+export const getGroupDetail = async (groupId: string) => {
+  const response = await axios.get(`/groups/${groupId}`);
+
+  return response.data.data;
 };

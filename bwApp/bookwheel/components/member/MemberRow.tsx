@@ -19,7 +19,7 @@ type Props = {
 
   status?: Status;
 
-  variant?: "home" | "status";
+  variant?: "home" | "status" | "applicant";
 };
 
 export default function MemberRow({
@@ -34,7 +34,12 @@ export default function MemberRow({
   variant = "home",
 }: Props) {
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        variant === "applicant" && styles.applicantContainer,
+      ]}
+    >
       {/* 프로필 */}
       <ProfileImage uri={profileUrl} size={44} showCamera={false} />
 
@@ -49,15 +54,31 @@ export default function MemberRow({
           {role === "vice" && <Text style={styles.role}> 모임부장</Text>}
         </View>
 
-        {/* 책 제목 (status 화면에서만) */}
+        {/* 책 제목 */}
         {variant === "status" && showBook && (
           <Text style={styles.book}>{bookTitle}</Text>
+        )}
+
+        {/* 신청자용 서브텍스트 */}
+        {variant === "applicant" && (
+          <Text style={styles.applicantSub}>가입 신청을 보냈어요!</Text>
         )}
       </View>
 
       {/* 버튼 */}
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          variant === "applicant" && styles.applicantButton,
+        ]}
+        onPress={onPress}
+      >
+        <Text
+          style={[
+            styles.buttonText,
+            variant === "applicant" && styles.applicantButtonText,
+          ]}
+        >
           {status ? getStatusText(status) : buttonText}
         </Text>
       </TouchableOpacity>
@@ -77,18 +98,32 @@ function getStatusText(status: Status) {
       return "준비완료";
   }
 }
-
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
+    alignItems: "flex-start",
+
+    paddingHorizontal: 4,
+    paddingVertical: 12,
+  },
+
+  applicantContainer: {
+    backgroundColor: "#FFF",
+
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2EEE8",
+
+    borderRadius: 0,
+    borderWidth: 0,
+
+    paddingHorizontal: 6,
     paddingVertical: 12,
   },
 
   info: {
     flex: 1,
     marginLeft: 12,
+    justifyContent: "center",
   },
 
   nameRow: {
@@ -99,17 +134,18 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: "600",
+    color: "#2F2F2F",
   },
 
   role: {
     fontSize: 12,
-    color: "#888",
+    color: "#999",
     marginLeft: 6,
   },
 
-  book: {
-    fontSize: 13,
-    color: "#666",
+  applicantSub: {
+    fontSize: 12,
+    color: "#8A8A8A",
     marginTop: 2,
   },
 
@@ -117,11 +153,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#FCF5D7",
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 999,
+  },
+
+  applicantButton: {
+    backgroundColor: "#F7E7BE",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
   },
 
   buttonText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: "600",
+    color: "#513A11",
+  },
+
+  applicantButtonText: {
+    color: "#7A5315",
+  },
+
+  book: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 2,
   },
 });

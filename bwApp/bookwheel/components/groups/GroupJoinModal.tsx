@@ -6,21 +6,23 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  Alert,
 } from "react-native";
+import { joinGroup } from "@/api/group";
 
 import { ExtendedGroup } from "./GroupListExtended";
+import { useState } from "react";
 
 type Props = {
   open: boolean;
   setOpen: (v: boolean) => void;
 
-  step: 1 | 2;
-  setStep: (v: 1 | 2) => void;
+  step: 1 | 2 | 3;
+  setStep: (v: 1 | 2 | 3) => void;
 
   selectedGroup: ExtendedGroup | null;
 
-  joinedIds: string[];
-  setJoinedIds: React.Dispatch<React.SetStateAction<string[]>>;
+  onJoinSuccess?: (groupId: string) => void;
 };
 
 export default function GroupJoinModal({
@@ -29,12 +31,21 @@ export default function GroupJoinModal({
   step,
   setStep,
   selectedGroup,
-  joinedIds,
-  setJoinedIds,
+  onJoinSuccess,
 }: Props) {
+  const [password, setPassword] = useState("");
+  const [joinMent, setJoinMent] = useState("");
+
+  const handleClose = () => {
+    setPassword("");
+    setJoinMent("");
+    setStep(1);
+    setOpen(false);
+  };
+
   return (
     <Modal visible={open} transparent animationType="fade">
-      <TouchableWithoutFeedback onPress={() => setOpen(false)}>
+      <TouchableWithoutFeedback onPress={() => handleClose()}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.sheet}>
@@ -48,12 +59,14 @@ export default function GroupJoinModal({
                     style={styles.input}
                     secureTextEntry
                     placeholderTextColor="#CCC"
+                    value={password}
+                    onChangeText={setPassword}
                   />
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                       style={[styles.btn, styles.cancel]}
-                      onPress={() => setOpen(false)}
+                      onPress={() => handleClose()}
                     >
                       <Text style={styles.cancelText}>취소</Text>
                     </TouchableOpacity>
@@ -80,29 +93,76 @@ export default function GroupJoinModal({
                     placeholderTextColor="#CCC"
                     multiline
                     textAlignVertical="top"
+                    value={joinMent}
+                    onChangeText={setJoinMent}
                   />
 
                   <View style={styles.buttonRow}>
                     <TouchableOpacity
                       style={[styles.btn, styles.cancel]}
-                      onPress={() => setOpen(false)}
+                      onPress={() => handleClose()}
                     >
                       <Text style={styles.cancelText}>취소</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={[styles.btn, styles.apply]}
-                      onPress={() => {
-                        if (selectedGroup) {
-                          setJoinedIds((prev) => [...prev, selectedGroup.id]);
-                        }
+                      onPress={async () => {
+                        if (!selectedGroup) return;
 
-                        setOpen(false);
+                        try {
+                          console.log(selectedGroup.id);
+                          console.log(selectedGroup.title);
+
+                          await joinGroup(selectedGroup.id, {
+                            password: selectedGroup?.isPrivate
+                              ? password
+                              : undefined,
+                            joinMent,
+                          });
+
+                          console.log("API 성공");
+                          onJoinSuccess?.(selectedGroup.id);
+                          console.log("리스트 제거 성공");
+
+                          setStep(3);
+                        } catch (error: any) {
+                          const message =
+                            error.response?.data?.error?.message ||
+                            "가입 요청에 실패했습니다.";
+
+                          Alert.alert("오류", message);
+
+                          handleClose();
+                        }
                       }}
                     >
                       <Text style={styles.applyText}>가입</Text>
                     </TouchableOpacity>
                   </View>
+                </>
+              )}
+              {step === 3 && (
+                <>
+                  <Text style={styles.title}>가입 요청을 보냈어요!</Text>
+
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      color: "#777",
+                      lineHeight: 22,
+                      marginBottom: 24,
+                    }}
+                  >
+                    모임장이 가입 요청을 확인한 후 승인 여부를 결정합니다.
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.btn, styles.apply, { width: "100%" }]}
+                    onPress={() => handleClose()}
+                  >
+                    <Text style={styles.applyText}>확인</Text>
+                  </TouchableOpacity>
                 </>
               )}
             </View>
@@ -171,7 +231,7 @@ const styles = StyleSheet.create({
   },
 
   btn: {
-    flex: 1,
+    // flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",

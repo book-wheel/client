@@ -14,8 +14,8 @@ export type Group = {
   dday?: number;
   title: string;
   current: number;
-  total: number;
   maxPeople: number;
+  role?: "OWNER" | "MEMBER";
 };
 
 type Props = {
@@ -35,6 +35,7 @@ export default function GroupList({ group }: Props) {
           params: {
             id: group.id,
             name: group.title,
+            role: group.role,
           },
         })
       }
@@ -63,23 +64,29 @@ export default function GroupList({ group }: Props) {
               {statusText}
             </Text>
           </View>
-          {/* 제목 + 인원 묶음 */}
+          {/* 제목 + 인원 묶음 + 역할 */}
           <View style={styles.titleWrap}>
             <Text style={styles.title} numberOfLines={1}>
               {group.title}
             </Text>
+
+            {group.role === "OWNER" && (
+              <View style={styles.ownerBadge}>
+                <Text style={styles.ownerText}>모임장</Text>
+              </View>
+            )}
+
             <Text style={styles.people}>
-              {`( `}
-              {group.total} / {group.maxPeople}
-              {` )`}
+              ( {group.current} / {group.maxPeople} )
             </Text>
           </View>
 
           {/* 진행률 */}
-          {(group.status === "active" || group.status === "done") && (
+          {(group.status === "RECRUITING" ||
+            group.status === "IN_PROGRESS") && (
             <View style={styles.progressWrap}>
               <ProgressBlocks
-                total={group.total}
+                total={group.maxPeople}
                 current={group.current}
                 width={110}
                 height={14}
@@ -87,7 +94,7 @@ export default function GroupList({ group }: Props) {
             </View>
           )}
 
-          {group.status === "scheduled" && (
+          {group.status === "COMPLETE" && (
             <View style={styles.dateBadge}>
               <Text style={styles.dateText}>{group.startDate}</Text>
             </View>
@@ -202,5 +209,17 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 12,
     color: "#513A11",
+  },
+  ownerBadge: {
+    backgroundColor: "#513A11",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+
+  ownerText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "600",
   },
 });
