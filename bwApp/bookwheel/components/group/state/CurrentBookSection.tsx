@@ -3,13 +3,14 @@ import ReadingCard from "@/components/home/ReadingCard";
 
 type Book = {
   title: string;
-  author: string;
   owner: string;
-  image: any;
+  image: {
+    uri: string;
+  };
 };
 
 type Props = {
-  book: Book;
+  book: Book | null;
   buttonText: string;
   onPress: () => void;
 };
@@ -19,6 +20,23 @@ export default function CurrentBookSection({
   buttonText,
   onPress,
 }: Props) {
+  if (!book) {
+    return (
+      <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "bold",
+            color: "#513A11",
+            marginBottom: 12,
+          }}
+        >
+          진행중인 도서
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
       <Text
@@ -35,7 +53,7 @@ export default function CurrentBookSection({
       <ReadingCard
         image={book.image}
         title={book.title}
-        author={book.author}
+        author="" // API에 없음
         owner={book.owner}
         buttonText={buttonText}
         onPress={onPress}

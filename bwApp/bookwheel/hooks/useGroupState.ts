@@ -1,6 +1,9 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 
+import { getDashboard } from "@/api/group-dashboard";
+import { GroupDashboardData } from "@/types/groupDashboard";
+
 export type MemberStatus = {
   id: string;
   name: string;
@@ -8,12 +11,14 @@ export type MemberStatus = {
   role: "leader" | "vice" | "member";
   status: "completed" | "exchanging" | "reading" | "ready";
 };
+
 type CurrentBook = {
   id: string;
   title: string;
-  author: string;
   owner: string;
-  image: any;
+  image: {
+    uri: string;
+  };
 };
 
 const mockMembers: MemberStatus[] = [
@@ -33,21 +38,49 @@ const mockMembers: MemberStatus[] = [
   },
 ];
 
-const currentBook: CurrentBook = {
-  id: "1",
-  title: "해리포터와 마법사의 돌",
-  author: "J.K. 롤링",
-  owner: "김주옥",
-  image: require("@/assets/images/book.png"),
-};
-
 export function useGroupState() {
   const { id: rawId, memberId, newStatus } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const session = 3;
+  // 대시보드 데이터
+  const [dashboard, setDashboard] = useState<GroupDashboardData | null>(null);
 
+  // 임시 members
   const [members, setMembers] = useState<MemberStatus[]>(mockMembers);
+
+  // 대시보드 정보 조회
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchDashboard = async () => {
+      try {
+        const response = await getDashboard(id);
+
+        console.log(response.data);
+
+        setDashboard(response.data);
+      } catch (error) {
+        console.error("대시보드 조회 실패:", error);
+      }
+    };
+
+    fetchDashboard();
+  }, [id]);
+
+  // 현재 회차
+  const session = dashboard?.currentRound ?? 0;
+
+  // 현재 책
+  const currentBook: CurrentBook | null = dashboard?.myStep
+    ? {
+        id: dashboard.myStep.bookId,
+        title: dashboard.myStep.bookTitle,
+        owner: dashboard.myStep.senderNickname,
+        image: {
+          uri: dashboard.myStep.coverImage,
+        },
+      }
+    : null;
 
   const updateMemberStatus = (id: string, status: MemberStatus["status"]) => {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
@@ -56,6 +89,7 @@ export function useGroupState() {
   const currentMember = members.find((m) => m.id === "1");
 
   const totalMembers = members.length;
+
   const completedMembers = members.filter(
     (m) => m.status === "completed",
   ).length;
@@ -66,7 +100,10 @@ export function useGroupState() {
     if (currentMember.status === "reading") {
       router.push({
         pathname: "/group/[id]/completed-books",
-        params: { id, memberId: "1" },
+        params: {
+          id,
+          memberId: "1",
+        },
       });
     } else if (currentMember.status === "completed") {
       updateMemberStatus("1", "ready");
@@ -84,10 +121,13 @@ export function useGroupState() {
     switch (currentMember.status) {
       case "reading":
         return "완독 인증 하기";
+
       case "completed":
         return "전달 완료";
+
       case "ready":
         return "준비 완료";
+
       default:
         return "완독 인증 하기";
     }
