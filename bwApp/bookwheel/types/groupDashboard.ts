@@ -31,3 +31,15 @@ export interface GroupDashboardResponse {
   success: boolean;
   data: GroupDashboardData;
 }
+
+export interface RegisterBookRequest {
+  isbn: string;
+  title: string;
+  author: string;
+  publisher: string;
+  pubDate: string;
+  coverImage: string;
+  totalPage: number;
+  bookCondition: string;
+  noteToReader: string;
+}
