@@ -1,16 +1,51 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { Stack, withLayoutContext } from "expo-router";
-import { useState } from "react";
+import { Stack, useLocalSearchParams, withLayoutContext } from "expo-router";
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { getBookDetail } from "@/api/books";
+import { BookDetailContext } from "@/contexts/book-detail";
+import type { BookDetailContent } from "@/types/books";
 const Tab = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Tab.Navigator);
 
 export default function BookDetailTabsLayout() {
+    const { bookId } = useLocalSearchParams<{ bookId?: string | string[] }>();
+    const isbn = Array.isArray(bookId) ? bookId[0] : bookId;
+
+    const [book, setBook] = useState<BookDetailContent | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<unknown>(null);
+
     const [isInterested, setIsInterested] = useState(false);
 
+    useEffect(() => {
+        if (!isbn) return;
+    
+    const fetchBookDetail = async () => {
+        setBook(null);
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await getBookDetail(isbn);
+
+            if (response.data.success && response.data.data) {
+                setBook(response.data.data);
+            } 
+        }catch (error) {
+            setError(error);
+        } finally {
+            setIsLoading(false);
+        }
+        
+    };
+    fetchBookDetail();
+}, [isbn]);
+    
     return (
+        <BookDetailContext.Provider value={{ book, isLoading, error, isbn }}>
         <View style={styles.container}>
             {/* 1. 네비게이션 바 */}
             <Stack.Screen options={{
@@ -26,7 +61,11 @@ export default function BookDetailTabsLayout() {
                 <View style={styles.visualSection}>
                     <View style={styles.bookImageWrap}>
                         <Image
-                            source={require("@/assets/images/book.png")}
+                            source={
+                                book?.cover
+                                ? { uri: book.cover }
+                                : require("@/assets/images/book.png")
+                            }
                             style={styles.bookImage}
                             resizeMode="cover"
                         />
@@ -47,15 +86,15 @@ export default function BookDetailTabsLayout() {
 
                     {/* 배지를 이미지 바로 아래에 배치 */}
                     <View style={styles.infoBadge}>
-                        <Text style={styles.bookTitle}>&lt; 내 남편을 팝니다 &gt;</Text>
+                        <Text style={styles.bookTitle}>&lt; {book?.title ?? "도서 정보"} &gt;</Text>
                         <View style={styles.subInfoRow}>
                             {/* 작가 이름 배지 */}
                             <View style={styles.smallBadge}>
-                                <Text style={styles.smallBadgeText}>고요한</Text>
+                                <Text style={styles.smallBadgeText}>{book?.author ?? "저자명"}</Text>
                             </View>
                             {/* 페이지 수 배지 */}
                             <View style={styles.smallBadge}>
-                                <Text style={styles.smallBadgeText}>236p</Text>
+                                <Text style={styles.smallBadgeText}>{book?.itemPage ? `${book.itemPage}p` : "페이지 정보 없음"}</Text>
                             </View>
                         </View>
                     </View>
@@ -89,6 +128,7 @@ export default function BookDetailTabsLayout() {
                 </TopTabs>
             </View>
         </View>
+        </BookDetailContext.Provider>
     );
 }
 

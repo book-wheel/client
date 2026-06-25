@@ -13,6 +13,19 @@ export type BooksCursorParams = {
   size?: number;
 };
 
+export type BookDetailContent = {
+  title: string;
+  author: string;
+  publisher: string;
+  description: string;
+  cover: string | null;
+  itemPage: number;
+  toc: string | null;
+  isbn: string;
+};
+
+export type BookDetailResponse = ApiResponse<BookDetailContent>;
+
 export type BookGalleryContent = {
   galleryId: number;
   bookId: number;
