@@ -30,18 +30,22 @@ export default function BookDetailTabsLayout() {
 
         try {
             const response = await getBookDetail(isbn);
+            const result = response.data;
 
-            if (response.data.success && response.data.data) {
-                setBook(response.data.data);
-            } 
-        }catch (error) {
-            setError(error);
+            if (!result.success || !result.data) {
+                throw new Error(
+                    result.error?.message ?? "도서 정보를 불러오지 못했습니다."
+                );
+            }
+            setBook(result.data);
+            setIsInterested(result.data.isInterested);
+        } catch (err) {
+            setError(err);
         } finally {
             setIsLoading(false);
-        }
-        
+        };
     };
-    fetchBookDetail();
+    void fetchBookDetail();
 }, [isbn]);
     
     return (

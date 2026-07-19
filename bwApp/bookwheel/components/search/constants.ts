@@ -65,7 +65,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "3",
+    id: "9791161571188",
     title: "내 남편을 팝니다",
     author: "고요한",
     publisher: "나무옆의자",

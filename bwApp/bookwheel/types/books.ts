@@ -22,6 +22,7 @@ export type BookDetailContent = {
   itemPage: number;
   toc: string | null;
   isbn: string;
+  isInterested: boolean;
 };
 
 export type BookDetailResponse = ApiResponse<BookDetailContent>;
