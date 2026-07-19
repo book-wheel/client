@@ -12,10 +12,13 @@ export default function CompletedBooks() {
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const memberId = Array.isArray(rawMemberId) ? rawMemberId[0] : rawMemberId;
 
+  const { review, setReview, handleComplete } = useCompletedBooks(
+    id ?? "",
+    memberId ?? "",
+  );
+
   // params 없으면 렌더 안함
   if (!id || !memberId) return null;
-
-  const { review, setReview, handleComplete } = useCompletedBooks(id, memberId);
 
   const book = {
     image: require("@/assets/images/book.png"),
