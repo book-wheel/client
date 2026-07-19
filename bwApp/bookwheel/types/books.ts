@@ -27,6 +27,18 @@ export type BookDetailContent = {
 
 export type BookDetailResponse = ApiResponse<BookDetailContent>;
 
+export type ReviewVote =
+  | "RECOMMEND"
+  | "NOT_RECOMMEND";
+
+export type ReviewStatsContent = {
+  recommendedRatio: number;
+  notRecommendedRatio: number;
+  myVote: ReviewVote | null;
+};
+
+export type ReviewStatsResponse = ApiResponse<ReviewStatsContent>;
+
 export type BookGalleryContent = {
   galleryId: number;
   bookId: number;

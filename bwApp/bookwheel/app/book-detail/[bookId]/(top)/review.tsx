@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Animated, Alert } from "react-native";
-import { Ionicons, AntDesign } from "@expo/vector-icons";
+import { getReviewStats } from "@/api/books";
+import { useBookDetail } from "@/contexts/book-detail";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Animated, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 // 1. 리뷰 데이터 타입 정의
 type VoteType = 'recommend' | 'not-recommend' | null;
@@ -27,7 +29,6 @@ interface ReviewItem {
 interface BookVoteStats {
     recommendPercent: number;
     notRecommendPercent: number;
-    totalVotes: number;
 }
 
 // 2. 목업 데이터
@@ -97,13 +98,6 @@ const MOCK_REVIEWS: ReviewItem[] = [
     },
 ];
 
-// 2-2. 도서 통계 목업 데이터
-const MOCK_VOTE_STATS: BookVoteStats = {
-    recommendPercent: 80,
-    notRecommendPercent: 20,
-    totalVotes: 1024,
-};
-
 interface AnimatedStatBoxProps {
     type: 'recommend' | 'not-recommend';
     label: string;
@@ -167,6 +161,7 @@ const AnimatedStatBox = ({ type, label, percent, isSelected, hasVoted, onPress }
 
 export default function Review() {
     const router = useRouter();
+    const { isbn } = useBookDetail();
 
     const [myVote, setMyVote] = useState<VoteType>(null);
     const [inputText, setInputText] = useState("");
@@ -174,8 +169,50 @@ export default function Review() {
     const [reviews, setReviews] = useState<ReviewItem[]>(MOCK_REVIEWS);
     const [sortType, setSortType] = useState<SortType>("최신순");
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-    const [voteStats, setVoteStats] = useState<BookVoteStats>(MOCK_VOTE_STATS);
+    const [voteStats, setVoteStats] = useState<BookVoteStats>({
+        recommendPercent: 0,
+        notRecommendPercent: 0
+    });
     const [visibleReviewCount, setVisibleReviewCount] = useState(5);
+
+    useEffect(() => {
+        if (!isbn) return;
+
+        const fetchReviewStats = async () => {
+            try {
+                const response = await getReviewStats(isbn);
+
+                const result = response.data;
+
+                if (!result.success || !result.data) {
+                    throw new Error(
+                        result.error?.message ??
+                        "추천 통계를 불러오지 못했습니다.",
+                    );
+                }
+
+                const stats = result.data;
+
+                setVoteStats({
+                    recommendPercent:
+                    stats.recommendedRatio,
+                    notRecommendPercent:
+                    stats.notRecommendedRatio,
+                });
+
+                if (stats.myVote === "RECOMMEND") {
+                    setMyVote("recommend");
+                } else if (stats.myVote === "NOT_RECOMMEND") {
+                    setMyVote("not-recommend");
+                } else {
+                    setMyVote(null);
+                }
+            } catch (error) {
+                console.error("추천 통계 조회 실패:", error);
+            }
+        };
+        void fetchReviewStats();
+    }, [isbn]);
 
     const handleVote = (vote: VoteType) => {
         if (myVote === vote) {

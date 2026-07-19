@@ -1,4 +1,3 @@
-import api from "./axios";
 import type {
   BookDetailResponse,
   BookGalleryParams,
@@ -7,7 +6,9 @@ import type {
   BookSearchResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
+  ReviewStatsResponse,
 } from "@/types/books";
+import api from "./axios";
 
 export const getBookGallery = (params?: BookGalleryParams) => {
   return api.get<BookGalleryResponse>("/books/gallery", { params });
@@ -23,4 +24,8 @@ export const searchBooks = (params: BookSearchParams) => {
 
 export const getBookDetail = (isbn: string) => {
   return api.get<BookDetailResponse>(`/books/${isbn}`);
+};
+
+export const getReviewStats = (isbn: string) => {
+  return api.get<ReviewStatsResponse>(`/books/${isbn}/reviews/stats`);
 };
