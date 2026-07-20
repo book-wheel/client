@@ -28,6 +28,7 @@ export default function State() {
         dDay={dashboard?.dDay}
         hasBook={hasBook}
         bookTitle={dashboard?.myBookStep?.bookTitle}
+        coverImage={dashboard?.myBookStep?.coverImage}
       />
     );
   }

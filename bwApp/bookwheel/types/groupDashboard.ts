@@ -13,6 +13,7 @@ export interface MyBookStep {
   holderNickname: string;
   status: string;
   location: string;
+  coverImage: string;
 }
 
 export interface GroupDashboardData {

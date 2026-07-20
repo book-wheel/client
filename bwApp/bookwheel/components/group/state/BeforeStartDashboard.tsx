@@ -8,6 +8,7 @@ type Props = {
   hasBook?: boolean;
   bookTitle?: string;
   author?: string;
+  coverImage?: string;
 };
 
 export default function BeforeStartDashboard({
@@ -16,6 +17,7 @@ export default function BeforeStartDashboard({
   hasBook = false,
   bookTitle,
   author,
+  coverImage,
 }: Props) {
   return (
     <View
@@ -90,7 +92,11 @@ export default function BeforeStartDashboard({
                 }}
               >
                 <Image
-                  source={require("@/assets/images/book.png")}
+                  source={
+                    coverImage
+                      ? { uri: coverImage }
+                      : require("@/assets/images/book.png")
+                  }
                   style={{
                     width: 75,
                     height: 110,

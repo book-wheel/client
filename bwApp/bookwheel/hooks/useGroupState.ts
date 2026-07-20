@@ -56,7 +56,8 @@ export function useGroupState() {
       try {
         const response = await getDashboard(id);
 
-        console.log(response.data);
+        console.log("대시보드", response.data);
+        console.log("내 책", response.data.myBookStep);
 
         setDashboard(response.data);
       } catch (error) {
