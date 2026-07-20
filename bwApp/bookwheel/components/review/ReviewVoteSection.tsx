@@ -28,16 +28,22 @@ function AnimatedStatBox({
   const fillWidth = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (hasVoted) {
-      Animated.timing(fillWidth, {
-        toValue: percent,
-        duration: 500,
-        useNativeDriver: false,
-      }).start();
+    if (!hasVoted) {
+      fillWidth.setValue(0);
       return;
     }
 
-    fillWidth.setValue(0);
+    const animation = Animated.timing(fillWidth, {
+      toValue: percent,
+      duration: 500,
+      useNativeDriver: false,
+    });
+
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
   }, [fillWidth, hasVoted, percent]);
 
   const widthInterpolated = fillWidth.interpolate({
