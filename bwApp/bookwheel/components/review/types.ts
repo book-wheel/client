@@ -12,7 +12,7 @@ export interface ReviewItem {
   vote: VoteKind;
   content: string;
   isSpoiler: boolean;
-  isRevealed?: boolean;
+  isRevealed: boolean;
   likes: number;
   isLikedByMe: boolean;
 }
