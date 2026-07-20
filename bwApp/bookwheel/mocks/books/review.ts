@@ -1,11 +1,11 @@
-import type { BookVoteStats, ReviewItem } from "./types";
+import type { BookVoteStats, ReviewItem } from "@/components/review/types";
 
-export const MOCK_VOTE_STATS: BookVoteStats = {
+export const mockReviewVoteStats: BookVoteStats = {
   recommendPercent: 80,
   notRecommendPercent: 20,
 };
 
-export const MOCK_REVIEWS: ReviewItem[] = [
+export const mockReviewItems: ReviewItem[] = [
   {
     id: "1",
     user: { name: "문소희", profileUrl: "" },

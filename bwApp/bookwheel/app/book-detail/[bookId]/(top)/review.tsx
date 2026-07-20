@@ -1,10 +1,10 @@
 import ReviewComposer from "@/components/review/ReviewComposer";
 import ReviewList from "@/components/review/ReviewList";
 import ReviewVoteSection from "@/components/review/ReviewVoteSection";
-import { MOCK_REVIEWS, MOCK_VOTE_STATS } from "@/components/review/mock";
 import type { ReviewItem, SortType, VoteKind, VoteType } from "@/components/review/types";
 import { useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { mockReviewItems, mockReviewVoteStats } from "@/mocks/books/review";
 
 const INITIAL_VISIBLE_REVIEW_COUNT = 5;
 
@@ -16,7 +16,7 @@ export default function Review() {
   const [myVote, setMyVote] = useState<VoteType>(null);
   const [inputText, setInputText] = useState("");
   const [isSpoilerChecked, setIsSpoilerChecked] = useState(false);
-  const [reviews, setReviews] = useState<ReviewItem[]>(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState<ReviewItem[]>(mockReviewItems);
   const [sortType, setSortType] = useState<SortType>("최신순");
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [visibleReviewCount, setVisibleReviewCount] = useState(INITIAL_VISIBLE_REVIEW_COUNT);
@@ -102,7 +102,7 @@ export default function Review() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <ReviewVoteSection myVote={myVote} voteStats={MOCK_VOTE_STATS} onVote={handleVote} />
+      <ReviewVoteSection myVote={myVote} voteStats={mockReviewVoteStats} onVote={handleVote} />
       <View style={styles.thickDivider} />
       <ReviewComposer
         value={inputText}
