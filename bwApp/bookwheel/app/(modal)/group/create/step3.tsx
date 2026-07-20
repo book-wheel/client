@@ -8,7 +8,6 @@ import Button from "@/components/Button";
 
 import { makingGroup } from "@/api/group";
 import { useGroupCreateStore } from "@/store/groupCreateStore";
-import { createSchedule } from "@/api/group-dashboard";
 
 export default function Step3() {
   const steps = ["정보입력", "운영방식", "기타"];
@@ -97,15 +96,6 @@ export default function Step3() {
 
       const groupId = response.data.groupId;
       console.log("생성된 groupId:", groupId);
-
-      const schedule = await createSchedule(groupId, {
-        startDate,
-        endDate: "2027-12-31", // TODO: 최대 종료일 우선 임시 데이터
-        excludedDates: [],
-        excludedDateRanges: [],
-      });
-
-      console.log("생성된 일정:", schedule);
 
       reset();
 

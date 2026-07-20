@@ -51,7 +51,7 @@ export interface ExcludedDateRange {
 
 export interface CreateScheduleRequest {
   startDate: string;
-  endDate: string;
+  endDate?: string;
   excludedDates: string[];
   excludedDateRanges: ExcludedDateRange[];
 }
@@ -59,5 +59,5 @@ export interface CreateScheduleRequest {
 export interface RoundSchedule {
   roundNumber: number;
   startDate: string;
-  endDate: string;
+  endDate?: string;
 }
