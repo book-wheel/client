@@ -52,6 +52,7 @@ export default function ReviewComposer({
 
         <TouchableOpacity
           style={[styles.submitButton, hasContent ? styles.submitButtonActive : styles.submitButtonDisabled]}
+          disabled={!hasContent}
           onPress={onSubmit}
           activeOpacity={0.9}
         >
