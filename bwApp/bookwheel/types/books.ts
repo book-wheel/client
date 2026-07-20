@@ -39,30 +39,17 @@ export type InterestedBooksParams = BooksCursorParams;
 
 export type BookSearchSort = "relevance" | "latest" | "title";
 
-export type BookSearchParams = BooksCursorParams & {
-  keyword: string;
-  categoryId?: number | null;
-  publishedFrom?: string | null;
-  publishedTo?: string | null;
-  minPageCount?: number | null;
-  maxPageCount?: number | null;
-  excludeInterested?: boolean;
-  sort?: BookSearchSort;
-};
-
-export type BookSearchContent = {
-  bookId: number;
+export type BookSearchItem = {
   title: string;
   author: string;
   publisher: string;
   publishedDate: string;
-  coverImageUrl: string | null;
-  categoryId: number;
-  categoryName: string;
-  pageCount: number;
-  averageRating: number;
-  isInterested: boolean;
+  thumbnail: string;
+  isbn: string;
 };
 
-export type BookSearchPage = CursorPage<BookSearchContent>;
-export type BookSearchResponse = ApiResponse<BookSearchPage>;
+export type BookSearchResponse = ApiResponse<{
+  books: BookSearchItem[];
+  totalCount: number;
+  isEnd: boolean;
+}>;

@@ -43,3 +43,21 @@ export interface RegisterBookRequest {
   bookCondition: string;
   noteToReader: string;
 }
+
+export interface ExcludedDateRange {
+  startDate: string;
+  endDate: string;
+}
+
+export interface CreateScheduleRequest {
+  startDate: string;
+  endDate: string;
+  excludedDates: string[];
+  excludedDateRanges: ExcludedDateRange[];
+}
+
+export interface RoundSchedule {
+  roundNumber: number;
+  startDate: string;
+  endDate: string;
+}

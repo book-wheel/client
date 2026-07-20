@@ -144,8 +144,6 @@ export function useGroupState() {
 
   const isStarted = (dashboard?.currentRound ?? 0) > 0;
 
-  //테스트를 위한 임시 값 (책 등록 오류 수정 후 변경)
-  //const hasBook = true;
   const hasBook = dashboard?.myBookStep != null;
 
   return {

@@ -1,5 +1,8 @@
 import axiosInstance from "@/api/axios";
-import { RegisterBookRequest } from "@/types/groupDashboard";
+import {
+  CreateScheduleRequest,
+  RegisterBookRequest,
+} from "@/types/groupDashboard";
 
 // 그룹 대시보드 정보 조회 API
 export const getDashboard = async (groupId: string) => {
@@ -16,4 +19,17 @@ export const registerBook = async (
   const response = await axiosInstance.post(`/groups/${groupId}/books`, body);
 
   return response.data;
+};
+
+// 일정 생성 API
+export const createSchedule = async (
+  groupId: string,
+  body: CreateScheduleRequest,
+) => {
+  const response = await axiosInstance.post(
+    `/groups/${groupId}/schedule`,
+    body,
+  );
+
+  return response.data.data;
 };

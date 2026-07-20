@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,47 +9,62 @@ import {
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
-import { searchBooks } from "@/components/search/constants";
-import { registerBook } from "@/api/group-dashboard";
+import { getBookDetail } from "@/api/books";
+import { getDashboard, registerBook } from "@/api/group-dashboard";
 
 export default function AddBook() {
   const { id, bookId } = useLocalSearchParams();
 
   const groupId = Array.isArray(id) ? id[0] : id;
-  const selectedBookId = Array.isArray(bookId) ? bookId[0] : bookId;
+  const isbn = Array.isArray(bookId) ? bookId[0] : bookId;
 
-  const selectedBook = searchBooks.find((book) => book.id === selectedBookId);
-
+  const [selectedBook, setSelectedBook] = useState<any>(null);
   const [bookCondition, setBookCondition] = useState("");
   const [noteToReader, setNoteToReader] = useState("");
+  useEffect(() => {
+    if (!isbn) return;
+
+    const fetchBook = async () => {
+      try {
+        const res = await getBookDetail(isbn);
+
+        console.log(JSON.stringify(res.data, null, 2));
+
+        setSelectedBook(res.data.data);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    fetchBook();
+  }, [isbn]);
 
   const handleRegister = async () => {
     if (!groupId || !selectedBook) return;
 
     try {
       const response = await registerBook(groupId, {
-        isbn: "9791190090018",
+        isbn: selectedBook.isbn,
         title: selectedBook.title,
         author: selectedBook.author,
         publisher: selectedBook.publisher,
-        pubDate: selectedBook.publishedAt,
-        coverImage: "",
-        totalPage: selectedBook.pageCount,
+        pubDate: "",
+        coverImage: selectedBook.cover,
+        totalPage: selectedBook.itemPage,
         bookCondition,
         noteToReader,
       });
 
-      console.log("책 등록 응답:", JSON.stringify(response, null, 2));
+      const dashboard = await getDashboard(groupId);
+      console.log("등록 직후 대시보드", JSON.stringify(dashboard, null, 2));
 
       router.replace({
         pathname: "/group/[id]/state",
         params: { id: groupId },
       });
     } catch (error: any) {
-      console.log("응답 데이터", error.response?.data);
-      console.log("응답 상태", error.response?.status);
-
-      console.error("책 등록 실패:", error);
+      console.log("status", error.response?.status);
+      console.log("data", JSON.stringify(error.response?.data, null, 2));
     }
   };
 
@@ -95,7 +110,7 @@ export default function AddBook() {
         }}
       >
         <Image
-          source={selectedBook.image}
+          source={{ uri: selectedBook.cover }}
           style={{
             width: 80,
             height: 120,

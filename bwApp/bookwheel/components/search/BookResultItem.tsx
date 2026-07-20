@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 import { searchStyles as styles } from "./styles";
-import type { BookSearchItem } from "./types";
+import type { BookSearchItem } from "@/types/books";
 
 type Props = {
   book: BookSearchItem;
@@ -41,7 +41,11 @@ export default function BookResultItem({
       onPress={onPress}
     >
       <Image
-        source={book.image}
+        source={
+          book.thumbnail
+            ? { uri: book.thumbnail }
+            : require("@/assets/images/book.png")
+        }
         style={[styles.bookImage, { width: coverWidth, height: coverHeight }]}
       />
 
@@ -49,7 +53,7 @@ export default function BookResultItem({
         <MetaLine label="책 제목" value={book.title} />
         <MetaLine label="저자" value={book.author} />
         <MetaLine label="출판사" value={book.publisher} />
-        <MetaLine label="출간일" value={book.publishedAt} />
+        <MetaLine label="출간일" value={book.publishedDate} />
       </View>
 
       <TouchableOpacity

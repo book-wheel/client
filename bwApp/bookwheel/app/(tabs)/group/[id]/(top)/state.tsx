@@ -23,14 +23,6 @@ export default function State() {
 
   if (!isStarted) {
     return (
-      //테스트를 위한 임시 값 (책 등록 오류 수정 후 변경)
-      //<BeforeStartDashboard
-      //  id={id}
-      //  dDay={dashboard?.dDay}
-      //  hasBook={true}
-      //  bookTitle="불편한 편의점"
-      //  author="김호연"
-      // />
       <BeforeStartDashboard
         id={id}
         dDay={dashboard?.dDay}

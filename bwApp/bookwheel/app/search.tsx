@@ -19,10 +19,14 @@ import {
   categoryOptions,
   filterKeys,
   filterLabels,
-  searchBooks,
 } from "@/components/search/constants";
+import { searchBooks } from "@/api/books";
 import { searchStyles as styles } from "@/components/search/styles";
-import type { DateRange, FilterKey, PageRange } from "@/components/search/types";
+import type {
+  DateRange,
+  FilterKey,
+  PageRange,
+} from "@/components/search/types";
 import {
   createDefaultDateRange,
   createEmptyPageRange,
@@ -33,6 +37,7 @@ import {
   matchesPublishedAtFilter,
   matchesVolumeFilter,
 } from "@/components/search/utils";
+import type { BookSearchItem } from "@/types/books";
 
 export default function Search() {
   const { from: rawFrom, id: rawId } = useLocalSearchParams<{
@@ -53,48 +58,24 @@ export default function Search() {
   );
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [excludeInterested, setExcludeInterested] = useState(false);
-  const [interestedBookIds, setInterestedBookIds] = useState(
-    () =>
-      new Set(
-        searchBooks
-          .filter((book) => book.isInterested)
-          .map((book) => book.id),
-      ),
-  );
+  const [interestedBookIds, setInterestedBookIds] = useState(new Set<string>());
+
+  const [books, setBooks] = useState<BookSearchItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const filteredBooks = useMemo(() => {
     const keyword = query.trim().toLowerCase();
 
-    return searchBooks.filter((book) => {
+    return books.filter((book) => {
       const matchesQuery =
         keyword.length === 0 ||
         book.title.toLowerCase().includes(keyword) ||
         book.author.toLowerCase().includes(keyword) ||
         book.publisher.toLowerCase().includes(keyword);
 
-      const matchesCategory =
-        categoryFilter === "all" || book.category === categoryFilter;
-      const matchesPublishedAt = matchesPublishedAtFilter(book, publishedAtRange);
-      const matchesVolume = matchesVolumeFilter(book, pageRange);
-      const matchesInterest =
-        !excludeInterested || !interestedBookIds.has(book.id);
-
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        matchesPublishedAt &&
-        matchesVolume &&
-        matchesInterest
-      );
+      return matchesQuery;
     });
-  }, [
-    categoryFilter,
-    excludeInterested,
-    interestedBookIds,
-    pageRange,
-    publishedAtRange,
-    query,
-  ]);
+  }, [books, query]);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -125,22 +106,38 @@ export default function Search() {
     setActiveFilter(null);
   };
 
-  const handleToggleInterest = (bookId: string) => {
+  const handleToggleInterest = (isbn: string) => {
     setInterestedBookIds((prev) => {
       const next = new Set(prev);
 
-      if (next.has(bookId)) {
-        next.delete(bookId);
-      } else {
-        next.add(bookId);
-      }
+      if (next.has(isbn)) next.delete(isbn);
+      else next.add(isbn);
 
       return next;
     });
   };
 
+  const fetchBooks = async () => {
+    if (!query.trim()) return;
+
+    try {
+      setLoading(true);
+
+      const res = await searchBooks(query, 1, 20);
+
+      console.log(JSON.stringify(res.data, null, 2));
+
+      setBooks(res.data.data.books);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmitSearch = () => {
     Keyboard.dismiss();
+    fetchBooks();
   };
 
   return (
@@ -241,7 +238,7 @@ export default function Search() {
 
       <FlatList
         data={filteredBooks}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.isbn}
         contentContainerStyle={[
           styles.listContent,
           filteredBooks.length === 0 && styles.emptyListContent,
@@ -251,9 +248,9 @@ export default function Search() {
         renderItem={({ item }) => (
           <BookResultItem
             book={item}
-            isInterested={interestedBookIds.has(item.id)}
-            onPress={() => handleSelectBook(item.id)}
-            onToggleInterest={() => handleToggleInterest(item.id)}
+            isInterested={interestedBookIds.has(item.isbn)}
+            onPress={() => handleSelectBook(item.isbn)}
+            onToggleInterest={() => handleToggleInterest(item.isbn)}
           />
         )}
         ListEmptyComponent={
