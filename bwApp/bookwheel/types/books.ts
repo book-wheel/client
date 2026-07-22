@@ -39,6 +39,47 @@ export type ReviewStatsContent = {
 
 export type ReviewStatsResponse = ApiResponse<ReviewStatsContent>;
 
+export type BookReviewContent = {
+  reviewId: number;
+  isbn: string;
+  reviewerName: string;
+  profileImageUrl: string | null;
+  isRecommended: boolean;
+  comment: string;
+  isHidden: boolean;
+  likeCount: number;
+  isLikedByMe: boolean;
+  createdAt: string;
+};
+
+export type BookReviewPage = {
+  content: BookReviewContent[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+};
+
+export type BookReviewListParams = {
+  sort?: "latest" | "popular";
+  page?: number;
+  size?: number;
+};
+
+export type BookReviewListResponse = ApiResponse<BookReviewPage>;
+
+export type CreateBookReviewRequest = {
+  isbn: string;
+  comment: string;
+  isRecommended: boolean;
+  isHidden: boolean;
+};
+
+export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
+
 export type BookGalleryContent = {
   galleryId: number;
   bookId: number;

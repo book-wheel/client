@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
-import { getReviewStats } from "@/api/books";
+import { createBookReview, getBookReviews, getReviewStats } from "@/api/books";
 import ReviewComposer from "@/components/review/ReviewComposer";
 import ReviewList from "@/components/review/ReviewList";
 import ReviewVoteSection from "@/components/review/ReviewVoteSection";
 import type { BookVoteStats, ReviewItem, SortType, VoteKind, VoteType } from "@/components/review/types";
 import { useBookDetail } from "@/contexts/book-detail";
-import { mockReviewItems } from "@/mocks/books/review";
+import type { BookReviewContent } from "@/types/books";
 
 const INITIAL_VISIBLE_REVIEW_COUNT = 5;
 
@@ -15,12 +15,32 @@ function parseReviewDate(date: string) {
   return new Date(date.replace(/\./g, "-")).getTime();
 }
 
+function mapBookReviewToReviewItem(
+  review: BookReviewContent,
+): ReviewItem {
+  return {
+    id: String(review.reviewId),
+    user: {
+      name: review.reviewerName,
+      profileUrl: review.profileImageUrl ?? "",
+    },
+  date: review.createdAt.slice(0, 10).replace(/-/g, "."),
+  vote: review.isRecommended ? "recommend" : "not-recommend",
+  content: review.comment,
+  isSpoiler: review.isHidden,
+  isRevealed: !review.isHidden,
+  likes: review.likeCount,
+  isLikedByMe: review.isLikedByMe,
+  };
+}
+
+
 export default function Review() {
   const { isbn } = useBookDetail();
   const [myVote, setMyVote] = useState<VoteType>(null);
   const [inputText, setInputText] = useState("");
   const [isSpoilerChecked, setIsSpoilerChecked] = useState(false);
-  const [reviews, setReviews] = useState<ReviewItem[]>(mockReviewItems);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [sortType, setSortType] = useState<SortType>("최신순");
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [voteStats, setVoteStats] = useState<BookVoteStats>({
@@ -63,6 +83,42 @@ export default function Review() {
     void fetchReviewStats();
   }, [isbn]);
 
+  useEffect(() => {
+    if (!isbn) return;
+
+    const fetchReviews = async () => {
+      try {
+        const response = await getBookReviews(
+          isbn,
+          {
+            sort:
+            sortType === "최신순"
+            ? "latest"
+            : "popular",
+            page: 0,
+            size: 10,
+          }
+        );
+
+        const result = response.data;
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message ?? "리뷰를 불러오지 못했습니다.");
+        }
+
+        const reviewItems = result.data.content.map(mapBookReviewToReviewItem);
+        console.log("리뷰 목록:", reviewItems);
+
+        setReviews(reviewItems);
+        setVisibleReviewCount(INITIAL_VISIBLE_REVIEW_COUNT);
+      } catch (error) {
+        console.error("리뷰 조회 실패:", error);
+      }
+    };
+
+    void fetchReviews();
+  }, [isbn, sortType]);
+
   const sortedReviews = useMemo(() => {
     return [...reviews].sort((a, b) => {
       if (sortType === "인기순" && b.likes !== a.likes) {
@@ -103,10 +159,16 @@ export default function Review() {
     );
   };
 
-  const handleSubmitComment = () => {
+  const handleSubmitComment = async () => {
     const trimmedText = inputText.trim();
 
     if (!trimmedText) {
+      Alert.alert("알림", "리뷰 내용을 입력해주세요.");
+      return;
+    }
+
+    if (!isbn) {
+      Alert.alert("오류", "책 정보를 불러오지 못했습니다.");
       return;
     }
 
@@ -115,31 +177,32 @@ export default function Review() {
       return;
     }
 
-    const today = new Date();
-    const date = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join(".");
-    const newReview: ReviewItem = {
-      id: Date.now().toString(),
-      user: {
-        name: "나",
-        profileUrl: "",
-      },
-      date,
-      vote: myVote,
-      content: trimmedText,
-      isSpoiler: isSpoilerChecked,
-      isRevealed: !isSpoilerChecked,
-      likes: 0,
-      isLikedByMe: false,
-    };
+    try {
+      const response = await createBookReview(isbn, {
+        isbn,
+        comment: trimmedText,
+        isRecommended: myVote === "recommend",
+        isHidden: isSpoilerChecked,
+      });
 
-    setReviews((currentReviews) => [newReview, ...currentReviews]);
+    const result = response.data;
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message ?? "리뷰 등록 실패했습니다.");
+    }
+
+    const createReview = mapBookReviewToReviewItem(result.data);
+
+    setReviews((currentReviews) => [createReview, ...currentReviews]);
     setVisibleReviewCount((currentCount) => Math.max(currentCount, INITIAL_VISIBLE_REVIEW_COUNT));
     setInputText("");
     setIsSpoilerChecked(false);
+    Alert.alert("알림", "리뷰가 등록되었습니다.");
+    } catch (error) {
+      console.error("리뷰 등록 실패:", error);
+      Alert.alert("오류", error instanceof Error ? error.message : "리뷰 등록에 실패했습니다. 다시 시도해주세요.");
+    }
+
   };
 
   return (

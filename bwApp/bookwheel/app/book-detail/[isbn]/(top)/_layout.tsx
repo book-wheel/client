@@ -12,8 +12,10 @@ const Tab = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Tab.Navigator);
 
 export default function BookDetailTabsLayout() {
-  const { bookId } = useLocalSearchParams<{ bookId?: string | string[] }>();
-  const isbn = Array.isArray(bookId) ? bookId[0] : bookId;
+  const { isbn: rawIsbn } = useLocalSearchParams<{
+    isbn?: string | string[];
+  }>();
+  const isbn = Array.isArray(rawIsbn) ? rawIsbn[0] : rawIsbn;
 
   const [book, setBook] = useState<BookDetailContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);

@@ -37,7 +37,7 @@ export default function RootLayout() {
                         options={{title: "모임 생성"}}
                     />
                     <Stack.Screen
-                        name="book-detail/[bookId]/[galleryId]/comment"
+                        name="book-detail/[isbn]/[galleryId]/comment"
                         options={{
                             headerShown: false,
                             presentation: "transparentModal",
@@ -51,4 +51,3 @@ export default function RootLayout() {
         </GestureHandlerRootView>
     );
 }
-

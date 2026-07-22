@@ -105,18 +105,18 @@ export default function Search() {
     router.replace("/(tabs)/books");
   };
 
-  const handleSelectBook = (bookId: string) => {
+  const handleSelectBook = (isbn: string) => {
     if (from === "add" && id) {
       router.push({
         pathname: "/group/[id]/add-book",
-        params: { id, bookId },
+        params: { id, isbn },
       });
       return;
     }
 
     router.push({
-      pathname: "/book-detail/[bookId]/info",
-      params: { bookId },
+      pathname: "/book-detail/[isbn]/info",
+      params: { isbn },
     });
   };
 

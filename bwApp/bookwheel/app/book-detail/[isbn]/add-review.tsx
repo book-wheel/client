@@ -9,10 +9,10 @@ import PhotoUpload from "@/components/completedBooks/PhotoUpload";
 import ReviewInput from "@/components/completedBooks/ReviewInput";
 
 export default function AddReview() {
-  const { bookId } = useLocalSearchParams<{ bookId: string }>();
+  const { isbn } = useLocalSearchParams<{ isbn: string }>();
   const [review, setReview] = useState("");
 
-  if (!bookId) return null;
+  if (!isbn) return null;
 
   const bookData = {
     image: require("@/assets/images/book.png"),
@@ -29,7 +29,7 @@ export default function AddReview() {
 
     // 2. 서버로 보낼 가짜(Dummy) 데이터 세팅
     const mockSubmitData = {
-      bookId: bookId,
+      isbn,
       reviewText: review,
       // 사진 업로드는 아직 안 했으니 가짜 이미지 경로를 넣어줍니다.
       images: ["file://dummy/image1.jpg", "file://dummy/image2.jpg"],
@@ -49,7 +49,7 @@ export default function AddReview() {
           onPress: () => {
             // 확인 누르면 뒤로 가기
             if (router.canGoBack()) router.back();
-            else router.replace(`/book-detail/${bookId}/gallery`);
+            else router.replace(`/book-detail/${isbn}/gallery`);
           },
         },
       ]);

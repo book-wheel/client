@@ -2,8 +2,12 @@ import type {
   BookDetailResponse,
   BookGalleryParams,
   BookGalleryResponse,
+  BookReviewListParams,
+  BookReviewListResponse,
   BookSearchParams,
   BookSearchResponse,
+  CreateBookReviewRequest,
+  CreateBookReviewResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
   ReviewStatsResponse,
@@ -28,4 +32,24 @@ export const getBookDetail = (isbn: string) => {
 
 export const getReviewStats = (isbn: string) => {
   return api.get<ReviewStatsResponse>(`/books/${isbn}/reviews/stats`);
+};
+
+export const getBookReviews = (
+  isbn: string,
+  params?: BookReviewListParams,
+) => {
+  return api.get<BookReviewListResponse>(
+    `/books/${isbn}/reviews`,
+    { params },
+  );
+};
+
+export const createBookReview = (
+  isbn: string,
+  body: CreateBookReviewRequest,
+) => {
+  return api.post<CreateBookReviewResponse>(
+    `/books/${isbn}/reviews`,
+    body,
+  );
 };
