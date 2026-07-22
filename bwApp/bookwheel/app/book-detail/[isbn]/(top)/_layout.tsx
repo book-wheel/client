@@ -3,7 +3,7 @@ import { Stack, useLocalSearchParams, withLayoutContext } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 
-import { getBookDetail } from "@/api/books";
+import { getBookDetail, toggleBookLike } from "@/api/books";
 import BookDetailHero from "@/components/books/BookDetailHero";
 import { BookDetailContext } from "@/contexts/book-detail";
 import type { BookDetailContent } from "@/types/books";
@@ -21,6 +21,23 @@ export default function BookDetailTabsLayout() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isInterested, setIsInterested] = useState(false);
+
+  const handleToggleInterest = async () => {
+    if (!isbn) return;
+
+    try {
+      const response = await toggleBookLike(isbn);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "관심 도서 상태 변경에 실패했습니다.");
+      }
+
+    setIsInterested(result.data.liked);
+    } catch (error) {
+      console.error("관심 도서 상태 변경 실패:", error);
+    }
+  }
 
   useEffect(() => {
     if (!isbn) return;
@@ -66,7 +83,7 @@ export default function BookDetailTabsLayout() {
           pageCount={book?.itemPage ? `${book.itemPage}p` : "페이지 정보 없음"}
           cover={book?.cover ? { uri: book.cover } : require("@/assets/images/book.png")}
           isInterested={isInterested}
-          onToggleInterest={() => setIsInterested((currentValue) => !currentValue)}
+          onToggleInterest={handleToggleInterest}
         />
 
         <View style={styles.tabsContainer}>

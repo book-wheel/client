@@ -39,12 +39,22 @@ export type ReviewStatsContent = {
 
 export type ReviewStatsResponse = ApiResponse<ReviewStatsContent>;
 
+export type UpdateReviewVoteRequest = {
+  vote: ReviewVote;
+};
+
+export type ReviewVoteContent = ReviewStatsContent & {
+  isbn: string;
+};
+
+export type ReviewVoteResponse = ApiResponse<ReviewVoteContent>;
+
 export type BookReviewContent = {
   reviewId: number;
   isbn: string;
   reviewerName: string;
   profileImageUrl: string | null;
-  isRecommended: boolean;
+  isRecommended: boolean | null;
   comment: string;
   isHidden: boolean;
   likeCount: number;
@@ -72,9 +82,7 @@ export type BookReviewListParams = {
 export type BookReviewListResponse = ApiResponse<BookReviewPage>;
 
 export type CreateBookReviewRequest = {
-  isbn: string;
   comment: string;
-  isRecommended: boolean;
   isHidden: boolean;
 };
 
@@ -104,32 +112,36 @@ export type InterestedBooksPage = CursorPage<InterestedBookContent>;
 export type InterestedBooksResponse = ApiResponse<InterestedBooksPage>;
 export type InterestedBooksParams = BooksCursorParams;
 
-export type BookSearchSort = "relevance" | "latest" | "title";
+export type BookSearchSort = "accuracy" | "latest";
 
-export type BookSearchParams = BooksCursorParams & {
-  keyword: string;
-  categoryId?: number | null;
-  publishedFrom?: string | null;
-  publishedTo?: string | null;
-  minPageCount?: number | null;
-  maxPageCount?: number | null;
-  excludeInterested?: boolean;
+export type BookSearchParams = {
+  query: string;
   sort?: BookSearchSort;
+  page?: number;
+  size?: number;
 };
 
 export type BookSearchContent = {
-  bookId: number;
   title: string;
   author: string;
   publisher: string;
   publishedDate: string;
-  coverImageUrl: string | null;
-  categoryId: number;
-  categoryName: string;
-  pageCount: number;
-  averageRating: number;
-  isInterested: boolean;
+  thumbnail: string;
+  isbn: string;
 };
 
-export type BookSearchPage = CursorPage<BookSearchContent>;
-export type BookSearchResponse = ApiResponse<BookSearchPage>;
+export type BookSearchListContent = {
+  books: BookSearchContent[];
+  totalCount: number;
+  isEnd: boolean;
+};
+
+export type BookSearchResponse = ApiResponse<BookSearchListContent>;
+
+export type ReviewLikeContent = {
+  reviewId: number;
+  isLikedByMe: boolean;
+  likeCount: number;
+};
+
+export type ReviewLikeResponse = ApiResponse<ReviewLikeContent>;

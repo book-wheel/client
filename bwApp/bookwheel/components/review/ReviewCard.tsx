@@ -23,15 +23,16 @@ export default function ReviewCard({ review, onToggleLike, onRevealSpoiler }: Pr
           <View style={styles.userMeta}>
             <View style={styles.nameBadgeRow}>
               <Text style={styles.userName}>{review.user.name}</Text>
-              {review.vote === "recommend" ? (
-                <View style={[styles.voteBadge, styles.recommendBadge]}>
-                  <Text style={[styles.voteBadgeText, styles.recommendBadgeText]}>추천</Text>
-                </View>
-              ) : (
-                <View style={[styles.voteBadge, styles.notRecommendBadge]}>
-                  <Text style={[styles.voteBadgeText, styles.notRecommendBadgeText]}>비추천</Text>
-                </View>
-              )}
+              {review.vote !== null &&
+                (review.vote === "recommend" ? (
+                  <View style={[styles.voteBadge, styles.recommendBadge]}>
+                    <Text style={[styles.voteBadgeText, styles.recommendBadgeText]}>추천</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.voteBadge, styles.notRecommendBadge]}>
+                    <Text style={[styles.voteBadgeText, styles.notRecommendBadgeText]}>비추천</Text>
+                  </View>
+                ))}
             </View>
 
             <Text style={styles.reviewDate}>{review.date}</Text>

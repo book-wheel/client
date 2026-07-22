@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
-import { createBookReview, getBookReviews, getReviewStats } from "@/api/books";
+import {
+  createBookReview,
+  deleteReviewVote,
+  getBookReviews,
+  getReviewStats,
+  toggleReviewLike,
+  updateReviewVote,
+} from "@/api/books";
 import ReviewComposer from "@/components/review/ReviewComposer";
 import ReviewList from "@/components/review/ReviewList";
 import ReviewVoteSection from "@/components/review/ReviewVoteSection";
@@ -25,7 +32,12 @@ function mapBookReviewToReviewItem(
       profileUrl: review.profileImageUrl ?? "",
     },
   date: review.createdAt.slice(0, 10).replace(/-/g, "."),
-  vote: review.isRecommended ? "recommend" : "not-recommend",
+  vote:
+    review.isRecommended === null
+      ? null
+      : review.isRecommended
+        ? "recommend"
+        : "not-recommend",
   content: review.comment,
   isSpoiler: review.isHidden,
   isRevealed: !review.isHidden,
@@ -129,8 +141,38 @@ export default function Review() {
     });
   }, [reviews, sortType]);
 
-  const handleVote = (vote: VoteKind) => {
-    setMyVote((currentVote) => (currentVote === vote ? null : vote));
+  const handleVote = async (vote: VoteKind) => {
+    if (!isbn) return;
+
+    try {
+      const response =
+        myVote === vote
+          ? await deleteReviewVote(isbn)
+          : await updateReviewVote(isbn, {
+              vote: vote === "recommend" ? "RECOMMEND" : "NOT_RECOMMEND",
+            });
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "추천 상태 변경에 실패했습니다.");
+      }
+
+      setVoteStats({
+        recommendPercent: result.data.recommendedRatio,
+        notRecommendPercent: result.data.notRecommendedRatio,
+      });
+
+      if (result.data.myVote === "RECOMMEND") {
+        setMyVote("recommend");
+      } else if (result.data.myVote === "NOT_RECOMMEND") {
+        setMyVote("not-recommend");
+      } else {
+        setMyVote(null);
+      }
+    } catch (error) {
+      console.error("추천 상태 변경 실패:", error);
+      Alert.alert("오류", "추천 상태를 변경하지 못했습니다.");
+    }
   };
 
   const handleSelectSort = (nextSort: SortType) => {
@@ -139,18 +181,31 @@ export default function Review() {
     setIsSortDropdownOpen(false);
   };
 
-  const toggleLike = (id: string) => {
-    setReviews((currentReviews) =>
-      currentReviews.map((review) =>
-        review.id === id
-          ? {
-              ...review,
-              isLikedByMe: !review.isLikedByMe,
-              likes: review.isLikedByMe ? review.likes - 1 : review.likes + 1,
-            }
-          : review,
-      ),
-    );
+  const toggleLike = async (id: string) => {
+    try {
+      const response = await toggleReviewLike(Number(id));
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "리뷰 공감 변경에 실패했습니다.");
+      }
+
+      const updatedLike = result.data;
+
+      setReviews((currentReviews) =>
+        currentReviews.map((review) =>
+          review.id === String(updatedLike.reviewId)
+            ? {
+                ...review,
+                isLikedByMe: updatedLike.isLikedByMe,
+                likes: updatedLike.likeCount,
+              }
+            : review,
+        ),
+      );
+    } catch (error) {
+      console.error("리뷰 공감 변경 실패:", error);
+    }
   };
 
   const revealSpoiler = (id: string) => {
@@ -172,16 +227,9 @@ export default function Review() {
       return;
     }
 
-    if (myVote === null) {
-      Alert.alert("알림", "추천 또는 비추천을 선택해주세요.");
-      return;
-    }
-
     try {
       const response = await createBookReview(isbn, {
-        isbn,
         comment: trimmedText,
-        isRecommended: myVote === "recommend",
         isHidden: isSpoilerChecked,
       });
 
@@ -197,6 +245,7 @@ export default function Review() {
     setVisibleReviewCount((currentCount) => Math.max(currentCount, INITIAL_VISIBLE_REVIEW_COUNT));
     setInputText("");
     setIsSpoilerChecked(false);
+
     Alert.alert("알림", "리뷰가 등록되었습니다.");
     } catch (error) {
       console.error("리뷰 등록 실패:", error);

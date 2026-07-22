@@ -9,7 +9,7 @@ export interface ReviewItem {
     profileUrl: string;
   };
   date: string;
-  vote: VoteKind;
+  vote: VoteType;
   content: string;
   isSpoiler: boolean;
   isRevealed: boolean;

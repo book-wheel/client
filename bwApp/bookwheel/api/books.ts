@@ -10,7 +10,10 @@ import type {
   CreateBookReviewResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
+  ReviewLikeResponse,
   ReviewStatsResponse,
+  ReviewVoteResponse,
+  UpdateReviewVoteRequest,
 } from "@/types/books";
 import api from "./axios";
 
@@ -34,6 +37,22 @@ export const getReviewStats = (isbn: string) => {
   return api.get<ReviewStatsResponse>(`/books/${isbn}/reviews/stats`);
 };
 
+export const updateReviewVote = (
+  isbn: string,
+  body: UpdateReviewVoteRequest,
+) => {
+  return api.put<ReviewVoteResponse>(
+    `/books/${encodeURIComponent(isbn)}/reviews/vote`,
+    body,
+  );
+};
+
+export const deleteReviewVote = (isbn: string) => {
+  return api.delete<ReviewVoteResponse>(
+    `/books/${encodeURIComponent(isbn)}/reviews/vote`,
+  );
+};
+
 export const getBookReviews = (
   isbn: string,
   params?: BookReviewListParams,
@@ -51,5 +70,15 @@ export const createBookReview = (
   return api.post<CreateBookReviewResponse>(
     `/books/${isbn}/reviews`,
     body,
+  );
+};
+
+export const toggleBookLike = (isbn: string) => {
+  return api.post(`/books/${isbn}/likes`);
+};
+
+export const toggleReviewLike = (reviewId: number) => {
+  return api.post<ReviewLikeResponse>(
+    `/books/reviews/${reviewId}/likes`,
   );
 };

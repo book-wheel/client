@@ -53,12 +53,12 @@ export default function Search() {
   );
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [excludeInterested, setExcludeInterested] = useState(false);
-  const [interestedBookIds, setInterestedBookIds] = useState(
+  const [interestedBookIsbns, setInterestedBookIsbns] = useState(
     () =>
       new Set(
         searchBooks
           .filter((book) => book.isInterested)
-          .map((book) => book.id),
+          .map((book) => book.isbn),
       ),
   );
 
@@ -77,7 +77,7 @@ export default function Search() {
       const matchesPublishedAt = matchesPublishedAtFilter(book, publishedAtRange);
       const matchesVolume = matchesVolumeFilter(book, pageRange);
       const matchesInterest =
-        !excludeInterested || !interestedBookIds.has(book.id);
+        !excludeInterested || !interestedBookIsbns.has(book.isbn);
 
       return (
         matchesQuery &&
@@ -90,7 +90,7 @@ export default function Search() {
   }, [
     categoryFilter,
     excludeInterested,
-    interestedBookIds,
+    interestedBookIsbns,
     pageRange,
     publishedAtRange,
     query,
@@ -125,14 +125,14 @@ export default function Search() {
     setActiveFilter(null);
   };
 
-  const handleToggleInterest = (bookId: string) => {
-    setInterestedBookIds((prev) => {
+  const handleToggleInterest = (isbn: string) => {
+    setInterestedBookIsbns((prev) => {
       const next = new Set(prev);
 
-      if (next.has(bookId)) {
-        next.delete(bookId);
+      if (next.has(isbn)) {
+        next.delete(isbn);
       } else {
-        next.add(bookId);
+        next.add(isbn);
       }
 
       return next;
@@ -241,7 +241,7 @@ export default function Search() {
 
       <FlatList
         data={filteredBooks}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.isbn}
         contentContainerStyle={[
           styles.listContent,
           filteredBooks.length === 0 && styles.emptyListContent,
@@ -251,9 +251,9 @@ export default function Search() {
         renderItem={({ item }) => (
           <BookResultItem
             book={item}
-            isInterested={interestedBookIds.has(item.id)}
-            onPress={() => handleSelectBook(item.id)}
-            onToggleInterest={() => handleToggleInterest(item.id)}
+            isInterested={interestedBookIsbns.has(item.isbn)}
+            onPress={() => handleSelectBook(item.isbn)}
+            onToggleInterest={() => handleToggleInterest(item.isbn)}
           />
         )}
         ListEmptyComponent={
