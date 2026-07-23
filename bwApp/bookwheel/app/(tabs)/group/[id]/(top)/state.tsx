@@ -26,6 +26,7 @@ export default function State() {
       <BeforeStartDashboard
         id={id}
         dDay={dashboard?.dDay}
+        startDate={dashboard?.startDate}
         hasBook={hasBook}
         bookTitle={dashboard?.myBookStep?.bookTitle}
         coverImage={dashboard?.myBookStep?.coverImage}

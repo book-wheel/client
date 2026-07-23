@@ -5,6 +5,7 @@ import Ionicons from "@expo/vector-icons/build/Ionicons";
 type Props = {
   id: string;
   dDay?: number;
+  startDate?: string;
   hasBook?: boolean;
   bookTitle?: string;
   author?: string;
@@ -13,7 +14,8 @@ type Props = {
 
 export default function BeforeStartDashboard({
   id,
-  dDay = 10,
+  dDay,
+  startDate,
   hasBook = false,
   bookTitle,
   author,
@@ -60,7 +62,7 @@ export default function BeforeStartDashboard({
                   fontWeight: "500",
                 }}
               >
-                2027년 6월 2일 진행 예정
+                {formatStartDate(startDate)}
               </Text>
             </View>
             <View
@@ -197,7 +199,7 @@ export default function BeforeStartDashboard({
                   marginTop: 8,
                 }}
               >
-                D-{dDay}
+                {typeof dDay === "number" ? `D-${dDay}` : "시작일 미정"}
               </Text>
             </View>
 
@@ -256,4 +258,17 @@ export default function BeforeStartDashboard({
       </View>
     </View>
   );
+}
+
+function formatStartDate(startDate?: string) {
+  if (!startDate) return "진행 예정일 미정";
+
+  const [year, month, day] = startDate
+    .split("T")[0]
+    .split("-")
+    .map(Number);
+
+  if (!year || !month || !day) return "진행 예정일 미정";
+
+  return `${year}년 ${month}월 ${day}일 진행 예정`;
 }
