@@ -5,6 +5,7 @@ import type {
   BookGalleryResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
+  BookSearchResponse,
 } from "@/types/books";
 
 export const getBookGallery = (params?: BookGalleryParams) => {
@@ -16,7 +17,7 @@ export const getInterestedBooks = (params?: InterestedBooksParams) => {
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {
-  return api.get("/books/search", {
+  return api.get<BookSearchResponse>("/books/search", {
     params: {
       query,
       sort: "accuracy",

@@ -119,6 +119,10 @@ export const searchStyles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 48,
   },
+  loadingMore: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
   emptyListContent: {
     flexGrow: 1,
   },
