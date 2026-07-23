@@ -1,5 +1,6 @@
 import api from "./axios";
 import type {
+  BookDetailResponse,
   BookGalleryParams,
   BookGalleryResponse,
   InterestedBooksParams,
@@ -26,5 +27,5 @@ export const searchBooks = (query: string, page = 1, size = 20) => {
 };
 
 export const getBookDetail = (isbn: string) => {
-  return api.get(`/books/${isbn}`);
+  return api.get<BookDetailResponse>(`/books/${isbn}`);
 };

@@ -53,3 +53,15 @@ export type BookSearchResponse = ApiResponse<{
   totalCount: number;
   isEnd: boolean;
 }>;
+
+export type BookDetail = {
+  isbn: string;
+  title: string;
+  author: string;
+  publisher: string;
+  pubDate?: string;
+  cover: string;
+  itemPage: number;
+};
+
+export type BookDetailResponse = ApiResponse<BookDetail>;
