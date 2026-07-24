@@ -95,13 +95,17 @@ export default function Step3() {
       const response = await makingGroup(payload);
 
       const groupId = response.data.groupId;
+      console.log("생성된 groupId:", groupId);
 
       reset();
 
       router.replace(`/group/${groupId}/home`);
     } catch (error: any) {
-      console.log("에러:", error.response?.data);
-      console.log("상태코드:", error.response?.status);
+      console.log("응답 데이터:", error.response?.data);
+      console.log("상태 코드:", error.response?.status);
+      console.log("에러 메시지:", error.message);
+
+      console.error(error);
     }
   };
 

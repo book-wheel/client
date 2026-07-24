@@ -23,9 +23,11 @@ export type BookDetailContent = {
   toc: string | null;
   isbn: string;
   isInterested: boolean;
+  pubDate?: string;
 };
 
-export type BookDetailResponse = ApiResponse<BookDetailContent>;
+export type BookDetail = BookDetailContent;
+export type BookDetailResponse = ApiResponse<BookDetail>;
 
 export type ReviewVote =
   | "RECOMMEND"
@@ -114,14 +116,7 @@ export type InterestedBooksParams = BooksCursorParams;
 
 export type BookSearchSort = "accuracy" | "latest";
 
-export type BookSearchParams = {
-  query: string;
-  sort?: BookSearchSort;
-  page?: number;
-  size?: number;
-};
-
-export type BookSearchContent = {
+export type BookSearchItem = {
   title: string;
   author: string;
   publisher: string;
@@ -130,13 +125,11 @@ export type BookSearchContent = {
   isbn: string;
 };
 
-export type BookSearchListContent = {
-  books: BookSearchContent[];
+export type BookSearchResponse = ApiResponse<{
+  books: BookSearchItem[];
   totalCount: number;
   isEnd: boolean;
-};
-
-export type BookSearchResponse = ApiResponse<BookSearchListContent>;
+}>;
 
 export type ReviewLikeContent = {
   reviewId: number;

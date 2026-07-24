@@ -4,7 +4,6 @@ import type {
   BookGalleryResponse,
   BookReviewListParams,
   BookReviewListResponse,
-  BookSearchParams,
   BookSearchResponse,
   CreateBookReviewRequest,
   CreateBookReviewResponse,
@@ -25,8 +24,15 @@ export const getInterestedBooks = (params?: InterestedBooksParams) => {
   return api.get<InterestedBooksResponse>("/books/interests", { params });
 };
 
-export const searchBooks = (params: BookSearchParams) => {
-  return api.get<BookSearchResponse>("/books/search", { params });
+export const searchBooks = (query: string, page = 1, size = 20) => {
+  return api.get<BookSearchResponse>("/books/search", {
+    params: {
+      query,
+      sort: "accuracy",
+      page,
+      size,
+    },
+  });
 };
 
 export const getBookDetail = (isbn: string) => {
