@@ -39,6 +39,7 @@ import {
 import type { BookSearchItem } from "@/types/books";
 
 const SEARCH_PAGE_SIZE = 20;
+const SEARCH_FILTER_ENABLED = false;
 
 export default function Search() {
   const { from: rawFrom, id: rawId } = useLocalSearchParams<{
@@ -239,6 +240,7 @@ export default function Search() {
         </TouchableOpacity>
       </View>
 
+      {SEARCH_FILTER_ENABLED && (
       <View style={styles.filterRow}>
         {filterKeys.map((key) => {
           const active =
@@ -273,9 +275,11 @@ export default function Search() {
           );
         })}
       </View>
+      )}
 
       <View style={styles.resultHeader}>
         <Text style={styles.resultCount}>결과 {totalCount}개</Text>
+        {SEARCH_FILTER_ENABLED && (
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={() => setExcludeInterested((prev) => !prev)}
@@ -295,6 +299,7 @@ export default function Search() {
             관심도서 제외
           </Text>
         </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
