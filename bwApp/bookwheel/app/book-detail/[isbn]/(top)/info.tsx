@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useBookDetail } from "@/contexts/book-detail";
+import React, { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Info() {
     //  데이터를 담을 상태 관리 (초기값은 null 혹은 빈 객체)
@@ -39,6 +39,15 @@ export default function Info() {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            {/* 저자 소개 섹션 */}            
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>저자</Text>
+                <Text style={styles.bodyText}>{data.author}</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            
             {/* 책 소개 섹션 */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>책 소개</Text>

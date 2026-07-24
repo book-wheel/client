@@ -42,11 +42,17 @@ export default function BookDetailHero({
         <View style={styles.infoBadge}>
           <Text style={styles.bookTitle}>&lt; {title} &gt;</Text>
           <View style={styles.subInfoRow}>
-            <View style={styles.smallBadge}>
-              <Text style={styles.smallBadgeText}>{author}</Text>
-            </View>
+            
             <View style={styles.smallBadge}>
               <Text style={styles.smallBadgeText}>{pageCount}</Text>
+            </View>
+            <View style={styles.smallBadge}>
+              <Text
+                style={[styles.smallBadgeText, styles.authorText]}
+                numberOfLines={1}
+              >
+                {author}
+              </Text>
             </View>
           </View>
         </View>
@@ -119,5 +125,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#7A6F5C",
     fontWeight: "600",
+  },
+  authorText: {
+    maxWidth: 100,
   },
 });
