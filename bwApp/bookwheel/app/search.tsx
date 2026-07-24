@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Keyboard,
   Text,
@@ -19,10 +20,14 @@ import {
   categoryOptions,
   filterKeys,
   filterLabels,
-  searchBooks,
 } from "@/components/search/constants";
+import { searchBooks } from "@/api/books";
 import { searchStyles as styles } from "@/components/search/styles";
-import type { DateRange, FilterKey, PageRange } from "@/components/search/types";
+import type {
+  DateRange,
+  FilterKey,
+  PageRange,
+} from "@/components/search/types";
 import {
   createDefaultDateRange,
   createEmptyPageRange,
@@ -30,9 +35,11 @@ import {
   getSingleParam,
   hasDateRange,
   hasPageRange,
-  matchesPublishedAtFilter,
-  matchesVolumeFilter,
 } from "@/components/search/utils";
+import type { BookSearchItem } from "@/types/books";
+
+const SEARCH_PAGE_SIZE = 20;
+const SEARCH_FILTER_ENABLED = false;
 
 export default function Search() {
   const { from: rawFrom, id: rawId } = useLocalSearchParams<{
@@ -42,6 +49,8 @@ export default function Search() {
   const from = getSingleParam(rawFrom);
   const id = getSingleParam(rawId);
   const insets = useSafeAreaInsets();
+  const searchRequestId = useRef(0);
+  const loadingMoreRef = useRef(false);
 
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -53,48 +62,14 @@ export default function Search() {
   );
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [excludeInterested, setExcludeInterested] = useState(false);
-  const [interestedBookIds, setInterestedBookIds] = useState(
-    () =>
-      new Set(
-        searchBooks
-          .filter((book) => book.isInterested)
-          .map((book) => book.id),
-      ),
-  );
-
-  const filteredBooks = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-
-    return searchBooks.filter((book) => {
-      const matchesQuery =
-        keyword.length === 0 ||
-        book.title.toLowerCase().includes(keyword) ||
-        book.author.toLowerCase().includes(keyword) ||
-        book.publisher.toLowerCase().includes(keyword);
-
-      const matchesCategory =
-        categoryFilter === "all" || book.category === categoryFilter;
-      const matchesPublishedAt = matchesPublishedAtFilter(book, publishedAtRange);
-      const matchesVolume = matchesVolumeFilter(book, pageRange);
-      const matchesInterest =
-        !excludeInterested || !interestedBookIds.has(book.id);
-
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        matchesPublishedAt &&
-        matchesVolume &&
-        matchesInterest
-      );
-    });
-  }, [
-    categoryFilter,
-    excludeInterested,
-    interestedBookIds,
-    pageRange,
-    publishedAtRange,
-    query,
-  ]);
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [interestedBookIds, setInterestedBookIds] = useState(new Set<string>());
+  const [books, setBooks] = useState<BookSearchItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isEnd, setIsEnd] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -125,22 +100,106 @@ export default function Search() {
     setActiveFilter(null);
   };
 
-  const handleToggleInterest = (bookId: string) => {
+  const handleToggleInterest = (isbn: string) => {
     setInterestedBookIds((prev) => {
       const next = new Set(prev);
 
-      if (next.has(bookId)) {
-        next.delete(bookId);
-      } else {
-        next.add(bookId);
-      }
+      if (next.has(isbn)) next.delete(isbn);
+      else next.add(isbn);
 
       return next;
     });
   };
 
-  const handleSubmitSearch = () => {
+  const handleSubmitSearch = async () => {
     Keyboard.dismiss();
+
+    const keyword = query.trim();
+    const requestId = ++searchRequestId.current;
+
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+
+    if (!keyword) {
+      setLoading(false);
+      setSubmittedQuery("");
+      setBooks([]);
+      setPage(1);
+      setTotalCount(0);
+      setIsEnd(true);
+      return;
+    }
+
+    setLoading(true);
+    setSubmittedQuery(keyword);
+    setBooks([]);
+    setTotalCount(0);
+    setPage(1);
+    setIsEnd(true);
+
+    try {
+      const res = await searchBooks(keyword, 1, SEARCH_PAGE_SIZE);
+      const data = res.data.data;
+
+      if (requestId !== searchRequestId.current) return;
+
+      setBooks(data?.books ?? []);
+      setTotalCount(data?.totalCount ?? 0);
+      setIsEnd(data?.isEnd ?? true);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      if (requestId === searchRequestId.current) setLoading(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (
+      loading ||
+      loadingMoreRef.current ||
+      isEnd ||
+      !submittedQuery
+    ) {
+      return;
+    }
+
+    const requestId = searchRequestId.current;
+    const nextPage = page + 1;
+
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const res = await searchBooks(
+        submittedQuery,
+        nextPage,
+        SEARCH_PAGE_SIZE,
+      );
+      const data = res.data.data;
+
+      if (requestId !== searchRequestId.current || !data) return;
+
+      setBooks((previousBooks) => {
+        const existingIsbns = new Set(
+          previousBooks.map((book) => book.isbn),
+        );
+        const nextBooks = data.books.filter(
+          (book) => !existingIsbns.has(book.isbn),
+        );
+
+        return [...previousBooks, ...nextBooks];
+      });
+      setPage(nextPage);
+      setTotalCount(data.totalCount);
+      setIsEnd(data.isEnd);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      if (requestId === searchRequestId.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }
   };
 
   return (
@@ -181,6 +240,7 @@ export default function Search() {
         </TouchableOpacity>
       </View>
 
+      {SEARCH_FILTER_ENABLED && (
       <View style={styles.filterRow}>
         {filterKeys.map((key) => {
           const active =
@@ -215,9 +275,11 @@ export default function Search() {
           );
         })}
       </View>
+      )}
 
       <View style={styles.resultHeader}>
-        <Text style={styles.resultCount}>결과 {filteredBooks.length}개</Text>
+        <Text style={styles.resultCount}>결과 {totalCount}개</Text>
+        {SEARCH_FILTER_ENABLED && (
         <TouchableOpacity
           activeOpacity={0.75}
           onPress={() => setExcludeInterested((prev) => !prev)}
@@ -237,33 +299,47 @@ export default function Search() {
             관심도서 제외
           </Text>
         </TouchableOpacity>
+        )}
       </View>
 
       <FlatList
-        data={filteredBooks}
-        keyExtractor={(item) => item.id}
+        data={books}
+        keyExtractor={(item) => item.isbn}
         contentContainerStyle={[
           styles.listContent,
-          filteredBooks.length === 0 && styles.emptyListContent,
+          books.length === 0 && styles.emptyListContent,
         ]}
         ItemSeparatorComponent={() => <View style={styles.divider} />}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <BookResultItem
             book={item}
-            isInterested={interestedBookIds.has(item.id)}
-            onPress={() => handleSelectBook(item.id)}
-            onToggleInterest={() => handleToggleInterest(item.id)}
+            isInterested={interestedBookIds.has(item.isbn)}
+            onPress={() => handleSelectBook(item.isbn)}
+            onToggleInterest={() => handleToggleInterest(item.isbn)}
           />
         )}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator color="#E4A54E" />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
-          <View style={styles.emptyBox}>
-            <Ionicons name="book-outline" size={40} color="#DCC9A5" />
-            <Text style={styles.emptyTitle}>검색 결과가 없어요</Text>
-            <Text style={styles.emptyText}>
-              검색어 또는 필터를 조금 바꿔보세요.
-            </Text>
-          </View>
+          loading ? (
+            <View style={styles.emptyBox}>
+              <ActivityIndicator size="large" color="#E4A54E" />
+            </View>
+          ) : (
+            <View style={styles.emptyBox}>
+              <Ionicons name="book-outline" size={40} color="#DCC9A5" />
+              <Text style={styles.emptyTitle}>검색 결과가 없어요</Text>
+              <Text style={styles.emptyText}>검색어를 입력해 주세요.</Text>
+            </View>
+          )
         }
       />
 
