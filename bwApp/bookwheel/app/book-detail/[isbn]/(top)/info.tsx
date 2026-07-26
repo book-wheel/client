@@ -24,7 +24,9 @@ export default function Info() {
                 {isLoading
                     ? "로딩 중..."
                     : error
-                      ? "도서 정보를 불러오지 못했어요."
+                      ? error instanceof Error
+                        ? error.message
+                        : "도서 정보를 불러오지 못했어요."
                       : "도서 정보가 없어요."}
             </Text>
             </View>

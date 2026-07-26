@@ -41,6 +41,9 @@ import type { BookSearchItem } from "@/types/books";
 const SEARCH_PAGE_SIZE = 20;
 const SEARCH_FILTER_ENABLED = false;
 
+const removeDuplicateBooks = (books: BookSearchItem[]) =>
+  Array.from(new Map(books.map((book) => [book.isbn, book])).values());
+
 export default function Search() {
   const { from: rawFrom, id: rawId } = useLocalSearchParams<{
     from?: string | string[];
@@ -143,7 +146,7 @@ export default function Search() {
 
       if (requestId !== searchRequestId.current) return;
 
-      setBooks(data?.books ?? []);
+      setBooks(removeDuplicateBooks(data?.books ?? []));
       setTotalCount(data?.totalCount ?? 0);
       setIsEnd(data?.isEnd ?? true);
     } catch (e) {
@@ -179,16 +182,9 @@ export default function Search() {
 
       if (requestId !== searchRequestId.current || !data) return;
 
-      setBooks((previousBooks) => {
-        const existingIsbns = new Set(
-          previousBooks.map((book) => book.isbn),
-        );
-        const nextBooks = data.books.filter(
-          (book) => !existingIsbns.has(book.isbn),
-        );
-
-        return [...previousBooks, ...nextBooks];
-      });
+      setBooks((previousBooks) =>
+        removeDuplicateBooks([...previousBooks, ...data.books]),
+      );
       setPage(nextPage);
       setTotalCount(data.totalCount);
       setIsEnd(data.isEnd);

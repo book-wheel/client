@@ -40,7 +40,7 @@ export interface RegisterBookRequest {
   publisher: string;
   pubDate: string;
   coverImage: string;
-  totalPage: number;
+  totalPage: number | null;
   bookCondition: string;
   noteToReader: string;
 }

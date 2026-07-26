@@ -19,7 +19,7 @@ export type BookDetailContent = {
   publisher: string;
   description: string;
   cover: string | null;
-  itemPage: number;
+  itemPage: number | null;
   toc: string | null;
   isbn: string;
   isInterested: boolean;
