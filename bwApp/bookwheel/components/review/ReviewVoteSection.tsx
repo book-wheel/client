@@ -35,7 +35,7 @@ function AnimatedStatBox({
 
     const animation = Animated.timing(fillWidth, {
       toValue: percent,
-      duration: 500,
+      duration: 200,
       useNativeDriver: false,
     });
 
@@ -79,7 +79,9 @@ function AnimatedStatBox({
 }
 
 export default function ReviewVoteSection({ myVote, voteStats, onVote }: Props) {
-  const hasVoted = myVote !== null;
+  const hasVoted =
+    myVote !== null &&
+    voteStats.recommendPercent + voteStats.notRecommendPercent > 0;
 
   return (
     <View style={styles.section}>

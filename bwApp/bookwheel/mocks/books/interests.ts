@@ -26,7 +26,7 @@ export const mockInterestedBooksResponse: InterestedBooksResponse = {
 };
 
 export const mockInterestBooks: BookItem[] =
-  mockInterestedBooksResponse.data.content.map((book) => ({
+  (mockInterestedBooksResponse.data?.content ?? []).map((book) => ({
     id: String(book.bookId),
     title: book.title,
     author: book.author,

@@ -40,11 +40,11 @@ const galleryItems: GalleryItem[] = DUMMY_GALLERY_DATA.map((post) => ({
 }));
 
 export default function Gallery() {
-  const { bookId } = useGlobalSearchParams<{ bookId: string }>();
+  const { isbn } = useGlobalSearchParams<{ isbn: string }>();
 
   const handleAddPhoto = () => {
-    if (!bookId) {
-      Alert.alert("알림", "책 ID를 찾을 수 없습니다.");
+    if (!isbn) {
+      Alert.alert("알림", "ISBN을 찾을 수 없습니다.");
       return;
     }
 
@@ -55,7 +55,7 @@ export default function Gallery() {
     router.push({
       pathname: "../[galleryId]/post",
       params: {
-        bookId,
+        isbn,
         galleryId,
       },
     });

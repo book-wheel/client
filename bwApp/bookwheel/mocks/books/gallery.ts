@@ -26,7 +26,7 @@ export const mockBookGalleryResponse: BookGalleryResponse = {
 };
 
 export const mockGalleryItems: GalleryItem[] =
-  mockBookGalleryResponse.data.content.map((item) => ({
+  (mockBookGalleryResponse.data?.content ?? []).map((item) => ({
     id: String(item.galleryId),
     image: galleryImage,
     extraCount: item.imageCount > 1 ? item.imageCount - 1 : undefined,

@@ -7,7 +7,9 @@ interface Props {
   reviews: ReviewItem[];
   sortType: SortType;
   isSortDropdownOpen: boolean;
-  visibleReviewCount: number;
+  totalReviewCount: number;
+  hasNextPage: boolean;
+  isLoadingMore: boolean;
   onToggleSortDropdown: () => void;
   onSelectSort: (sortType: SortType) => void;
   onToggleLike: (id: string) => void;
@@ -19,7 +21,9 @@ export default function ReviewList({
   reviews,
   sortType,
   isSortDropdownOpen,
-  visibleReviewCount,
+  totalReviewCount,
+  hasNextPage,
+  isLoadingMore,
   onToggleSortDropdown,
   onSelectSort,
   onToggleLike,
@@ -29,7 +33,7 @@ export default function ReviewList({
   return (
     <View style={styles.section}>
       <View style={styles.listHeader}>
-        <Text style={styles.reviewCountTitle}>리뷰 {reviews.length}</Text>
+        <Text style={styles.reviewCountTitle}>리뷰 {totalReviewCount}</Text>
 
         <View style={styles.sortDropdownWrap}>
           <TouchableOpacity style={styles.sortButton} onPress={onToggleSortDropdown} activeOpacity={0.8}>
@@ -50,7 +54,7 @@ export default function ReviewList({
         </View>
       </View>
 
-      {reviews.slice(0, visibleReviewCount).map((review) => (
+      {reviews.map((review) => (
         <ReviewCard
           key={review.id}
           review={review}
@@ -59,9 +63,16 @@ export default function ReviewList({
         />
       ))}
 
-      {reviews.length > 5 && visibleReviewCount < reviews.length && (
-        <TouchableOpacity style={styles.loadMoreButton} onPress={onLoadMore} activeOpacity={0.8}>
-          <Text style={styles.loadMoreText}>더보기</Text>
+      {hasNextPage && (
+        <TouchableOpacity
+          style={styles.loadMoreButton}
+          disabled={isLoadingMore}
+          onPress={onLoadMore}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.loadMoreText}>
+            {isLoadingMore ? "불러오는 중..." : "더보기"}
+          </Text>
           <Ionicons name="chevron-down" size={16} color="#777" />
         </TouchableOpacity>
       )}

@@ -11,7 +11,7 @@ import { getRelativeTime } from '@/components/utils/date'
 
 export default function PostDetailScreen() {
     const router = useRouter();
-    const { bookId, galleryId } = useLocalSearchParams();
+    const { isbn, galleryId } = useLocalSearchParams();
 
     const postData = {
         author: '문소희',
@@ -71,7 +71,7 @@ export default function PostDetailScreen() {
                         commentCount={postData.comments}
                         onLikePress={handleLikePress}
                         onCommentPress={() =>
-                            router.push(`/book-detail/${bookId}/${galleryId}/comment`)
+                            router.push(`/book-detail/${isbn}/${galleryId}/comment`)
                         }
                     />
 

@@ -1,0 +1,381 @@
+import { useEffect, useRef, useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+
+import { getApiErrorMessage } from "@/api/axios";
+import {
+  createBookReview,
+  deleteReviewVote,
+  getBookReviews,
+  getReviewStats,
+  toggleReviewLike,
+  updateReviewVote,
+} from "@/api/books";
+import ReviewComposer from "@/components/review/ReviewComposer";
+import ReviewList from "@/components/review/ReviewList";
+import ReviewVoteSection from "@/components/review/ReviewVoteSection";
+import type { BookVoteStats, ReviewItem, SortType, VoteKind, VoteType } from "@/components/review/types";
+import { useBookDetail } from "@/contexts/book-detail";
+import type { BookReviewContent } from "@/types/books";
+
+const REVIEW_PAGE_SIZE = 5;
+
+type ReviewSortParam = "latest" | "popular";
+
+const REVIEW_SORT_PARAMS = {
+  최신순: "latest",
+  인기순: "popular",
+} as const satisfies Record<SortType, ReviewSortParam>;
+
+function mapBookReviewToReviewItem(
+  review: BookReviewContent,
+): ReviewItem {
+  return {
+    id: String(review.reviewId),
+    user: {
+      name: review.reviewerName,
+      profileUrl: review.profileImageUrl ?? "",
+    },
+  date: review.createdAt.slice(0, 10).replace(/-/g, "."),
+  vote:
+    review.isRecommended === null
+      ? null
+      : review.isRecommended
+        ? "recommend"
+        : "not-recommend",
+  content: review.comment,
+  isSpoiler: review.isHidden,
+  isRevealed: !review.isHidden,
+  likes: review.likeCount,
+  isLikedByMe: review.isLikedByMe,
+  };
+}
+
+
+export default function Review() {
+  const { isbn } = useBookDetail();
+  const reviewRequestId = useRef(0);
+  const loadingMoreReviewsRef = useRef(false);
+  const [myVote, setMyVote] = useState<VoteType>(null);
+  const [inputText, setInputText] = useState("");
+  const [isSpoilerChecked, setIsSpoilerChecked] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [sortType, setSortType] = useState<SortType>("최신순");
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const [voteStats, setVoteStats] = useState<BookVoteStats>({
+    recommendPercent: 0,
+    notRecommendPercent: 0,
+  });
+  const [reviewPage, setReviewPage] = useState(0);
+  const [totalReviewCount, setTotalReviewCount] = useState(0);
+  const [hasNextReviewPage, setHasNextReviewPage] = useState(false);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
+
+  useEffect(() => {
+    if (!isbn) return;
+
+    const fetchReviewStats = async () => {
+      try {
+        const response = await getReviewStats(isbn);
+        const result = response.data;
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message ?? "추천 통계를 불러오지 못했습니다.");
+        }
+
+        const stats = result.data;
+
+        setVoteStats({
+          recommendPercent: stats.recommendedRatio,
+          notRecommendPercent: stats.notRecommendedRatio,
+        });
+
+        if (stats.myVote === "RECOMMEND") {
+          setMyVote("recommend");
+        } else if (stats.myVote === "NOT_RECOMMEND") {
+          setMyVote("not-recommend");
+        } else {
+          setMyVote(null);
+        }
+      } catch (fetchError) {
+        console.error(
+          "추천 통계 조회 실패:",
+          getApiErrorMessage(fetchError, "추천 통계를 불러오지 못했습니다."),
+        );
+      }
+    };
+
+    void fetchReviewStats();
+  }, [isbn]);
+
+  
+
+  useEffect(() => {
+    if (!isbn) return;
+
+    const requestId = ++reviewRequestId.current;
+    loadingMoreReviewsRef.current = false;
+    setReviewPage(0);
+    setHasNextReviewPage(false);
+    setIsLoadingMoreReviews(false);
+
+    const fetchReviews = async () => {
+      try {
+        const response = await getBookReviews(
+          isbn,
+          {
+            sort: REVIEW_SORT_PARAMS[sortType],
+            page: 0,
+            size: REVIEW_PAGE_SIZE,
+          }
+        );
+
+        const result = response.data;
+
+        if (requestId !== reviewRequestId.current) return;
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message ?? "리뷰를 불러오지 못했습니다.");
+        }
+
+        const reviewItems = result.data.content.map(mapBookReviewToReviewItem);
+        console.log("리뷰 목록:", reviewItems);
+
+        setReviews(reviewItems);
+        setReviewPage(result.data.number);
+        setTotalReviewCount(result.data.totalElements);
+        setHasNextReviewPage(!result.data.last);
+      } catch (error) {
+        if (requestId !== reviewRequestId.current) return;
+
+        console.error(
+          "리뷰 조회 실패:",
+          getApiErrorMessage(error, "리뷰를 불러오지 못했습니다."),
+        );
+      }
+    };
+
+    void fetchReviews();
+  }, [isbn, sortType]);
+
+
+  const handleVote = async (vote: VoteKind) => {
+    if (!isbn) return;
+
+    try {
+      const response =
+        myVote === vote
+          ? await deleteReviewVote(isbn)
+          : await updateReviewVote(isbn, {
+              vote: vote === "recommend" ? "RECOMMEND" : "NOT_RECOMMEND",
+            });
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "추천 상태 변경에 실패했습니다.");
+      }
+
+      setVoteStats({
+        recommendPercent: result.data.recommendedRatio,
+        notRecommendPercent: result.data.notRecommendedRatio,
+      });
+
+      if (result.data.myVote === "RECOMMEND") {
+        setMyVote("recommend");
+      } else if (result.data.myVote === "NOT_RECOMMEND") {
+        setMyVote("not-recommend");
+      } else {
+        setMyVote(null);
+      }
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        "추천 상태를 변경하지 못했습니다.",
+      );
+
+      console.error("추천 상태 변경 실패:", message);
+      Alert.alert("오류", message);
+    }
+  };
+
+  const handleSelectSort = (nextSort: SortType) => {
+    setSortType(nextSort);
+    setIsSortDropdownOpen(false);
+  };
+
+  // 리뷰 조회 페이지네이션
+  const handleLoadMoreReviews = async () => {
+    if (!isbn || !hasNextReviewPage || loadingMoreReviewsRef.current) {
+      return;
+    }
+
+    const requestId = reviewRequestId.current;
+    loadingMoreReviewsRef.current = true;
+    setIsLoadingMoreReviews(true);
+
+    try {
+      const response = await getBookReviews(isbn, {
+        sort: REVIEW_SORT_PARAMS[sortType],
+        page: reviewPage + 1,
+        size: REVIEW_PAGE_SIZE,
+      });
+      const result = response.data;
+
+      if (requestId !== reviewRequestId.current) return;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "리뷰를 더 불러오지 못했습니다.");
+      }
+
+      const nextReviews = result.data.content.map(mapBookReviewToReviewItem);
+
+      setReviews((currentReviews) => {
+        const reviewIds = new Set(
+          currentReviews.map((review) => review.id),
+        );
+
+        return [
+          ...currentReviews,
+          ...nextReviews.filter((review) => !reviewIds.has(review.id)),
+        ];
+      });
+      setReviewPage(result.data.number);
+      setTotalReviewCount(result.data.totalElements);
+      setHasNextReviewPage(!result.data.last);
+    } catch (error) {
+      if (requestId !== reviewRequestId.current) return;
+
+      console.error(
+        "리뷰 추가 조회 실패:",
+        getApiErrorMessage(error, "리뷰를 더 불러오지 못했습니다."),
+      );
+    } finally {
+      if (requestId === reviewRequestId.current) {
+        loadingMoreReviewsRef.current = false;
+        setIsLoadingMoreReviews(false);
+      }
+    }
+  };
+
+  const toggleLike = async (id: string) => {
+    try {
+      const response = await toggleReviewLike(Number(id));
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message ?? "리뷰 공감 변경에 실패했습니다.");
+      }
+
+      const updatedLike = result.data;
+
+      setReviews((currentReviews) =>
+        currentReviews.map((review) =>
+          review.id === String(updatedLike.reviewId)
+            ? {
+                ...review,
+                isLikedByMe: updatedLike.isLikedByMe,
+                likes: updatedLike.likeCount,
+              }
+            : review,
+        ),
+      );
+    } catch (error) {
+      console.error(
+        "리뷰 공감 변경 실패:",
+        getApiErrorMessage(error, "리뷰 공감 변경에 실패했습니다."),
+      );
+    }
+  };
+
+  const revealSpoiler = (id: string) => {
+    setReviews((currentReviews) =>
+      currentReviews.map((review) => (review.id === id ? { ...review, isRevealed: true } : review)),
+    );
+  };
+
+  const handleSubmitComment = async () => {
+    const trimmedText = inputText.trim();
+
+    if (!trimmedText) {
+      Alert.alert("알림", "리뷰 내용을 입력해주세요.");
+      return;
+    }
+
+    if (!isbn) {
+      Alert.alert("오류", "책 정보를 불러오지 못했습니다.");
+      return;
+    }
+
+    try {
+      const response = await createBookReview(isbn, {
+        comment: trimmedText,
+        isHidden: isSpoilerChecked,
+      });
+
+    const result = response.data;
+
+    if (!result.success || !result.data) {
+      throw new Error(result.error?.message ?? "리뷰 등록 실패했습니다.");
+    }
+
+    const createReview = mapBookReviewToReviewItem(result.data);
+
+    setReviews((currentReviews) => [
+      createReview,
+      ...currentReviews.filter((review) => review.id !== createReview.id),
+    ]);
+    setTotalReviewCount((currentCount) => currentCount + 1);
+    setInputText("");
+    setIsSpoilerChecked(false);
+
+    Alert.alert("알림", "리뷰가 등록되었습니다.");
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        "리뷰 등록에 실패했습니다. 다시 시도해주세요.",
+      );
+
+      console.error("리뷰 등록 실패:", message);
+      Alert.alert("오류", message);
+    }
+
+  };
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ReviewVoteSection myVote={myVote} voteStats={voteStats} onVote={handleVote} />
+      <View style={styles.thickDivider} />
+      <ReviewComposer
+        value={inputText}
+        isSpoilerChecked={isSpoilerChecked}
+        onChangeText={setInputText}
+        onToggleSpoiler={() => setIsSpoilerChecked((currentValue) => !currentValue)}
+        onExpand={() => console.log("상세 작성 페이지로 이동")}
+        onSubmit={handleSubmitComment}
+      />
+      <View style={styles.thickDivider} />
+      <ReviewList
+        reviews={reviews}
+        sortType={sortType}
+        isSortDropdownOpen={isSortDropdownOpen}
+        totalReviewCount={totalReviewCount}
+        hasNextPage={hasNextReviewPage}
+        isLoadingMore={isLoadingMoreReviews}
+        onToggleSortDropdown={() => setIsSortDropdownOpen((isOpen) => !isOpen)}
+        onSelectSort={handleSelectSort}
+        onToggleLike={toggleLike}
+        onRevealSpoiler={revealSpoiler}
+        onLoadMore={handleLoadMoreReviews}
+      />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FAFAFA",
+  },
+  thickDivider: {
+    height: 4,
+  },
+});

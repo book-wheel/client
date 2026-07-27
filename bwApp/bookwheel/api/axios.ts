@@ -1,12 +1,25 @@
-import axios from "axios";
+import { create, isAxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 
-const api = axios.create({
+import type { ApiResponse } from "@/types/api";
+
+const api = create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
   timeout: 5000,
 });
+
+export const getApiErrorMessage = (
+  error: unknown,
+  fallbackMessage: string,
+) => {
+  if (isAxiosError<ApiResponse<unknown>>(error)) {
+    return error.response?.data?.error?.message ?? fallbackMessage;
+  }
+
+  return error instanceof Error ? error.message : fallbackMessage;
+};
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");

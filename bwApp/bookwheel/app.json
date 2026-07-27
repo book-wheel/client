@@ -14,7 +14,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "transparent",
+        "backgroundColor": "#F7EDE0",
         "backgroundImage": "./assets/images/transparent.png",
         "foregroundImage": "./assets/images/logo.png"
       },
@@ -39,7 +39,8 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

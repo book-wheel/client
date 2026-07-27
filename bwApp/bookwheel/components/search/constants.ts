@@ -43,7 +43,7 @@ export const filterKeys: FilterKey[] = ["category", "publishedAt", "volume"];
 
 export const searchBooks: BookSearchItem[] = [
   {
-    id: "1",
+    isbn: "1",
     title: "불편한 편의점",
     author: "김호연",
     publisher: "나무옆의자",
@@ -54,7 +54,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "2",
+    isbn: "2",
     title: "불편한 편의점2",
     author: "김호연",
     publisher: "나무옆의자",
@@ -65,7 +65,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "3",
+    isbn: "9791161571188",
     title: "내 남편을 팝니다",
     author: "고요한",
     publisher: "나무옆의자",
@@ -76,7 +76,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "4",
+    isbn: "4",
     title: "괴테는 모든 것을 말했다",
     author: "구병모",
     publisher: "창비",
@@ -87,7 +87,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "5",
+    isbn: "5",
     title: "어린왕자",
     author: "앙투안 드 생텍쥐페리",
     publisher: "열린책들",
@@ -98,7 +98,7 @@ export const searchBooks: BookSearchItem[] = [
     image: bookImage,
   },
   {
-    id: "6",
+    isbn: "6",
     title: "아무튼, 메모",
     author: "정혜윤",
     publisher: "위고",

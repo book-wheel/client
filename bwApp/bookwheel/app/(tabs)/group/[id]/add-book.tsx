@@ -54,7 +54,7 @@ export default function AddBook() {
         author: selectedBook.author,
         publisher: selectedBook.publisher,
         pubDate: selectedBook.pubDate ?? "",
-        coverImage: selectedBook.cover,
+        coverImage: selectedBook.cover ?? "",
         totalPage: selectedBook.itemPage,
         bookCondition,
         noteToReader,

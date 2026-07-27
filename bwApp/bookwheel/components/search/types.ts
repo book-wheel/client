@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from "react-native";
 
 export type BookSearchItem = {
-  id: string;
+  isbn: string;
   title: string;
   author: string;
   publisher: string;

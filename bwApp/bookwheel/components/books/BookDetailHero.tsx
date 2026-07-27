@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ImageSourcePropType } from "react-native";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   title: string;
@@ -8,6 +8,7 @@ interface Props {
   pageCount: string;
   cover: ImageSourcePropType;
   isInterested: boolean;
+  isInterestLoading: boolean;
   onToggleInterest: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function BookDetailHero({
   pageCount,
   cover,
   isInterested,
+  isInterestLoading,
   onToggleInterest,
 }: Props) {
   return (
@@ -27,26 +29,40 @@ export default function BookDetailHero({
           <TouchableOpacity
             accessibilityLabel={isInterested ? "관심도서 해제" : "관심도서 등록"}
             accessibilityRole="button"
+            accessibilityState={{
+              disabled: isInterestLoading,
+              busy: isInterestLoading,
+            }}
             activeOpacity={0.75}
             onPress={onToggleInterest}
-            style={styles.interestButton}
+            style={[styles.interestButton, isInterestLoading && styles.interestButtonDisabled, ]}
           >
+            {isInterestLoading ? (
+              <ActivityIndicator size="small" color="#513A11" />
+             ) : (
             <Ionicons
               name={isInterested ? "heart" : "heart-outline"}
               size={24}
               color={isInterested ? "#E4A54E" : "#513A11"}
             />
+            )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.infoBadge}>
           <Text style={styles.bookTitle}>&lt; {title} &gt;</Text>
           <View style={styles.subInfoRow}>
-            <View style={styles.smallBadge}>
-              <Text style={styles.smallBadgeText}>{author}</Text>
-            </View>
+            
             <View style={styles.smallBadge}>
               <Text style={styles.smallBadgeText}>{pageCount}</Text>
+            </View>
+            <View style={styles.smallBadge}>
+              <Text
+                style={[styles.smallBadgeText, styles.authorText]}
+                numberOfLines={1}
+              >
+                {author}
+              </Text>
             </View>
           </View>
         </View>
@@ -119,5 +135,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#7A6F5C",
     fontWeight: "600",
+  },
+  authorText: {
+    maxWidth: 100,
+  },
+  interestButtonDisabled: {
+  opacity: 0.6,
   },
 });
