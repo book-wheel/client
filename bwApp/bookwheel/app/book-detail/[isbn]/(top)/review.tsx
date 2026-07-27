@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { getApiErrorMessage } from "@/api/axios";
@@ -19,9 +19,12 @@ import type { BookReviewContent } from "@/types/books";
 
 const REVIEW_PAGE_SIZE = 5;
 
-function parseReviewDate(date: string) {
-  return new Date(date.replace(/\./g, "-")).getTime();
-}
+type ReviewSortParam = "latest" | "popular";
+
+const REVIEW_SORT_PARAMS = {
+  최신순: "latest",
+  인기순: "popular",
+} as const satisfies Record<SortType, ReviewSortParam>;
 
 function mapBookReviewToReviewItem(
   review: BookReviewContent,
@@ -104,11 +107,15 @@ export default function Review() {
     void fetchReviewStats();
   }, [isbn]);
 
+  
+
   useEffect(() => {
     if (!isbn) return;
 
     const requestId = ++reviewRequestId.current;
     loadingMoreReviewsRef.current = false;
+    setReviewPage(0);
+    setHasNextReviewPage(false);
     setIsLoadingMoreReviews(false);
 
     const fetchReviews = async () => {
@@ -116,10 +123,7 @@ export default function Review() {
         const response = await getBookReviews(
           isbn,
           {
-            sort:
-            sortType === "최신순"
-            ? "latest"
-            : "popular",
+            sort: REVIEW_SORT_PARAMS[sortType],
             page: 0,
             size: REVIEW_PAGE_SIZE,
           }
@@ -153,15 +157,6 @@ export default function Review() {
     void fetchReviews();
   }, [isbn, sortType]);
 
-  const sortedReviews = useMemo(() => {
-    return [...reviews].sort((a, b) => {
-      if (sortType === "인기순" && b.likes !== a.likes) {
-        return b.likes - a.likes;
-      }
-
-      return parseReviewDate(b.date) - parseReviewDate(a.date);
-    });
-  }, [reviews, sortType]);
 
   const handleVote = async (vote: VoteKind) => {
     if (!isbn) return;
@@ -219,7 +214,7 @@ export default function Review() {
 
     try {
       const response = await getBookReviews(isbn, {
-        sort: sortType === "최신순" ? "latest" : "popular",
+        sort: REVIEW_SORT_PARAMS[sortType],
         page: reviewPage + 1,
         size: REVIEW_PAGE_SIZE,
       });
@@ -254,9 +249,8 @@ export default function Review() {
         getApiErrorMessage(error, "리뷰를 더 불러오지 못했습니다."),
       );
     } finally {
-      loadingMoreReviewsRef.current = false;
-
       if (requestId === reviewRequestId.current) {
+        loadingMoreReviewsRef.current = false;
         setIsLoadingMoreReviews(false);
       }
     }
@@ -360,7 +354,7 @@ export default function Review() {
       />
       <View style={styles.thickDivider} />
       <ReviewList
-        reviews={sortedReviews}
+        reviews={reviews}
         sortType={sortType}
         isSortDropdownOpen={isSortDropdownOpen}
         totalReviewCount={totalReviewCount}
