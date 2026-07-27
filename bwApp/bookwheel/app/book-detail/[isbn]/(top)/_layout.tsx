@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { router, Stack, useLocalSearchParams, withLayoutContext } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getBookDetail, toggleBookLike } from "@/api/books";
 import { getApiErrorMessage } from "@/api/axios";
+import { getBookDetail, toggleBookLike } from "@/api/books";
 import BookDetailHero from "@/components/books/BookDetailHero";
 import { BookDetailContext } from "@/contexts/book-detail";
 import type { BookDetailContent } from "@/types/books";
@@ -25,6 +25,9 @@ export default function BookDetailTabsLayout() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isInterested, setIsInterested] = useState(false);
+  const [isInterestLoading, setIsInterestLoading] = useState(false);
+
+  const interestRequestingRef = useRef(false);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -36,8 +39,10 @@ export default function BookDetailTabsLayout() {
   };
 
   const handleToggleInterest = async () => {
-    if (!isbn) return;
+    if (!isbn || interestRequestingRef.current) return;
 
+    interestRequestingRef.current = true;
+    setIsInterestLoading(true);
     try {
       const response = await toggleBookLike(isbn);
       const result = response.data;
@@ -52,11 +57,16 @@ export default function BookDetailTabsLayout() {
         "관심 도서 상태 변경 실패:",
         getApiErrorMessage(error, "관심 도서 상태 변경에 실패했습니다."),
       );
+    } finally {
+      interestRequestingRef.current = false;
+      setIsInterestLoading(false);
     }
   }
 
   useEffect(() => {
     if (!isbn) return;
+
+    let isActive = true;
 
     const fetchBookDetail = async () => {
       setBook(null);
@@ -68,8 +78,17 @@ export default function BookDetailTabsLayout() {
         const result = response.data;
 
         if (!result.success || !result.data) {
-          throw new Error(result.error?.message ?? "도서 정보를 불러오지 못했습니다.");
+          if (!isActive) return;
+
+          setError(
+            new Error(
+              result.error?.message ?? "도서 정보를 불러오지 못했습니다.",
+            ),
+          );
+          return;
         }
+
+        if (!isActive) return;
 
         setBook(result.data);
         setIsInterested(result.data.isInterested);
@@ -82,11 +101,15 @@ export default function BookDetailTabsLayout() {
         console.error("도서 정보 조회 실패:", message);
         setError(new Error(message));
       } finally {
-        setIsLoading(false);
+        if (isActive) setIsLoading(false);
       }
     };
 
     void fetchBookDetail();
+
+    return () => {
+      isActive = false;
+    };
   }, [isbn]);
 
   return (
@@ -113,6 +136,7 @@ export default function BookDetailTabsLayout() {
           pageCount={book?.itemPage ? `${book.itemPage}p` : "페이지 정보 없음"}
           cover={book?.cover ? { uri: book.cover } : require("@/assets/images/book.png")}
           isInterested={isInterested}
+          isInterestLoading={isInterestLoading}
           onToggleInterest={handleToggleInterest}
         />
 

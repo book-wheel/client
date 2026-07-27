@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ImageSourcePropType } from "react-native";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface Props {
   title: string;
@@ -8,6 +8,7 @@ interface Props {
   pageCount: string;
   cover: ImageSourcePropType;
   isInterested: boolean;
+  isInterestLoading: boolean;
   onToggleInterest: () => void;
 }
 
@@ -17,6 +18,7 @@ export default function BookDetailHero({
   pageCount,
   cover,
   isInterested,
+  isInterestLoading,
   onToggleInterest,
 }: Props) {
   return (
@@ -27,15 +29,23 @@ export default function BookDetailHero({
           <TouchableOpacity
             accessibilityLabel={isInterested ? "관심도서 해제" : "관심도서 등록"}
             accessibilityRole="button"
+            accessibilityState={{
+              disabled: isInterestLoading,
+              busy: isInterestLoading,
+            }}
             activeOpacity={0.75}
             onPress={onToggleInterest}
-            style={styles.interestButton}
+            style={[styles.interestButton, isInterestLoading && styles.interestButtonDisabled, ]}
           >
+            {isInterestLoading ? (
+              <ActivityIndicator size="small" color="#513A11" />
+             ) : (
             <Ionicons
               name={isInterested ? "heart" : "heart-outline"}
               size={24}
               color={isInterested ? "#E4A54E" : "#513A11"}
             />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -128,5 +138,8 @@ const styles = StyleSheet.create({
   },
   authorText: {
     maxWidth: 100,
+  },
+  interestButtonDisabled: {
+  opacity: 0.6,
   },
 });
