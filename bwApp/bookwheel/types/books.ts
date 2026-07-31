@@ -78,9 +78,9 @@ export type CreateBookReviewRequest = {
 export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
 
 export type BookGalleryContent = {
-  galleryId: number;
+  postId: number;
   isbn: string;
-  thumbnailUrl: string;
+  thumbnailUrl: string | null;
   imageCount: number;
   createdAt: string;
 };

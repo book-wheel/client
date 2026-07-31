@@ -64,8 +64,8 @@ export default function Gallery() {
   const galleryItems = useMemo<GalleryItem[]>(
     () =>
       galleryPosts.map((post) => ({
-        id: String(post.galleryId),
-        image: { uri: post.thumbnailUrl },
+        id: String(post.postId),
+        image: post.thumbnailUrl ? { uri: post.thumbnailUrl } : undefined,
         extraCount:
           post.imageCount > 1 ? post.imageCount - 1 : undefined,
       })),
@@ -81,12 +81,12 @@ export default function Gallery() {
     router.push("/books");
   };
 
-  const handlePressGalleryItem = (galleryId: string) => {
+  const handlePressGalleryItem = (postId: string) => {
     router.push({
       pathname: "../[galleryId]/post",
       params: {
         isbn,
-        galleryId,
+        galleryId: postId,
       },
     });
   };

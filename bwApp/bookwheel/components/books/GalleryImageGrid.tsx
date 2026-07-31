@@ -38,7 +38,15 @@ export default function GalleryImageGrid({
           activeOpacity={0.8}
           onPress={() => onPressItem(item)}
         >
-          <Image source={item.image} style={styles.image} />
+          {item.image ? (
+            <Image source={item.image} style={styles.image} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderText}>
+                이미지를{"\n"}찾을 수 없습니다.
+              </Text>
+            </View>
+          )}
 
           {!!item.extraCount && (
             <View style={styles.countBadge}>
@@ -86,6 +94,19 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F1F1",
+  },
+  placeholderText: {
+    color: "#929292",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
   },
   countBadge: {
     position: "absolute",

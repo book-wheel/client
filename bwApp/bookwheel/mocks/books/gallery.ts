@@ -7,12 +7,12 @@ export const mockBookGalleryResponse: BookGalleryResponse = {
   success: true,
   data: {
     content: Array.from({ length: 18 }, (_, index) => {
-      const galleryId = index + 1;
+      const postId = index + 1;
 
       return {
-        galleryId,
+        postId,
         isbn: "9788936434120",
-        thumbnailUrl: `https://cdn.example.com/gallery/${galleryId}-1.jpg`,
+        thumbnailUrl: `https://cdn.example.com/gallery/${postId}-1.jpg`,
         imageCount: index % 3 === 0 ? 4 : 1,
         createdAt: "2026-05-09T12:30:00Z",
       };
@@ -27,7 +27,7 @@ export const mockBookGalleryResponse: BookGalleryResponse = {
 
 export const mockGalleryItems: GalleryItem[] =
   (mockBookGalleryResponse.data?.content ?? []).map((item) => ({
-    id: String(item.galleryId),
+    id: String(item.postId),
     image: galleryImage,
     extraCount: item.imageCount > 1 ? item.imageCount - 1 : undefined,
   }));
