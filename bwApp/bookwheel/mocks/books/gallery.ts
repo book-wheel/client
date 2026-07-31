@@ -11,7 +11,7 @@ export const mockBookGalleryResponse: BookGalleryResponse = {
 
       return {
         galleryId,
-        bookId: 1,
+        isbn: "9788936434120",
         thumbnailUrl: `https://cdn.example.com/gallery/${galleryId}-1.jpg`,
         imageCount: index % 3 === 0 ? 4 : 1,
         createdAt: "2026-05-09T12:30:00Z",

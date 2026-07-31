@@ -16,8 +16,8 @@ import type {
 } from "@/types/books";
 import api from "./axios";
 
-export const getBookGallery = (params?: BookGalleryParams) => {
-  return api.get<BookGalleryResponse>("/books/gallery", { params });
+export const getBookGallery = (isbn: string, params?: BookGalleryParams) => {
+  return api.get<BookGalleryResponse>(`/books/${isbn}/gallery`, { params });
 };
 
 export const getInterestedBooks = (params?: InterestedBooksParams) => {

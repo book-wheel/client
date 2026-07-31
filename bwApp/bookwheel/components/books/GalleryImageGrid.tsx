@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -16,10 +17,17 @@ const itemSize = (width - gap * (numColumns - 1)) / numColumns;
 
 type Props = {
   items: GalleryItem[];
+  isLoading?: boolean;
+  onEndReached?: () => void;
   onPressItem: (item: GalleryItem) => void;
 };
 
-export default function GalleryImageGrid({ items, onPressItem }: Props) {
+export default function GalleryImageGrid({
+  items,
+  isLoading = false,
+  onEndReached,
+  onPressItem,
+}: Props) {
   return (
     <FlatList
       data={items}
@@ -43,6 +51,15 @@ export default function GalleryImageGrid({ items, onPressItem }: Props) {
       contentContainerStyle={styles.listContainer}
       columnWrapperStyle={styles.columnWrapper}
       showsVerticalScrollIndicator={false}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#E4A54E" />
+          </View>
+        ) : null
+      }
     />
   );
 }
@@ -54,6 +71,9 @@ const styles = StyleSheet.create({
   columnWrapper: {
     gap,
     marginBottom: gap,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
   },
   imageContainer: {
     width: itemSize,
