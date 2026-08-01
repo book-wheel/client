@@ -11,7 +11,8 @@ import AuthCard from "@/components/card";
 
 import { login } from "@/api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "@/api/axios";
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default function Login() {
   const [userId, setUserId] = useState("");
@@ -72,9 +73,10 @@ export default function Login() {
   };
 
   // 소셜 로그인 핸들러
-  const handleSocialLogin = (provider: "google" | "kakao") => {
-    const url = `http://43.200.65.32:8080/api/v1/auth/authorize/${provider}`;
-    Linking.openURL(url);
+  const handleSocialLogin = async (provider: "google" | "kakao") => {
+    const url = `${API_BASE_URL}/auth/authorize/${provider}`;
+
+    await Linking.openURL(url);
   };
 
   return (
