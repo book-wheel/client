@@ -3,16 +3,17 @@ import { getBookGallery } from "@/api/books";
 import GalleryImageGrid from "@/components/books/GalleryImageGrid";
 import type { GalleryItem } from "@/components/books/types";
 import { Colors } from "@/constants/theme";
+import { useBookDetail } from "@/contexts/book-detail";
 import { useCursorPagination } from "@/hooks/useCursorPagination";
 import type { CursorParams } from "@/types/api";
 import type { BookGalleryContent } from "@/types/books";
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { useCallback, useEffect, useMemo } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
 export default function Gallery() {
-  const { isbn } = useLocalSearchParams<{ isbn: string }>();
+  const { isbn } = useBookDetail();
 
   const fetchGalleryPage = useCallback(
     async (params: CursorParams) => {
@@ -27,6 +28,7 @@ export default function Gallery() {
         );
       }
 
+      console.log("갤러리 목록:", result.data.content);
       return result.data;
     },
     [isbn],

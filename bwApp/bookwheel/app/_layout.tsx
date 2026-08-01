@@ -41,7 +41,7 @@ export default function RootLayout() {
                         options={{
                             headerShown: false,
                             presentation: "transparentModal",
-                            animation: "fade",
+                            animation: "none",
                             contentStyle: { backgroundColor: "transparent" },
                         }}
                     />

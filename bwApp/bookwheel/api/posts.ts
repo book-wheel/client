@@ -1,4 +1,8 @@
-import type { ApiResponse } from "@/types/api";
+import type {
+  ApiResponse,
+  CursorPage,
+  CursorParams,
+} from "@/types/api";
 import api from "./axios";
 
 type SavePostRequest = {
@@ -35,6 +39,19 @@ export type PostDetailData = {
 type PostDetailResponse = ApiResponse<PostDetailData>;
 type TogglePostLikeResponse = ApiResponse<string>;
 
+export type PostCommentData = {
+  commentId: number;
+  postId: number;
+  author: string;
+  profileImageUrl: string | null;
+  content: string;
+  isMine: boolean;
+  createdAt: string;
+};
+
+type PostCommentListResponse = ApiResponse<CursorPage<PostCommentData>>;
+type CreatePostCommentResponse = ApiResponse<string>;
+
 export const savePost = (body: SavePostRequest) => {
   return api.post<SavePostResponse>(
     `/posts/${encodeURIComponent(body.isbn)}/save`,
@@ -48,4 +65,19 @@ export const getPostDetail = (postId: number) => {
 
 export const togglePostLike = (postId: number) => {
   return api.post<TogglePostLikeResponse>(`/posts/${postId}/likes`);
+};
+
+export const getPostComments = (
+  postId: number,
+  params?: CursorParams,
+) => {
+  return api.get<PostCommentListResponse>(`/posts/${postId}/comments`, {
+    params,
+  });
+};
+
+export const createPostComment = (postId: number, content: string) => {
+  return api.post<CreatePostCommentResponse>(`/posts/${postId}/comments`, {
+    content,
+  });
 };

@@ -10,6 +10,7 @@ import PostContentSection from "@/components/post/PostContentSection";
 import PostImageSection from "@/components/post/PostImageSection";
 import { ThemedView } from "@/components/themed-view";
 import { getRelativeTime } from "@/components/utils/date";
+import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -19,6 +20,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -35,6 +37,15 @@ export default function PostDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  const handleGoBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace(`/book-detail/${isbn}/gallery`);
+  };
 
   useEffect(() => {
     // 갤러리에서 넘겨준 값은 게시글 번호(postId)
@@ -119,10 +130,22 @@ export default function PostDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen
         options={{
-          headerShown: true,
-          title: "게시글 상세",
+          headerShown: false,
         }}
       />
+
+      <View style={styles.header}>
+        <TouchableOpacity
+          accessibilityLabel="뒤로가기"
+          accessibilityRole="button"
+          activeOpacity={0.7}
+          onPress={handleGoBack}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={30} color="#513A11" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>게시글 상세</Text>
+      </View>
 
       {isLoading ? (
         <View style={styles.center}>
@@ -184,6 +207,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  backButton: {
+    width: 38,
+    height: 38,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    marginLeft: 6,
+    color: "#513A11",
+    fontSize: 27,
+    fontWeight: "900",
   },
   center: {
     flex: 1,

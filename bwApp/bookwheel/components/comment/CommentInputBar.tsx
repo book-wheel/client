@@ -6,12 +6,14 @@ interface Props {
     value: string;
     onChangeText: (text: string) => void;
     onSubmit: () => void;
+    isSubmitting?: boolean;
 }
 
 export default function CommentInputBar({
                                             value,
                                             onChangeText,
                                             onSubmit,
+                                            isSubmitting = false,
                                         }: Props) {
     return (
         <View style={styles.inputSection}>
@@ -29,9 +31,9 @@ export default function CommentInputBar({
                 <TouchableOpacity
                     style={[
                         styles.submitButton,
-                        !value.trim() && styles.submitButtonDisabled,
+                        (!value.trim() || isSubmitting) && styles.submitButtonDisabled,
                     ]}
-                    disabled={!value.trim()}
+                    disabled={!value.trim() || isSubmitting}
                     onPress={onSubmit}
                 >
                     <ThemedText style={styles.submitButtonText}>게시</ThemedText>

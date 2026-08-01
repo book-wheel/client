@@ -1,123 +1,207 @@
-﻿import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
+import { getApiErrorMessage } from "@/api/axios";
+import {
+  createPostComment,
+  getPostComments,
+  type PostCommentData,
+} from "@/api/posts";
+import CommentInputBar from "@/components/comment/CommentInputBar";
+import CommentList, {
+  type CommentItem,
+} from "@/components/comment/CommentList";
+import CommentSheetHeader from "@/components/comment/CommentSheetHeader";
+import { ThemedView } from "@/components/themed-view";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
+import type { CursorParams } from "@/types/api";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-import { ThemedView } from '@/components/themed-view';
-import CommentSheetHeader from '@/components/comment/CommentSheetHeader';
-import CommentList from '@/components/comment/CommentList';
-import CommentInputBar from '@/components/comment/CommentInputBar';
-
-export type CommentItem = {
-    id: string;
-    author: string;
-    content: string;
-    profileImage: any;
-    isMine: boolean;
-    createdAt: string;
-};
-
-const INITIAL_COMMENTS: CommentItem[] = [
-    {
-        id: '1',
-        author: '김주옥',
-        content: '책 표지가 너무 예뻐요! 저도 읽어봐야겠어요.',
-        profileImage: require('@/assets/images/logo.png'),
-        isMine: false,
-        createdAt: '2026-03-24T14:35:00',
-    },
-    {
-        id: '2',
-        author: '조해연',
-        content: '공감되는 리뷰네요. 특히 후반부 전개가 인상 깊었죠.',
-        profileImage: require('@/assets/images/logo.png'),
-        isMine: false,
-        createdAt: '2026-03-24T15:10:00',
-    },
-    {
-        id: '3',
-        author: '탁은혜',
-        content: '좋은 책 추천 감사합니다~ 당장 구매하러 갑니다🏃‍♀️',
-        profileImage: require('@/assets/images/logo.png'),
-        isMine: false,
-        createdAt: '2026-03-24T16:25:00',
-    },
-];
+const defaultProfileImage = require("@/assets/images/logo.png");
 
 export default function CommentSheetScreen() {
-    const router = useRouter();
-    const bottomSheetRef = useRef<BottomSheet>(null);
+  const router = useRouter();
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
-    const [inputText, setInputText] = useState('');
-    const [comments, setComments] = useState<CommentItem[]>(INITIAL_COMMENTS);
+  const { galleryId } = useLocalSearchParams<{ galleryId: string }>();
+  const postId = Number(galleryId);
 
-    const snapPoints = useMemo(() => ['40%', '70%', '90%'], []);
+  const [inputText, setInputText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSheetChanges = useCallback(
-        (index: number) => {
-            if (index === -1) router.back();
-        },
-        [router]
+  const snapPoints = useMemo(() => ["40%", "70%", "90%"], []);
+
+  // 서버에서 댓글 한 페이지 가져옴
+  const fetchCommentPage = useCallback(
+    async (params: CursorParams) => {
+      if (!postId) return null;
+
+      const response = await getPostComments(postId, params);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "댓글을 불러오지 못했습니다.",
+        );
+      }
+
+      return result.data;
+    },
+    [postId],
+  );
+
+  // 첫 댓글 목록과 스크롤할 때 필요한 다음 목록 관리
+  const {
+    items,
+    totalElements,
+    isLoading,
+    error,
+    loadInitial,
+    loadMore,
+    refresh,
+    reset,
+  } = useCursorPagination<PostCommentData>({
+    fetchPage: fetchCommentPage,
+    pageSize: 20,
+  });
+
+  // 댓글창이 처음 열리면 첫 번째 댓글 목록을 불러옴
+  useEffect(() => {
+    reset();
+
+    if (postId) {
+      void loadInitial();
+    } else {
+      console.error("댓글 조회 실패: 게시글 번호가 올바르지 않습니다.");
+    }
+  }, [loadInitial, postId, reset]);
+
+  useEffect(() => {
+    if (!error) return;
+
+    console.error(
+      "댓글 조회 실패:",
+      getApiErrorMessage(error, "댓글을 불러오지 못했습니다."),
     );
+  }, [error]);
 
-    const handleSubmitComment = () => {
-        const trimmedText = inputText.trim();
-        if (!trimmedText) return;
+  // 서버 댓글 데이터를 댓글 컴포넌트가 사용하는 모양으로 변경
+  const comments = useMemo<CommentItem[]>(
+    () =>
+      items.map((comment) => ({
+        id: String(comment.commentId),
+        author: comment.author,
+        content: comment.content,
+        profileImage: comment.profileImageUrl
+          ? { uri: comment.profileImageUrl }
+          : defaultProfileImage,
+        isMine: comment.isMine,
+        createdAt: comment.createdAt,
+      })),
+    [items],
+  );
 
-        const newComment: CommentItem = {
-            id: Date.now().toString(),
-            author: '문소희',
-            content: trimmedText,
-            profileImage: require('@/assets/images/logo.png'),
-            isMine: true,
-            createdAt: new Date().toISOString(),
-        };
+  // 댓글창을 아래로 끝까지 내리면 댓글장 총료
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      if (index === -1) router.back();
+    },
+    [router],
+  );
 
-        setComments((prev) => [newComment, ...prev]);
-        setInputText('');
-    };
+  // 입력한 내용을 서버에 저장
+  const handleSubmitComment = async () => {
+    const content = inputText.trim();
 
-    const handleDeleteComment = (commentId: string) => {
-        setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-    };
+    if (!content || !postId || isSubmitting) return;
 
-    return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaView style={styles.safeArea}>
-                <View style={styles.backgroundContainer}>
-                    <BottomSheet
-                        ref={bottomSheetRef}
-                        index={1}
-                        snapPoints={snapPoints}
-                        enablePanDownToClose
-                        onChange={handleSheetChanges}
-                        handleIndicatorStyle={styles.dragHandle}
-                        backgroundStyle={styles.bottomSheetBackground}
-                    >
-                        <ThemedView style={styles.sheetContainer}>
-                            <CommentSheetHeader count={comments.length} />
-                            <CommentList comments={comments} onDelete={handleDeleteComment} />
-                        </ThemedView>
-                    </BottomSheet>
-                </View>
+    setIsSubmitting(true);
 
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={styles.fixedBottomInput}
-                >
-                    <CommentInputBar
-                        value={inputText}
-                        onChangeText={setInputText}
-                        onSubmit={handleSubmitComment}
-                    />
-                </KeyboardAvoidingView>
-            </SafeAreaView>
-        </GestureHandlerRootView>
-    );
+    try {
+      const response = await createPostComment(postId, content);
+      const result = response.data;
+
+      if (!result.success) {
+        throw new Error(
+          result.error?.message ?? "댓글 작성에 실패했습니다.",
+        );
+      }
+
+      setInputText("");
+
+      // 댓글 목록 다시 로딩
+      await refresh();
+    } catch (submitError) {
+      const message = getApiErrorMessage(
+        submitError,
+        "댓글 작성에 실패했습니다.",
+      );
+
+      console.error("댓글 작성 실패:", message);
+      Alert.alert("알림", message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.backgroundContainer}>
+          <BottomSheet
+            ref={bottomSheetRef}
+            index={2}
+            snapPoints={snapPoints}
+            enableDynamicSizing={false}
+            enablePanDownToClose
+            onChange={handleSheetChanges}
+            handleIndicatorStyle={styles.dragHandle}
+            backgroundStyle={styles.bottomSheetBackground}
+          >
+            <ThemedView style={styles.sheetContainer}>
+              <CommentSheetHeader count={totalElements} />
+              <CommentList
+                comments={comments}
+                isLoading={isLoading}
+                onEndReached={() => void loadMore()}
+                errorMessage={
+                  error
+                    ? getApiErrorMessage(error, "댓글을 불러오지 못했습니다.")
+                    : undefined
+                }
+              />
+            </ThemedView>
+          </BottomSheet>
+        </View>
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.fixedBottomInput}
+        >
+          <CommentInputBar
+            value={inputText}
+            onChangeText={setInputText}
+            onSubmit={() => void handleSubmitComment()}
+            isSubmitting={isSubmitting}
+          />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
+  );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
     safeArea: {
         flex: 1,
         backgroundColor: 'transparent',

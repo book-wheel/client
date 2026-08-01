@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { getRelativeTime } from '@/components/utils/date';
+import React from 'react';
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface CommentItem {
     id: string;
@@ -14,12 +14,14 @@ interface CommentItem {
 
 interface Props {
     item: CommentItem;
-    onDelete: (id: string) => void;
+    onDelete?: (id: string) => void;
     onReport?: (id: string) => void;
 }
 
 export default function CommentItemRow({ item, onDelete, onReport }: Props) {
     const handlePressDelete = () => {
+        if (!onDelete) return;
+
         Alert.alert(
             '댓글 삭제',
             '댓글을 삭제하시겠습니까?',
@@ -75,9 +77,11 @@ export default function CommentItemRow({ item, onDelete, onReport }: Props) {
 
                     <View style={styles.actionRow}>
                         {item.isMine ? (
-                            <TouchableOpacity onPress={handlePressDelete} activeOpacity={0.7}>
-                                <ThemedText style={styles.actionText}>삭제</ThemedText>
-                            </TouchableOpacity>
+                            onDelete ? (
+                                <TouchableOpacity onPress={handlePressDelete} activeOpacity={0.7}>
+                                    <ThemedText style={styles.actionText}>삭제</ThemedText>
+                                </TouchableOpacity>
+                            ) : null
                         ) : (
                             <TouchableOpacity onPress={handlePressReport} activeOpacity={0.7}>
                                 <ThemedText style={styles.actionText}>신고</ThemedText>

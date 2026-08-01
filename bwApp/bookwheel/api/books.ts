@@ -21,11 +21,11 @@ export const getBookGallery = (isbn: string, params?: BookGalleryParams) => {
 };
 
 export const getInterestedBooks = (params?: InterestedBooksParams) => {
-  return api.get<InterestedBooksResponse>("/books/interests", { params });
+  return api.get<InterestedBooksResponse>(`/books/interests`, { params });
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {
-  return api.get<BookSearchResponse>("/books/search", {
+  return api.get<BookSearchResponse>(`/books/search`, {
     params: {
       query,
       sort: "accuracy",
