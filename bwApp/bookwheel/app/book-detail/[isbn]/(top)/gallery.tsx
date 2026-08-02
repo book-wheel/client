@@ -85,10 +85,10 @@ export default function Gallery() {
 
   const handlePressGalleryItem = (postId: string) => {
     router.push({
-      pathname: "../[galleryId]/post",
+      pathname: "../[postId]/post",
       params: {
         isbn,
-        galleryId: postId,
+        postId,
       },
     });
   };

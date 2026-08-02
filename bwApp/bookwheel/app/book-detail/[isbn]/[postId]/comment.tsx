@@ -31,8 +31,8 @@ export default function CommentSheetScreen() {
   const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const { galleryId } = useLocalSearchParams<{ galleryId: string }>();
-  const postId = Number(galleryId);
+  const { postId: postIdParam } = useLocalSearchParams<{ postId: string }>();
+  const postId = Number(postIdParam);
 
   const [inputText, setInputText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

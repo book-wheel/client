@@ -28,9 +28,9 @@ const defaultProfileImage = require("@/assets/images/logo.png");
 
 export default function PostDetailScreen() {
   const router = useRouter();
-  const { isbn, galleryId } = useLocalSearchParams<{
+  const { isbn, postId: postIdParam } = useLocalSearchParams<{
     isbn: string;
-    galleryId: string;
+    postId: string;
   }>();
 
   const [post, setPost] = useState<PostDetailData | null>(null);
@@ -48,8 +48,7 @@ export default function PostDetailScreen() {
   };
 
   useEffect(() => {
-    // 갤러리에서 넘겨준 값은 게시글 번호(postId)
-    const postId = Number(galleryId);
+    const postId = Number(postIdParam);
 
     setPost(null);
     setErrorMessage("");
@@ -84,7 +83,7 @@ export default function PostDetailScreen() {
     };
 
     void loadPost();
-  }, [galleryId]);
+  }, [postIdParam]);
 
   const handleLikePress = async () => {
     if (!post || isLikeLoading) return;
@@ -183,7 +182,7 @@ export default function PostDetailScreen() {
               onLikePress={() => void handleLikePress()}
               onCommentPress={() =>
                 router.push(
-                  `/book-detail/${isbn}/${galleryId}/comment`,
+                  `/book-detail/${isbn}/${postIdParam}/comment`,
                 )
               }
             />
