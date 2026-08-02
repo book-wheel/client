@@ -3,15 +3,29 @@ import type {
   CreatePostCommentResponse,
   PostCommentListResponse,
   PostDetailResponse,
+  PostImagePresignedRequest,
+  PostImagePresignedResponse,
   SavePostRequest,
   SavePostResponse,
   TogglePostLikeResponse,
 } from "@/types/posts";
 import api from "./axios";
 
-export const savePost = (body: SavePostRequest) => {
+export const savePost = (
+  body: SavePostRequest
+) => {
   return api.post<SavePostResponse>(
     `/posts/${encodeURIComponent(body.isbn)}/save`,
+    body,
+  );
+};
+
+export const getPostImagePresignedUrls = (
+  isbn: string,
+  body: PostImagePresignedRequest,
+) => {
+  return api.post<PostImagePresignedResponse>(
+    `/posts/${encodeURIComponent(isbn)}/images/presigned-urls`,
     body,
   );
 };

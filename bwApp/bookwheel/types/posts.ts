@@ -1,13 +1,27 @@
 import type {
-  ApiResponse,
-  CursorPage,
-  CursorParams,
+    ApiResponse,
+    CursorPage,
+    CursorParams,
 } from "@/types/api";
+
+export type PostImagePresignedRequest = {
+    fileExtensions: string[];
+};
+
+export type PostImagePresignedData = {
+    presignedUrls: {
+        presignedUrl: string;
+        objectKey: string;
+    }[];
+};
+
+export type PostImagePresignedResponse = ApiResponse<PostImagePresignedData>;
 
 export type SavePostRequest = {
   isbn: string;
   content: string;
   objectKeys: string[];
+  groupId?: string | null;
 };
 
 export type SavePostData = {
