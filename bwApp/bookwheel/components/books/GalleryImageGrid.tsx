@@ -39,7 +39,11 @@ export default function GalleryImageGrid({
           onPress={() => onPressItem(item)}
         >
           {item.image ? (
-            <Image source={item.image} style={styles.image} />
+            <Image
+              source={item.image}
+              style={styles.image}
+              resizeMode="contain"
+            />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Text style={styles.placeholderText}>
@@ -86,21 +90,20 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: itemSize,
     height: itemSize,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#F5F2EC",
     position: "relative",
     overflow: "hidden",
   },
   image: {
     width: "100%",
     height: "100%",
-    resizeMode: "cover",
   },
   imagePlaceholder: {
     width: "100%",
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F1F1F1",
+    backgroundColor: "#F5F2EC",
   },
   placeholderText: {
     color: "#929292",
@@ -116,13 +119,13 @@ const styles = StyleSheet.create({
     height: 24,
     paddingHorizontal: 8,
     borderRadius: 9,
-    backgroundColor: "rgba(228, 228, 228, 0.68)",
+    backgroundColor: "rgba(81, 58, 17, 0.82)",
     justifyContent: "center",
     alignItems: "center",
   },
   countBadgeText: {
     fontSize: 11,
-    fontWeight: "500",
-    color: "#333",
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

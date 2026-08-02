@@ -8,7 +8,7 @@ import { useCursorPagination } from "@/hooks/useCursorPagination";
 import type { CursorParams } from "@/types/api";
 import type { PostGalleryContent } from "@/types/posts";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -46,13 +46,14 @@ export default function Gallery() {
     pageSize: 20,
   });
 
-  useEffect(() => {
-    reset();
+  useFocusEffect(
+    useCallback(() => {
+      if (!isbn) return;
 
-    if (isbn) {
+      reset();
       void loadInitial();
-    }
-  }, [isbn, loadInitial, reset]);
+    }, [isbn, loadInitial, reset]),
+  );
 
   useEffect(() => {
     if (!error) return;
@@ -80,7 +81,10 @@ export default function Gallery() {
       return;
     }
 
-    router.push("/books");
+    router.push({
+      pathname: "/book-detail/[isbn]/add-review",
+      params: { isbn },
+    });
   };
 
   const handlePressGalleryItem = (postId: string) => {
