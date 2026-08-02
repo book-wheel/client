@@ -1,56 +1,13 @@
+import type { CursorParams } from "@/types/api";
 import type {
-  ApiResponse,
-  CursorPage,
-  CursorParams,
-} from "@/types/api";
+  CreatePostCommentResponse,
+  PostCommentListResponse,
+  PostDetailResponse,
+  SavePostRequest,
+  SavePostResponse,
+  TogglePostLikeResponse,
+} from "@/types/posts";
 import api from "./axios";
-
-type SavePostRequest = {
-  isbn: string;
-  content: string;
-  objectKeys: string[];
-};
-
-type SavePostData = {
-  postId: number;
-  isbn: string;
-  content: string;
-  objectKeys: string[];
-  createdAt: string;
-};
-
-type SavePostResponse = ApiResponse<SavePostData>;
-
-export type PostDetailData = {
-  postId: number;
-  isbn: string;
-  author: string;
-  profileImageUrl: string | null;
-  groupName: string | null;
-  title: string | null;
-  content: string;
-  imageUrls: string[];
-  likeCount: number;
-  commentCount: number;
-  isLikedByMe: boolean;
-  createdAt: string;
-};
-
-type PostDetailResponse = ApiResponse<PostDetailData>;
-type TogglePostLikeResponse = ApiResponse<string>;
-
-export type PostCommentData = {
-  commentId: number;
-  postId: number;
-  author: string;
-  profileImageUrl: string | null;
-  content: string;
-  isMine: boolean;
-  createdAt: string;
-};
-
-type PostCommentListResponse = ApiResponse<CursorPage<PostCommentData>>;
-type CreatePostCommentResponse = ApiResponse<string>;
 
 export const savePost = (body: SavePostRequest) => {
   return api.post<SavePostResponse>(

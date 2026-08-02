@@ -2,7 +2,6 @@ import { getApiErrorMessage } from "@/api/axios";
 import {
   getPostDetail,
   togglePostLike,
-  type PostDetailData,
 } from "@/api/posts";
 import PostActionBar from "@/components/post/PostActionBar";
 import PostAuthorSection from "@/components/post/PostAuthorSection";
@@ -10,6 +9,7 @@ import PostContentSection from "@/components/post/PostContentSection";
 import PostImageSection from "@/components/post/PostImageSection";
 import { ThemedView } from "@/components/themed-view";
 import { getRelativeTime } from "@/components/utils/date";
+import type { PostDetailData } from "@/types/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";

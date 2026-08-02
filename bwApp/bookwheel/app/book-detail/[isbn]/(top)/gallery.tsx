@@ -1,12 +1,12 @@
 import { getApiErrorMessage } from "@/api/axios";
-import { getBookGallery } from "@/api/books";
+import { getPostGallery } from "@/api/books";
 import GalleryImageGrid from "@/components/books/GalleryImageGrid";
 import type { GalleryItem } from "@/components/books/types";
 import { Colors } from "@/constants/theme";
 import { useBookDetail } from "@/contexts/book-detail";
 import { useCursorPagination } from "@/hooks/useCursorPagination";
 import type { CursorParams } from "@/types/api";
-import type { BookGalleryContent } from "@/types/books";
+import type { PostGalleryContent } from "@/types/posts";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo } from "react";
@@ -19,7 +19,7 @@ export default function Gallery() {
     async (params: CursorParams) => {
       if (!isbn) return null;
 
-      const response = await getBookGallery(isbn, params);
+      const response = await getPostGallery(isbn, params);
       const result = response.data;
 
       if (!result.success || !result.data) {
@@ -41,7 +41,7 @@ export default function Gallery() {
     loadInitial,
     loadMore,
     reset,
-  } = useCursorPagination<BookGalleryContent>({
+  } = useCursorPagination<PostGalleryContent>({
     fetchPage: fetchGalleryPage,
     pageSize: 20,
   });
