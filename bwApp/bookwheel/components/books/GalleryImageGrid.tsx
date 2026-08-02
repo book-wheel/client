@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -16,10 +17,17 @@ const itemSize = (width - gap * (numColumns - 1)) / numColumns;
 
 type Props = {
   items: GalleryItem[];
+  isLoading?: boolean;
+  onEndReached?: () => void;
   onPressItem: (item: GalleryItem) => void;
 };
 
-export default function GalleryImageGrid({ items, onPressItem }: Props) {
+export default function GalleryImageGrid({
+  items,
+  isLoading = false,
+  onEndReached,
+  onPressItem,
+}: Props) {
   return (
     <FlatList
       data={items}
@@ -30,7 +38,15 @@ export default function GalleryImageGrid({ items, onPressItem }: Props) {
           activeOpacity={0.8}
           onPress={() => onPressItem(item)}
         >
-          <Image source={item.image} style={styles.image} />
+          {item.image ? (
+            <Image source={item.image} style={styles.image} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderText}>
+                이미지를{"\n"}찾을 수 없습니다.
+              </Text>
+            </View>
+          )}
 
           {!!item.extraCount && (
             <View style={styles.countBadge}>
@@ -43,6 +59,15 @@ export default function GalleryImageGrid({ items, onPressItem }: Props) {
       contentContainerStyle={styles.listContainer}
       columnWrapperStyle={styles.columnWrapper}
       showsVerticalScrollIndicator={false}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#E4A54E" />
+          </View>
+        ) : null
+      }
     />
   );
 }
@@ -55,6 +80,9 @@ const styles = StyleSheet.create({
     gap,
     marginBottom: gap,
   },
+  loadingContainer: {
+    paddingVertical: 20,
+  },
   imageContainer: {
     width: itemSize,
     height: itemSize,
@@ -66,6 +94,19 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F1F1F1",
+  },
+  placeholderText: {
+    color: "#929292",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
   },
   countBadge: {
     position: "absolute",

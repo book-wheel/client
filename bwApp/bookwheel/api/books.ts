@@ -16,16 +16,16 @@ import type {
 } from "@/types/books";
 import api from "./axios";
 
-export const getBookGallery = (params?: BookGalleryParams) => {
-  return api.get<BookGalleryResponse>("/books/gallery", { params });
+export const getBookGallery = (isbn: string, params?: BookGalleryParams) => {
+  return api.get<BookGalleryResponse>(`/books/${isbn}/gallery`, { params });
 };
 
 export const getInterestedBooks = (params?: InterestedBooksParams) => {
-  return api.get<InterestedBooksResponse>("/books/interests", { params });
+  return api.get<InterestedBooksResponse>(`/books/interests`, { params });
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {
-  return api.get<BookSearchResponse>("/books/search", {
+  return api.get<BookSearchResponse>(`/books/search`, {
     params: {
       query,
       sort: "accuracy",
