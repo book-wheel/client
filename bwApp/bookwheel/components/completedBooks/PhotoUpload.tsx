@@ -35,14 +35,20 @@ export default function PhotoUpload({
 
   useEffect(() => {
     if (images.length === 0) {
-      setCurrentIndex(0);
+      if (currentIndex !== 0) {
+        setCurrentIndex(0);
+      }
       return;
     }
 
-    const nextIndex = Math.min(currentIndex, images.length - 1);
-    setCurrentIndex(nextIndex);
+    const lastIndex = images.length - 1;
+
+    // 사진 삭제 후 현재 인덱스가 범위를 벗어난 경우에만 보정한다.
+    if (currentIndex <= lastIndex) return;
+
+    setCurrentIndex(lastIndex);
     listRef.current?.scrollToIndex({
-      index: nextIndex,
+      index: lastIndex,
       animated: false,
     });
   }, [currentIndex, images.length]);
