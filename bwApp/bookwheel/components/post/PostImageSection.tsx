@@ -72,7 +72,7 @@ export default function PostImageSection({ images }: Props) {
                             },
                         ]}
                     >
-                        <Image source={item} style={styles.image} resizeMode="cover" />
+                        <Image source={item} style={styles.image} resizeMode="contain" />
                     </View>
                 )}
             />
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     imagePage: {
-        backgroundColor: '#F6F6F6',
+        backgroundColor: '#F5F2EC',
         overflow: 'hidden',
     },
     image: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
         height: 28,
         paddingHorizontal: 8,
         borderRadius: 10,
-        backgroundColor: "rgba(252,245,215,0.92)",
+        backgroundColor: "rgba(81,58,17,0.82)",
         justifyContent: "center",
         alignItems: "center",
     },
@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
         width: 5,
         height: 5,
         borderRadius: 2.5,
-        backgroundColor: 'rgba(255,255,255,0.25)'
+        backgroundColor: 'rgba(81,58,17,0.3)'
     },
     activeDot: {
         width: 16,
         height: 5,
         borderRadius: 999,
-        backgroundColor: 'rgba(255,255,255,0.25)'
+        backgroundColor: 'rgba(81,58,17,0.82)'
     },
     emptyBox: {
         width: '100%',

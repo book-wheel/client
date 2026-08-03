@@ -2,7 +2,6 @@ import { getApiErrorMessage } from "@/api/axios";
 import {
   createPostComment,
   getPostComments,
-  type PostCommentData,
 } from "@/api/posts";
 import CommentInputBar from "@/components/comment/CommentInputBar";
 import CommentList, {
@@ -12,6 +11,7 @@ import CommentSheetHeader from "@/components/comment/CommentSheetHeader";
 import { ThemedView } from "@/components/themed-view";
 import { useCursorPagination } from "@/hooks/useCursorPagination";
 import type { CursorParams } from "@/types/api";
+import type { PostCommentData } from "@/types/posts";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

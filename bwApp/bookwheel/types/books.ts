@@ -77,18 +77,6 @@ export type CreateBookReviewRequest = {
 
 export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
 
-export type BookGalleryContent = {
-  postId: number;
-  isbn: string;
-  thumbnailUrl: string | null;
-  imageCount: number;
-  createdAt: string;
-};
-
-export type BookGalleryPage = CursorPage<BookGalleryContent>;
-export type BookGalleryResponse = ApiResponse<BookGalleryPage>;
-export type BookGalleryParams = CursorParams;
-
 export type InterestedBookContent = {
   bookId: number;
   title: string;

@@ -1,8 +1,8 @@
 import { getApiErrorMessage } from "@/api/axios";
+import { getBookDetail } from "@/api/books";
 import {
   getPostDetail,
   togglePostLike,
-  type PostDetailData,
 } from "@/api/posts";
 import PostActionBar from "@/components/post/PostActionBar";
 import PostAuthorSection from "@/components/post/PostAuthorSection";
@@ -10,6 +10,7 @@ import PostContentSection from "@/components/post/PostContentSection";
 import PostImageSection from "@/components/post/PostImageSection";
 import { ThemedView } from "@/components/themed-view";
 import { getRelativeTime } from "@/components/utils/date";
+import type { PostDetailData } from "@/types/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -71,7 +72,25 @@ export default function PostDetailScreen() {
           );
         }
 
-        setPost(result.data);
+        let postData = result.data;
+
+        if (!postData.title?.trim()) {
+          try {
+            const bookResponse = await getBookDetail(postData.isbn);
+            const bookResult = bookResponse.data;
+
+            if (bookResult.success && bookResult.data) {
+              postData = {
+                ...postData,
+                title: bookResult.data.title,
+              };
+            }
+          } catch (bookError) {
+            console.warn("게시글 도서 제목 조회 실패:", bookError);
+          }
+        }
+
+        setPost(postData);
       } catch (error) {
         console.error("게시글 상세 조회 실패:", error);
         setErrorMessage(

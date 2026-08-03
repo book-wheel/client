@@ -1,9 +1,9 @@
 import type { GalleryItem } from "@/components/books/types";
-import type { BookGalleryResponse } from "@/types/books";
+import type { PostGalleryResponse } from "@/types/posts";
 
 const galleryImage = require("@/assets/images/comment.png");
 
-export const mockBookGalleryResponse: BookGalleryResponse = {
+export const mockBookGalleryResponse: PostGalleryResponse = {
   success: true,
   data: {
     content: Array.from({ length: 18 }, (_, index) => {

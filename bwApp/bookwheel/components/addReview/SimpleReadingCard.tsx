@@ -1,8 +1,9 @@
-import { View, Text, Image, StyleSheet } from "react-native";
 import Button from "@/components/Button";
+import type { ImageSourcePropType } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 type Props = {
-    image: any;
+    image: ImageSourcePropType | null;
     title: string;
     author: string;
     owner?: string;
@@ -21,8 +22,19 @@ export default function ReadingCard({
     return (
         <View style={styles.card}>
             {/* 책 이미지 */}
-            <Image source={image} style={styles.bookImage} />
-
+            {image ? (
+                <Image
+                    source={image}
+                    style={styles.bookImage}
+                    resizeMode="contain"
+                />
+                ) : (
+                <View style={[styles.bookImage, styles.bookImagePlaceholder]}>
+                    <Text style={styles.bookImagePlaceholderText}>
+                    도서 이미지
+                    </Text>
+                </View>
+                )}
             {/* 텍스트 영역 */}
             <View style={styles.info}>
                 {/* [수정] 소유자 이름(owner)이 있을 때만 배지를 렌더링합니다. */}
@@ -70,8 +82,6 @@ const styles = StyleSheet.create({
         height: 191,
         borderRadius: 10,
         marginRight: 18,
-        borderColor: "#513A11",
-        borderWidth: 1,
     },
 
     info: {
@@ -123,5 +133,17 @@ const styles = StyleSheet.create({
         width: "100%",
         marginTop: 15,
         height: 45,
-    }
+    },
+
+    bookImagePlaceholder: {
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#D9D9D9",
+    },
+
+    bookImagePlaceholderText: {
+        color: "#777",
+        fontSize: 14,
+        fontWeight: "600",
+    },
 });
