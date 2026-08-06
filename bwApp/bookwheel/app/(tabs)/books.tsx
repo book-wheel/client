@@ -1,6 +1,9 @@
+import { getApiErrorMessage } from "@/api/axios";
+import { getGalleryFeed } from "@/api/books";
 import { Ionicons } from "@expo/vector-icons";
-import { router, Tabs } from "expo-router";
-import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { router, Tabs, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import BookTile from "../../components/books/BookTile";
 import BooksSectionHeader from "../../components/books/BooksSectionHeader";
@@ -8,7 +11,6 @@ import GalleryPreviewRow from "../../components/books/GalleryPreviewRow";
 import ReadingBookCard from "../../components/books/ReadingBookCard";
 import RecommendBookCard from "../../components/books/RecommendBookCard";
 import type { BookItem, GalleryItem } from "../../components/books/types";
-
 const bookImage = require("@/assets/images/book.png");
 const galleryImage = require("@/assets/images/comment.png");
 
@@ -28,13 +30,6 @@ const readingBooks: BookItem[] = [
     author: "책바퀴",
     image: bookImage,
   },
-];
-
-const galleryPreview: GalleryItem[] = [
-  { id: "1", image: galleryImage },
-  { id: "2", image: galleryImage },
-  { id: "3", image: galleryImage },
-  { id: "4", image: galleryImage },
 ];
 
 const interestBooks: BookItem[] = [
@@ -92,6 +87,45 @@ const recommendBooks: BookItem[] = [
 ];
 
 export default function Books() {
+  const [galleryPreview, setGalleryPreview] = useState<GalleryItem[]>([]);
+  const [galleryError, setGalleryError] = useState<string|null>(null);
+
+  const loadGalleryPreview = useCallback(async () => {
+    setGalleryError(null);
+
+    try {
+      const response = await getGalleryFeed({ size: 4 });
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        setGalleryPreview([]);
+        setGalleryError(result.error?.message ?? "교환독서의 순간들을 불러오지 못했습니다.",);
+      return;
+      }
+
+      const items: GalleryItem[] = result.data.content.map(
+        (post) => ({
+          id: String(post.postId),
+          isbn: post.isbn,
+          image: post.thumbnailUrl ? { uri: post.thumbnailUrl } : galleryImage,
+          extraCount: post.imageCount > 1 ? post.imageCount - 1 : undefined,
+        }),
+      );
+
+      setGalleryPreview(items);
+    } catch (error) {
+        setGalleryPreview([]);
+        setGalleryError(getApiErrorMessage(error,"교환독서의 순간들을 불러오지 못했습니다.",),
+    );
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadGalleryPreview();
+    }, [loadGalleryPreview]),
+  );
+
   const handleSearch = () => {
     router.push({
       pathname: "/search",
@@ -110,8 +144,14 @@ export default function Books() {
     });
   };
 
-  const handlePressGalleryItem = () => {
-    router.push("/book-detail/1/2/post");
+  const handlePressGalleryItem = (item: GalleryItem) => {
+    router.push({
+      pathname: "/book-detail/[isbn]/[postId]/post",
+      params: {
+        isbn: item.isbn,
+        postId: item.id,
+      },
+    });
   };
 
   return (
@@ -162,10 +202,16 @@ export default function Books() {
           actionText="더보기"
           onPressAction={() => router.push("/(modal)/books/all-gallery")}
         />
-        <GalleryPreviewRow
-          items={galleryPreview}
-          onPressItem={handlePressGalleryItem}
-        />
+        {galleryError ? (
+          <View style={styles.galleryMessageContainer}>
+            <Text style={styles.galleryMessage}>{galleryError}</Text>
+          </View>
+        ) : (
+          <GalleryPreviewRow
+            items={galleryPreview}
+            onPressItem={handlePressGalleryItem}
+          />
+        )}
 
         <BooksSectionHeader title="교환독서 추천 도서" />
         <ScrollView
@@ -229,5 +275,15 @@ const styles = StyleSheet.create({
   interestList: {
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  galleryMessageContainer: {
+    minHeight: 100,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  galleryMessage: {
+    color: "#A68D63",
+    fontSize: 14,
+    textAlign: "center",
   },
 });

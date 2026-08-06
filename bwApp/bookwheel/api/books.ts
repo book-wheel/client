@@ -18,8 +18,16 @@ import type {
 } from "@/types/posts";
 import api from "./axios";
 
+// 특정 도서의 갤러리
 export const getPostGallery = (isbn: string, params?: PostGalleryParams) => {
   return api.get<PostGalleryResponse>(`/books/${isbn}/gallery`, { params });
+};
+
+// 전체 교환독서 갤러리
+export const getGalleryFeed = (params?: PostGalleryParams) => {
+  return api.get<PostGalleryResponse>(`/books/gallery`, {
+    params,
+  });
 };
 
 export const getInterestedBooks = (params?: InterestedBooksParams) => {

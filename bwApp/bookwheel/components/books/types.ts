@@ -9,6 +9,7 @@ export type BookItem = {
 
 export type GalleryItem = {
   id: string;
+  isbn: string;
   image?: ImageSourcePropType;
   extraCount?: number;
 };
