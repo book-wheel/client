@@ -7,11 +7,17 @@ export type BookDetailContent = {
   description: string;
   cover: string | null;
   itemPage: number | null;
-  toc: string | null;
   isbn: string;
   isInterested: boolean;
   pubDate?: string;
+  usageAnalysis: AnalysisData | null;
 };
+
+export type AnalysisData = {
+  totalLoanCount: number | null;
+  mostLoanedAgeGroup: string | null;
+  keywords: string[] | null;
+}
 
 export type BookDetail = BookDetailContent;
 export type BookDetailResponse = ApiResponse<BookDetail>;
@@ -98,6 +104,7 @@ export type BookSearchItem = {
   publishedDate: string;
   thumbnail: string;
   isbn: string;
+  isInterested: boolean;
 };
 
 export type BookSearchResponse = ApiResponse<{

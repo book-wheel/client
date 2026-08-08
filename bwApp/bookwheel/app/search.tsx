@@ -21,7 +21,7 @@ import {
   filterKeys,
   filterLabels,
 } from "@/components/search/constants";
-import { searchBooks } from "@/api/books";
+import { searchBooks, toggleBookLike } from "@/api/books";
 import { searchStyles as styles } from "@/components/search/styles";
 import type {
   DateRange,
@@ -54,6 +54,7 @@ export default function Search() {
   const insets = useSafeAreaInsets();
   const searchRequestId = useRef(0);
   const loadingMoreRef = useRef(false);
+  const interestRequestingRef = useRef(new Set<string>());
 
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -66,7 +67,6 @@ export default function Search() {
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [excludeInterested, setExcludeInterested] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const [interestedBookIds, setInterestedBookIds] = useState(new Set<string>());
   const [books, setBooks] = useState<BookSearchItem[]>([]);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -103,15 +103,33 @@ export default function Search() {
     setActiveFilter(null);
   };
 
-  const handleToggleInterest = (isbn: string) => {
-    setInterestedBookIds((prev) => {
-      const next = new Set(prev);
+  const handleToggleInterest = async (isbn: string) => {
+    if (interestRequestingRef.current.has(isbn)) return;
 
-      if (next.has(isbn)) next.delete(isbn);
-      else next.add(isbn);
+    interestRequestingRef.current.add(isbn);
 
-      return next;
-    });
+    try {
+      const response = await toggleBookLike(isbn);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "관심 도서 상태 변경에 실패했습니다.",
+        );
+      }
+
+      setBooks((currentBooks) =>
+        currentBooks.map((book) =>
+          book.isbn === isbn
+            ? { ...book, isInterested: result.data.liked }
+            : book,
+        ),
+      );
+    } catch (error) {
+      console.error("관심 도서 상태 변경 실패:", error);
+    } finally {
+      interestRequestingRef.current.delete(isbn);
+    }
   };
 
   const handleSubmitSearch = async () => {
@@ -312,9 +330,9 @@ export default function Search() {
         renderItem={({ item }) => (
           <BookResultItem
             book={item}
-            isInterested={interestedBookIds.has(item.isbn)}
+            isInterested={item.isInterested}
             onPress={() => handleSelectBook(item.isbn)}
-            onToggleInterest={() => handleToggleInterest(item.isbn)}
+            onToggleInterest={() => void handleToggleInterest(item.isbn)}
           />
         )}
         ListFooterComponent={

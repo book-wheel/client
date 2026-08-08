@@ -13,8 +13,55 @@ import SubmitButton from "@/components/addReview/SubmitButton";
 import PhotoUpload from "@/components/completedBooks/PhotoUpload";
 import ReviewInput from "@/components/completedBooks/ReviewInput";
 import type { BookDetailContent } from "@/types/books";
+import type { PostImageContentType, PostImageFileExtension, PostImageFileInfo } from "@/types/posts";
 
 const MAX_IMAGE_COUNT = 5;
+
+const IMAGE_CONTENT_TYPE_BY_EXTENSION: Record<
+  PostImageFileExtension,
+  PostImageContentType
+> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+
+const normalizeImageExtension = (extension?: string) =>
+  extension
+    ?.trim()
+    .toLowerCase()
+    .replace(/^x-/, "")
+    .replace(/-sequence$/, "") ?? "";
+
+const getPostImageFileInfo = (
+  image: ImagePicker.ImagePickerAsset,
+  index: number,
+): PostImageFileInfo => {
+  const mimeExtension = normalizeImageExtension(
+    image.mimeType?.split("/").pop(),
+  );
+  const fileNameExtension = normalizeImageExtension(
+    image.fileName?.split(".").pop(),
+  );
+  const extension = [mimeExtension, fileNameExtension].find(
+    (candidate) => candidate in IMAGE_CONTENT_TYPE_BY_EXTENSION,
+  ) as PostImageFileExtension | undefined;
+
+  if (!extension) {
+    throw new Error(
+      `${index + 1}번째 이미지 형식을 확인할 수 없습니다.\n` +
+        "jpg, jpeg, png, webp, heic, heif 이미지만 업로드할 수 있습니다.",
+    );
+  }
+
+  return {
+    fileExtension: extension,
+    contentType: IMAGE_CONTENT_TYPE_BY_EXTENSION[extension],
+  };
+};
 
 export default function AddReview() {
   const { isbn } = useLocalSearchParams<{ isbn: string }>();
@@ -128,31 +175,23 @@ export default function AddReview() {
       return;
     }
 
+    if (images.length === 0) {
+      Alert.alert("알림", "사진을 한 장 이상 등록해 주세요.");
+      return;
+    }
+
+    if (!book) {
+      Alert.alert("알림", "도서 정보를 불러온 뒤 다시 시도해 주세요.");
+      return;
+    }
+
     submitLockRef.current = true;
     setIsSubmitting(true);
 
     try {
-      const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
-
-      const fileExtensions = images.map((image, index) => {
-        const extension = (
-          image.fileName?.split(".").pop() ??
-          image.mimeType?.split("/").pop() ??
-          ""
-        ).toLowerCase();
-
-        if (!allowedExtensions.includes(extension)) {
-          throw new Error(
-            `${index + 1}번째 이미지는 지원하지 않는 형식입니다.\n` +
-              "jpg, jpeg, png, webp 이미지만 업로드할 수 있습니다.",
-          );
-        }
-
-        return extension;
-      });
-
+      const files = images.map(getPostImageFileInfo);
       const presignedResponse = await getPostImagePresignedUrls(isbn, {
-        fileExtensions,
+        files,
       });
 
       const presignedResult = presignedResponse.data;
@@ -175,15 +214,15 @@ export default function AddReview() {
           uploadImageToS3(
             info.presignedUrl,
             images[index].uri,
-            images[index].mimeType ?? "image/jpeg",
+            info.contentType,
           ),
         ),
       );
 
       const objectKeys = uploadInfos.map((info) => info.objectKey);
 
-      const saveResponse = await savePost({
-        isbn,
+      const saveResponse = await savePost(isbn, {
+        title: book.title,
         content: review.trim(),
         objectKeys,
       });

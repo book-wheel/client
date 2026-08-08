@@ -12,10 +12,11 @@ import type {
 import api from "./axios";
 
 export const savePost = (
-  body: SavePostRequest
+  isbn: string,
+  body: SavePostRequest,
 ) => {
   return api.post<SavePostResponse>(
-    `/posts/${encodeURIComponent(body.isbn)}/save`,
+    `/posts/${encodeURIComponent(isbn)}/save`,
     body,
   );
 };

@@ -1,5 +1,4 @@
 import { getApiErrorMessage } from "@/api/axios";
-import { getBookDetail } from "@/api/books";
 import {
   getPostDetail,
   togglePostLike,
@@ -72,25 +71,7 @@ export default function PostDetailScreen() {
           );
         }
 
-        let postData = result.data;
-
-        if (!postData.title?.trim()) {
-          try {
-            const bookResponse = await getBookDetail(postData.isbn);
-            const bookResult = bookResponse.data;
-
-            if (bookResult.success && bookResult.data) {
-              postData = {
-                ...postData,
-                title: bookResult.data.title,
-              };
-            }
-          } catch (bookError) {
-            console.warn("게시글 도서 제목 조회 실패:", bookError);
-          }
-        }
-
-        setPost(postData);
+        setPost(result.data);
       } catch (error) {
         console.error("게시글 상세 조회 실패:", error);
         setErrorMessage(
@@ -207,7 +188,7 @@ export default function PostDetailScreen() {
             />
 
             <PostContentSection
-              title={post.title ?? "도서"}
+              title={post.title}
               content={post.content}
             />
           </ScrollView>
