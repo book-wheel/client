@@ -1,4 +1,5 @@
 import { useBookDetail } from "@/contexts/book-detail";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -79,7 +80,7 @@ export default function Info() {
                         </Text>
 
                         <Text style={styles.tocItem}>
-                            최다 대출 연령대: {analysis.mostLoanedAgeGroup ?? "-"}
+                            최다 대출 연령대 (최근 30일): {analysis.mostLoanedAgeGroup ?? "-"}
                         </Text>
 
                         <Text style={styles.tocItem}>
@@ -88,6 +89,13 @@ export default function Info() {
                             ? keywords.join(", ")
                             : "-"}
                         </Text>
+                        <View
+                            style={styles.sourceRow}
+                            accessibilityLabel="도서관정보나루 제공 데이터"
+                        >
+                            <Ionicons name="information-circle-outline" size={14} color="#A19681" />
+                            <Text style={styles.sourceText}>도서관정보나루 제공 데이터</Text>
+                        </View>
                         </View>
                     ) : (
                         <Text style={styles.tocItem}>이용 분석 정보가 없어요.</Text>
@@ -153,6 +161,16 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#444",
         marginBottom: 8,
+    },
+    sourceRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 2,
+    },
+    sourceText: {
+        fontSize: 12,
+        color: "#A19681",
     },
     groupTitle: {
         fontSize: 16,
