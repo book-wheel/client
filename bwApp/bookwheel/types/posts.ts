@@ -4,21 +4,42 @@ import type {
     CursorParams,
 } from "@/types/api";
 
+export type PostImageFileExtension =
+  | "jpg"
+  | "jpeg"
+  | "png"
+  | "webp"
+  | "heic"
+  | "heif";
+
+export type PostImageContentType =
+  | "image/jpeg"
+  | "image/png"
+  | "image/webp"
+  | "image/heic"
+  | "image/heif";
+
+export type PostImageFileInfo = {
+    fileExtension: PostImageFileExtension;
+    contentType: PostImageContentType;
+};
+
 export type PostImagePresignedRequest = {
-    fileExtensions: string[];
+    files: PostImageFileInfo[];
 };
 
 export type PostImagePresignedData = {
     presignedUrls: {
         presignedUrl: string;
         objectKey: string;
+        contentType: PostImageContentType;
     }[];
 };
 
 export type PostImagePresignedResponse = ApiResponse<PostImagePresignedData>;
 
 export type SavePostRequest = {
-  isbn: string;
+  title: string;
   content: string;
   objectKeys: string[];
   groupId?: string | null;
@@ -40,7 +61,7 @@ export type PostDetailData = {
   author: string;
   profileImageUrl: string | null;
   groupName: string | null;
-  title: string | null;
+  title: string;
   content: string;
   imageUrls: string[];
   likeCount: number;
