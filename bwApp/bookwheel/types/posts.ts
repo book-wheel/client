@@ -46,10 +46,13 @@ export type PostDetailData = {
   likeCount: number;
   commentCount: number;
   isLikedByMe: boolean;
+  isMine: boolean;
   createdAt: string;
 };
 
 export type PostDetailResponse = ApiResponse<PostDetailData>;
+// 서버의 게시글 삭제 응답은 별도 데이터 없이 data: null을 반환한다.
+export type DeletePostResponse = ApiResponse<null>;
 export type TogglePostLikeResponse = ApiResponse<string>;
 
 export type PostCommentData = {
@@ -64,6 +67,8 @@ export type PostCommentData = {
 
 export type PostCommentListResponse = ApiResponse<CursorPage<PostCommentData>>;
 export type CreatePostCommentResponse = ApiResponse<string>;
+// 서버의 댓글 삭제 응답은 별도 데이터 없이 data: null을 반환한다.
+export type DeletePostCommentResponse = ApiResponse<null>;
 
 export type PostGalleryContent = {
   postId: number;
