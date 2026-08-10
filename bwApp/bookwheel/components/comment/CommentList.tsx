@@ -16,6 +16,7 @@ export interface CommentItem {
 interface Props {
     comments: CommentItem[];
     onDelete?: (id: string) => void;
+    deletingCommentId?: string | null;
     isLoading?: boolean;
     onEndReached?: () => void;
     errorMessage?: string;
@@ -24,6 +25,7 @@ interface Props {
 export default function CommentList({
     comments,
     onDelete,
+    deletingCommentId,
     isLoading = false,
     onEndReached,
     errorMessage,
@@ -31,7 +33,11 @@ export default function CommentList({
     const keyExtractor = (item: CommentItem) => item.id;
 
     const renderItem: ListRenderItem<CommentItem> = ({ item }) => (
-        <CommentItemRow item={item} onDelete={onDelete} />
+        <CommentItemRow
+            item={item}
+            onDelete={onDelete}
+            isDeleting={deletingCommentId === item.id}
+        />
     );
 
     return (

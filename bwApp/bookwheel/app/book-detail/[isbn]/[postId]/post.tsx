@@ -1,5 +1,6 @@
 import { getApiErrorMessage } from "@/api/axios";
 import {
+  deletePost,
   getPostDetail,
   togglePostLike,
 } from "@/api/posts";
@@ -37,6 +38,7 @@ export default function PostDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -125,6 +127,33 @@ export default function PostDetailScreen() {
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!post || isDeleting) return;
+
+    setIsDeleting(true);
+
+    try {
+      const response = await deletePost(post.postId);
+      const result = response.data;
+
+      if (!result.success) {
+        throw new Error(
+          result.error?.message ?? "게시글 삭제에 실패했습니다.",
+        );
+      }
+
+      handleGoBack();
+    } catch (error) {
+      console.error("게시글 삭제 실패:", error);
+      Alert.alert(
+        "알림",
+        getApiErrorMessage(error, "게시글 삭제에 실패했습니다."),
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen
@@ -169,6 +198,8 @@ export default function PostDetailScreen() {
                   ? { uri: post.profileImageUrl }
                   : defaultProfileImage
               }
+              onDelete={post.isMine ? () => void handleDeletePost() : undefined}
+              isDeleting={isDeleting}
             />
 
             <PostImageSection

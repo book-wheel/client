@@ -15,12 +15,16 @@ interface CommentItem {
 interface Props {
     item: CommentItem;
     onDelete?: (id: string) => void;
-    onReport?: (id: string) => void;
+    isDeleting?: boolean;
 }
 
-export default function CommentItemRow({ item, onDelete, onReport }: Props) {
+export default function CommentItemRow({
+    item,
+    onDelete,
+    isDeleting = false,
+}: Props) {
     const handlePressDelete = () => {
-        if (!onDelete) return;
+        if (!onDelete || isDeleting) return;
 
         Alert.alert(
             '댓글 삭제',
@@ -31,29 +35,6 @@ export default function CommentItemRow({ item, onDelete, onReport }: Props) {
                     text: '삭제',
                     style: 'destructive',
                     onPress: () => onDelete(item.id),
-                },
-            ],
-            { cancelable: true }
-        );
-    };
-
-    const handlePressReport = () => {
-        if (onReport) {
-            onReport(item.id);
-            return;
-        }
-
-        Alert.alert(
-            '댓글 신고',
-            '이 댓글을 신고하시겠습니까?',
-            [
-                { text: '취소', style: 'cancel' },
-                {
-                    text: '신고',
-                    style: 'destructive',
-                    onPress: () => {
-                        Alert.alert('신고 완료', '댓글이 신고되었습니다.');
-                    },
                 },
             ],
             { cancelable: true }
@@ -76,17 +57,19 @@ export default function CommentItemRow({ item, onDelete, onReport }: Props) {
                     </View>
 
                     <View style={styles.actionRow}>
-                        {item.isMine ? (
-                            onDelete ? (
-                                <TouchableOpacity onPress={handlePressDelete} activeOpacity={0.7}>
-                                    <ThemedText style={styles.actionText}>삭제</ThemedText>
-                                </TouchableOpacity>
-                            ) : null
-                        ) : (
-                            <TouchableOpacity onPress={handlePressReport} activeOpacity={0.7}>
-                                <ThemedText style={styles.actionText}>신고</ThemedText>
+                        {item.isMine && onDelete ? (
+                            <TouchableOpacity
+                                accessibilityLabel="댓글 삭제"
+                                accessibilityRole="button"
+                                activeOpacity={0.7}
+                                disabled={isDeleting}
+                                onPress={handlePressDelete}
+                            >
+                                <ThemedText style={styles.actionText}>
+                                    {isDeleting ? '삭제 중' : '삭제'}
+                                </ThemedText>
                             </TouchableOpacity>
-                        )}
+                        ) : null}
                     </View>
                 </View>
 
