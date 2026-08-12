@@ -23,6 +23,23 @@ type CurrentBook = {
   };
 };
 
+type GroupSchedule = {
+  scheduleStatus:
+    | "NOT_CONFIGURED"
+    | "CONFIGURED"
+    | "READY"
+    | "RESCHEDULE_REQUIRED"
+    | "IN_PROGRESS"
+    | "COMPLETE";
+  targetMemberCount: number;
+  currentMemberCount: number;
+  canStart: boolean;
+  missingBookMembers: {
+    userPK: string;
+    nickname: string;
+  }[];
+};
+
 export function useGroupState() {
   const { id: rawId, memberId, newStatus } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -54,6 +71,7 @@ export function useGroupState() {
 
         console.log("대시보드", dashboardData);
         console.log("멤버", membersData);
+        console.log("일정", scheduleData);
 
         setDashboard(dashboardData);
         setGroupMembers(membersData.members);
@@ -122,6 +140,10 @@ export function useGroupState() {
           : "member",
     status: memberStatuses[member.memberId] ?? "ready",
   }));
+
+  // 멤버 순서 지정 가능 여부
+  const canSetMemberOrder =
+    schedule != null && schedule.missingBookMembers.length === 0;
 
   // 멤버 상태 변경
   const updateMemberStatus = (id: string, status: MemberStatus["status"]) => {
@@ -194,7 +216,7 @@ export function useGroupState() {
 
   // 현재는 화면 테스트를 위해 true
   // 나중에 다시 dashboard.currentRound 기준으로 변경
-  const isStarted = true;
+  const isStarted = (dashboard?.currentRound ?? 0) > 0;
 
   const hasBook = dashboard?.myBookStep != null;
 
@@ -218,5 +240,7 @@ export function useGroupState() {
     readingPeriod,
     currentReadingDay,
     remainingDays,
+
+    canSetMemberOrder,
   };
 }

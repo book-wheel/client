@@ -18,6 +18,7 @@ export default function State() {
     readingPeriod,
     currentReadingDay,
     remainingDays,
+    canSetMemberOrder,
   } = useGroupState();
 
   if (!isStarted) {
@@ -29,6 +30,7 @@ export default function State() {
         hasBook={hasBook}
         bookTitle={dashboard?.myBookStep?.bookTitle}
         coverImage={dashboard?.myBookStep?.coverImage}
+        canSetMemberOrder={canSetMemberOrder}
       />
     );
   }

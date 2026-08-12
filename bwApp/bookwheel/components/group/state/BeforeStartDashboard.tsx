@@ -10,6 +10,7 @@ type Props = {
   bookTitle?: string;
   author?: string;
   coverImage?: string;
+  canSetMemberOrder?: boolean;
 };
 
 export default function BeforeStartDashboard({
@@ -20,6 +21,7 @@ export default function BeforeStartDashboard({
   bookTitle,
   author,
   coverImage,
+  canSetMemberOrder = false,
 }: Props) {
   return (
     <View
@@ -167,6 +169,39 @@ export default function BeforeStartDashboard({
                   다른 책으로 변경하기
                 </Text>
               </TouchableOpacity>
+
+              {canSetMemberOrder && (
+                <TouchableOpacity
+                  onPress={() => {
+                    console.log("이동:", id);
+
+                    router.push({
+                      pathname: "/group/[id]/member-order-edit",
+                      params: {
+                        id: String(id),
+                      },
+                    });
+                  }}
+                  style={{
+                    marginTop: 12,
+                    height: 52,
+                    borderRadius: 15,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "#E4A54E",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "#FFF",
+                      fontSize: 15,
+                      fontWeight: "600",
+                    }}
+                  >
+                    읽기 순서 지정하기
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ) : (
@@ -263,10 +298,7 @@ export default function BeforeStartDashboard({
 function formatStartDate(startDate?: string) {
   if (!startDate) return "진행 예정일 미정";
 
-  const [year, month, day] = startDate
-    .split("T")[0]
-    .split("-")
-    .map(Number);
+  const [year, month, day] = startDate.split("T")[0].split("-").map(Number);
 
   if (!year || !month || !day) return "진행 예정일 미정";
 
