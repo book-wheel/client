@@ -62,3 +62,44 @@ export interface RoundSchedule {
   startDate: string;
   endDate?: string;
 }
+
+export type GroupScheduleRound = {
+  roundNumber: number;
+  startDate: string;
+  endDate: string;
+  executable: boolean;
+  wheelStateId: string;
+  wheelStatus: string;
+  bookId: string;
+  bookTitle: string;
+  coverImage: string;
+  senderNickname: string;
+};
+
+export type GroupScheduleData = {
+  startDate: string;
+  readingPeriod: number;
+  endDate: string;
+  excludedDates: string[];
+  excludedDateRanges: {
+    startDate: string;
+    endDate: string;
+  }[];
+  scheduleStatus: string;
+  scheduleReconfigurationStatus: string;
+  targetMemberCount: number;
+  currentMemberCount: number;
+  canStart: boolean;
+  blockingReasons: string[];
+  missingBookMembers: {
+    userPK: string;
+    nickname: string;
+  }[];
+  plannedRoundCount: number;
+  executableRoundCount: number;
+  plannedEndDate: string;
+  executableEndDate: string;
+  protectedRoundCount: number;
+  minTotalRoundCount: number;
+  rounds: GroupScheduleRound[];
+};

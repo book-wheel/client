@@ -9,16 +9,15 @@ import BeforeStartDashboard from "@/components/group/state/BeforeStartDashboard"
 export default function State() {
   const {
     id,
-    session,
     members,
-    totalMembers,
-    completedMembers,
-    currentBook,
-    getButtonText,
-    handleCardButtonPress,
-    isStarted,
     hasBook,
+    isStarted,
     dashboard,
+    currentBook,
+    session,
+    readingPeriod,
+    currentReadingDay,
+    remainingDays,
   } = useGroupState();
 
   if (!isStarted) {
@@ -34,18 +33,38 @@ export default function State() {
     );
   }
 
+  if (!dashboard) {
+    return null;
+  }
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <ScrollView
+      style={{
+        flex: 1,
+        backgroundColor: "#FFF",
+      }}
+    >
       <SessionProgress
         session={session}
-        totalMembers={totalMembers}
-        completedMembers={completedMembers}
+        readingPeriod={readingPeriod}
+        currentReadingDay={currentReadingDay}
+        remainingDays={remainingDays}
       />
 
       <CurrentBookSection
-        book={currentBook}
-        buttonText={getButtonText()}
-        onPress={handleCardButtonPress}
+        book={
+          dashboard.myStep
+            ? {
+                title: dashboard.myStep.bookTitle,
+                owner: dashboard.myStep.senderNickname,
+                image: {
+                  uri: dashboard.myStep.coverImage,
+                },
+              }
+            : null
+        }
+        buttonText="현재 책 보러가기"
+        onPress={() => {}}
       />
 
       <MemberStatusList members={members} />

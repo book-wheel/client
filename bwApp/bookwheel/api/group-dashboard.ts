@@ -8,7 +8,7 @@ import {
 export const getDashboard = async (groupId: string) => {
   const response = await axiosInstance.get(`/groups/${groupId}/dashboard`);
 
-  return response.data;
+  return response.data.data;
 };
 
 // 책 등록 API
@@ -30,6 +30,13 @@ export const createSchedule = async (
     `/groups/${groupId}/schedule`,
     body,
   );
+
+  return response.data.data;
+};
+
+// 그룹 일정 조회 API
+export const getGroupSchedule = async (groupId: string) => {
+  const response = await axiosInstance.get(`/groups/${groupId}/schedule`);
 
   return response.data.data;
 };
