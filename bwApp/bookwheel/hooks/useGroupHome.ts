@@ -26,7 +26,7 @@ export function useGroupHome() {
 
   const { id, name } = useLocalSearchParams<{
     id: string;
-    name: string;
+    name?: string;
   }>();
 
   const [applicants, setApplicants] = useState<Applicant[]>([]);
@@ -34,15 +34,24 @@ export function useGroupHome() {
 
   // 화면 타이틀
   useEffect(() => {
+    if (!name) return;
+
     navigation.getParent()?.setOptions({ title: name });
     navigation.getParent()?.getParent()?.setOptions({ title: name });
-  }, [name]);
+  }, [name, navigation]);
 
   // 그룹 상세 정보 조회
   useEffect(() => {
     const fetchGroupDetail = async () => {
       try {
         const data = await getGroupDetail(id);
+
+        if (!name) {
+          navigation.getParent()?.setOptions({ title: data.groupName });
+          navigation.getParent()?.getParent()?.setOptions({
+            title: data.groupName,
+          });
+        }
 
         setGroupInfo({
           intro: data.groupComment,
@@ -61,7 +70,7 @@ export function useGroupHome() {
     if (id) {
       fetchGroupDetail();
     }
-  }, [id]);
+  }, [id, name, navigation]);
 
   useEffect(() => {
     if (!id) return;

@@ -1,120 +1,116 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, Platform, StyleSheet, ToastAndroid, View } from "react-native";
+import { getApiErrorMessage } from "@/api/axios";
+import {
+  getInterestedBooks,
+  toggleBookLike,
+} from "@/api/books";
+import BookGrid from "@/components/books/BookGrid";
+import type { BookItem } from "@/components/books/types";
 import { Colors } from "@/constants/theme";
-import { mockInterestBooks } from "@/mocks/books/interests";
-
-import BookGrid from "../../../components/books/BookGrid";
-import type { BookItem } from "../../../components/books/types";
-
-const removedInterestBookIdsKey = "removedInterestBookIds";
-
-const showStorageErrorToast = (message: string) => {
-  if (Platform.OS === "android") {
-    ToastAndroid.show(message, ToastAndroid.SHORT);
-    return;
-  }
-
-  Alert.alert("알림", message);
-};
-
-const getStoredRemovedBookIds = async () => {
-  const storedValue = await AsyncStorage.getItem(removedInterestBookIdsKey);
-
-  if (!storedValue) {
-    return new Set<string>();
-  }
-
-  try {
-    const ids = JSON.parse(storedValue);
-
-    if (Array.isArray(ids)) {
-      return new Set(ids.filter((id): id is string => typeof id === "string"));
-    }
-  } catch {
-    return new Set<string>();
-  }
-
-  return new Set<string>();
-};
-
-const saveStoredRemovedBookIds = async (ids: Set<string>) => {
-  await AsyncStorage.setItem(
-    removedInterestBookIdsKey,
-    JSON.stringify(Array.from(ids)),
-  );
-};
-
-const updateStoredRemovedBookIds = async (
-  bookId: string,
-  shouldRemove: boolean,
-) => {
-  try {
-    const removedBookIds = await getStoredRemovedBookIds();
-
-    if (shouldRemove) {
-      removedBookIds.add(bookId);
-    } else {
-      removedBookIds.delete(bookId);
-    }
-
-    await saveStoredRemovedBookIds(removedBookIds);
-  } catch (error) {
-    console.warn("Failed to update removed interest books.", error);
-    showStorageErrorToast("관심도서 변경을 저장하지 못했어요.");
-  }
-};
+import { useCursorPagination } from "@/hooks/useCursorPagination";
+import type { CursorParams } from "@/types/api";
+import type { InterestedBookContent } from "@/types/books";
+import { router, Stack, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function AllInterest() {
-  const [books, setBooks] = useState<BookItem[]>(mockInterestBooks);
-  const [interestedBookIds, setInterestedBookIds] = useState(
-    () => new Set(mockInterestBooks.map((book) => book.id)),
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [updatingBookIsbns, setUpdatingBookIsbns] = useState<Set<string>>(
+    () => new Set(),
   );
+  const updatingBookIsbnsRef = useRef(new Set<string>());
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchInterestPage = useCallback(async (params: CursorParams) => {
+    const response = await getInterestedBooks(params);
+    const result = response.data;
 
-    const applyStoredRemovedBooks = async () => {
-      const removedBookIds = await getStoredRemovedBookIds();
-      const visibleBooks = mockInterestBooks.filter(
-        (book) => !removedBookIds.has(book.id),
+    if (!result.success || !result.data) {
+      throw new Error(
+        result.error?.message ?? "관심 도서를 불러오지 못했습니다.",
       );
+    }
 
-      if (!isMounted) {
-        return;
-      }
-
-      setBooks(visibleBooks);
-      setInterestedBookIds(new Set(visibleBooks.map((book) => book.id)));
-    };
-
-    void applyStoredRemovedBooks().catch((error) => {
-      console.warn("Failed to load removed interest books.", error);
-      showStorageErrorToast("관심도서 정보를 불러오지 못했어요.");
-    });
-
-    return () => {
-      isMounted = false;
-    };
+    return result.data;
   }, []);
 
-  const handleToggleInterest = (book: BookItem) => {
-    const isCurrentlyInterested = interestedBookIds.has(book.id);
+  const {
+    items: interestedBooks,
+    isLoading,
+    error,
+    loadInitial,
+    loadMore,
+    reset,
+  } = useCursorPagination<InterestedBookContent>({
+    fetchPage: fetchInterestPage,
+    pageSize: 30,
+  });
 
-    setInterestedBookIds((prev) => {
-      const next = new Set(prev);
+  useFocusEffect(
+    useCallback(() => {
+      setActionError(null);
+      reset();
+      void loadInitial();
+    }, [loadInitial, reset]),
+  );
 
-      if (next.has(book.id)) {
-        next.delete(book.id);
-      } else {
-        next.add(book.id);
+  const books = useMemo<BookItem[]>(
+    () =>
+      interestedBooks.map((book) => ({
+        id: String(book.bookInfoId),
+        isbn: book.isbn,
+        title: book.title ?? "제목 없음",
+        author: book.author ?? "저자 미상",
+        image: book.coverImageUrl
+          ? { uri: book.coverImageUrl }
+          : undefined,
+      })),
+    [interestedBooks],
+  );
+
+  const handlePressBook = (book: BookItem) => {
+    if (!book.isbn) return;
+
+    router.push({
+      pathname: "/book-detail/[isbn]/info",
+      params: { isbn: book.isbn },
+    });
+  };
+
+  const handleToggleInterest = async (book: BookItem) => {
+    if (!book.isbn || updatingBookIsbnsRef.current.has(book.isbn)) return;
+
+    setActionError(null);
+    updatingBookIsbnsRef.current.add(book.isbn);
+    setUpdatingBookIsbns(new Set(updatingBookIsbnsRef.current));
+
+    try {
+      const response = await toggleBookLike(book.isbn);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "관심 도서를 변경하지 못했습니다.",
+        );
       }
 
-      return next;
-    });
-    void updateStoredRemovedBookIds(book.id, isCurrentlyInterested);
+      reset();
+      await loadInitial();
+    } catch (caughtError) {
+      setActionError(
+        getApiErrorMessage(
+          caughtError,
+          "관심 도서를 변경하지 못했습니다.",
+        ),
+      );
+    } finally {
+      updatingBookIsbnsRef.current.delete(book.isbn);
+      setUpdatingBookIsbns(new Set(updatingBookIsbnsRef.current));
+    }
   };
+
+  const errorMessage = error
+    ? getApiErrorMessage(error, "관심 도서를 불러오지 못했습니다.")
+    : null;
 
   return (
     <View style={styles.container}>
@@ -125,12 +121,32 @@ export default function AllInterest() {
         }}
       />
 
-      <BookGrid
-        books={books}
-        onPressBook={() => router.push("/book-detail/1/info")}
-        getIsInterested={(book) => interestedBookIds.has(book.id)}
-        onToggleInterest={handleToggleInterest}
-      />
+      {errorMessage && books.length === 0 ? (
+        <View style={styles.messageContainer}>
+          <Text style={styles.message}>{errorMessage}</Text>
+        </View>
+      ) : !isLoading && books.length === 0 ? (
+        <View style={styles.messageContainer}>
+          <Text style={styles.message}>아직 관심 도서가 없습니다.</Text>
+        </View>
+      ) : (
+        <>
+          {actionError ? (
+            <Text style={styles.actionError}>{actionError}</Text>
+          ) : null}
+          <BookGrid
+            books={books}
+            isLoading={isLoading}
+            onEndReached={() => void loadMore()}
+            onPressBook={handlePressBook}
+            getIsInterested={() => true}
+            getIsUpdatingInterest={(book) =>
+              Boolean(book.isbn && updatingBookIsbns.has(book.isbn))
+            }
+            onToggleInterest={(book) => void handleToggleInterest(book)}
+          />
+        </>
+      )}
     </View>
   );
 }
@@ -139,5 +155,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.light.background,
+  },
+  messageContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  message: {
+    color: "#A68D63",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  actionError: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    color: "#B84A4A",
+    fontSize: 12,
+    textAlign: "center",
   },
 });

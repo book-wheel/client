@@ -89,7 +89,7 @@ export function useCursorPagination<T>({
             : [...currentItems, ...page.content],
         );
         setNextCursor(page.nextCursor);
-        setTotalElements(page.totalElements);
+        setTotalElements((currentTotal) => page.totalElements ?? currentTotal);
         setHasNext(page.hasNext);
       } catch (caughtError) {
         if (requestId === requestIdRef.current) {
