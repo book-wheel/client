@@ -9,6 +9,6 @@ export type BookItem = {
 
 export type GalleryItem = {
   id: string;
-  image: ImageSourcePropType;
+  image?: ImageSourcePropType;
   extraCount?: number;
 };

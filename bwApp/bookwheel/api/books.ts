@@ -1,7 +1,5 @@
 import type {
   BookDetailResponse,
-  BookGalleryParams,
-  BookGalleryResponse,
   BookReviewListParams,
   BookReviewListResponse,
   BookSearchResponse,
@@ -14,18 +12,22 @@ import type {
   ReviewVoteResponse,
   UpdateReviewVoteRequest,
 } from "@/types/books";
+import type {
+  PostGalleryParams,
+  PostGalleryResponse,
+} from "@/types/posts";
 import api from "./axios";
 
-export const getBookGallery = (params?: BookGalleryParams) => {
-  return api.get<BookGalleryResponse>("/books/gallery", { params });
+export const getPostGallery = (isbn: string, params?: PostGalleryParams) => {
+  return api.get<PostGalleryResponse>(`/books/${isbn}/gallery`, { params });
 };
 
 export const getInterestedBooks = (params?: InterestedBooksParams) => {
-  return api.get<InterestedBooksResponse>("/books/interests", { params });
+  return api.get<InterestedBooksResponse>(`/books/interests`, { params });
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {
-  return api.get<BookSearchResponse>("/books/search", {
+  return api.get<BookSearchResponse>(`/books/search`, {
     params: {
       query,
       sort: "accuracy",

@@ -1,17 +1,4 @@
-import type { ApiResponse } from "@/types/api";
-
-export type CursorPage<T> = {
-  content: T[];
-  size: number;
-  totalElements: number;
-  hasNext: boolean;
-  nextCursor: string | null;
-};
-
-export type BooksCursorParams = {
-  cursor?: string | null;
-  size?: number;
-};
+import type { ApiResponse, CursorPage, CursorParams } from "@/types/api";
 
 export type BookDetailContent = {
   title: string;
@@ -20,11 +7,17 @@ export type BookDetailContent = {
   description: string;
   cover: string | null;
   itemPage: number | null;
-  toc: string | null;
   isbn: string;
   isInterested: boolean;
   pubDate?: string;
+  usageAnalysis: AnalysisData | null;
 };
+
+export type AnalysisData = {
+  totalLoanCount: number | null;
+  mostLoanedAgeGroup: string | null;
+  keywords: string[] | null;
+}
 
 export type BookDetail = BookDetailContent;
 export type BookDetailResponse = ApiResponse<BookDetail>;
@@ -90,18 +83,6 @@ export type CreateBookReviewRequest = {
 
 export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
 
-export type BookGalleryContent = {
-  galleryId: number;
-  bookId: number;
-  thumbnailUrl: string;
-  imageCount: number;
-  createdAt: string;
-};
-
-export type BookGalleryPage = CursorPage<BookGalleryContent>;
-export type BookGalleryResponse = ApiResponse<BookGalleryPage>;
-export type BookGalleryParams = BooksCursorParams;
-
 export type InterestedBookContent = {
   bookId: number;
   title: string;
@@ -112,7 +93,7 @@ export type InterestedBookContent = {
 
 export type InterestedBooksPage = CursorPage<InterestedBookContent>;
 export type InterestedBooksResponse = ApiResponse<InterestedBooksPage>;
-export type InterestedBooksParams = BooksCursorParams;
+export type InterestedBooksParams = CursorParams;
 
 export type BookSearchSort = "accuracy" | "latest";
 
@@ -123,6 +104,7 @@ export type BookSearchItem = {
   publishedDate: string;
   thumbnail: string;
   isbn: string;
+  isInterested: boolean;
 };
 
 export type BookSearchResponse = ApiResponse<{

@@ -6,15 +6,31 @@ interface ButtonProps {
   color?: string;
   style?: ViewStyle;
   textStyle?: any;
+  disabled?: boolean;
 }
 
-export default function Button({ title, onPress, color, style }: ButtonProps) {
+export default function Button({
+  title,
+  onPress,
+  color,
+  style,
+  textStyle,
+  disabled = false,
+}: ButtonProps) {
   return (
     <TouchableOpacity
-      style={[styles.button, color && { backgroundColor: color }, style]}
+      disabled={disabled}
+      style={[
+        styles.button,
+        color && { backgroundColor: color },
+        disabled && styles.disabledButton,
+        style,
+      ]}
       onPress={onPress}
     >
-      <Text style={styles.text}>{title}</Text>
+      <Text style={[styles.text, disabled && styles.disabledText, textStyle]}>
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -35,5 +51,11 @@ const styles = StyleSheet.create({
     color: "#513A11",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.55,
+  },
+  disabledText: {
+    color: "#6F624E",
   },
 });

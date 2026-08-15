@@ -1,4 +1,5 @@
 import { useBookDetail } from "@/contexts/book-detail";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -8,7 +9,6 @@ export default function Info() {
 
     const [showFullDesc, setShowFullDesc] = useState(false);
     const [numOfLines, setNumOfLines] = useState(0);
-    const [showFullToc, setShowFullToc] = useState(false);
 
     const handleTextLayout = useCallback((e: any) => {
         if (numOfLines === 0) {
@@ -33,9 +33,8 @@ export default function Info() {
         );
     }
 
-    const tocItems = data.toc
-        ? data.toc.split("\n").filter(Boolean)  // 빈 문자열 제거
-        : [];
+    const analysis = data.usageAnalysis;
+    const keywords = analysis?.keywords ?? [];
 
     const isDescLong = numOfLines > 2;
 
@@ -70,19 +69,38 @@ export default function Info() {
             <View style={styles.divider} />
 
             {/* 목차 섹션 - map을 사용하여 리스트 출력 */}
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>목차</Text>
-                <View style={styles.tocBox}>
-                    {tocItems.slice(0, showFullToc ? undefined : 3).map((item, index) => (
-                        <Text key={index} style={styles.tocItem}>{item}</Text>
-                    ))}
-                </View>
-                {tocItems.length > 3 && (
-                    <TouchableOpacity onPress={() => setShowFullToc(!showFullToc)}>
-                        <Text style={styles.moreBtn}>{showFullToc ? "접기 ▴" : "더보기 ▾"}</Text>
-                    </TouchableOpacity>
-                )}
-            </View>
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>도서 이용 분석 정보</Text>
+                    {analysis ? (
+                        <View style={styles.tocBox}>
+                        <Text style={styles.tocItem}>
+                            누적 대출 횟수: {analysis.totalLoanCount == null
+                                ? "-"
+                                : `${analysis.totalLoanCount.toLocaleString()}회`}
+                        </Text>
+
+                        <Text style={styles.tocItem}>
+                            최다 대출 연령대 (최근 30일): {analysis.mostLoanedAgeGroup ?? "-"}
+                        </Text>
+
+                        <Text style={styles.tocItem}>
+                            주요 키워드:{" "}
+                            {keywords.length > 0
+                            ? keywords.join(", ")
+                            : "-"}
+                        </Text>
+                        <View
+                            style={styles.sourceRow}
+                            accessibilityLabel="도서관정보나루 제공 데이터"
+                        >
+                            <Ionicons name="information-circle-outline" size={14} color="#A19681" />
+                            <Text style={styles.sourceText}>도서관정보나루 제공 데이터</Text>
+                        </View>
+                        </View>
+                    ) : (
+                        <Text style={styles.tocItem}>이용 분석 정보가 없어요.</Text>
+                    )}
+                    </View>
 
             <View style={styles.thickDivider} />
 
@@ -143,6 +161,16 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#444",
         marginBottom: 8,
+    },
+    sourceRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 2,
+    },
+    sourceText: {
+        fontSize: 12,
+        color: "#A19681",
     },
     groupTitle: {
         fontSize: 16,
