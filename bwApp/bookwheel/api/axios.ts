@@ -1,19 +1,16 @@
-import { create, isAxiosError } from "axios";
+import axios, { isAxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 
 import type { ApiResponse } from "@/types/api";
 
-const api = create({
+const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
   timeout: 5000,
 });
 
-export const getApiErrorMessage = (
-  error: unknown,
-  fallbackMessage: string,
-) => {
+export const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
   if (isAxiosError<ApiResponse<unknown>>(error)) {
     return error.response?.data?.error?.message ?? fallbackMessage;
   }

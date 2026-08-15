@@ -96,3 +96,11 @@ export const deleteAccount = (password: string) => {
     data: { password },
   });
 };
+
+//토큰교환
+export const exchangeOAuthCode = (data: {
+  code: string;
+  codeVerifier: string;
+}) => {
+  return api.post("/auth/oauth2/token", data);
+};
