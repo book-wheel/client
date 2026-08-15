@@ -12,6 +12,12 @@ import AuthCard from "@/components/card";
 import { login } from "@/api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import * as SecureStore from "expo-secure-store";
+import {
+  generateCodeVerifier,
+  generateCodeChallenge,
+} from "@/components/utils/pkce";
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default function Login() {
@@ -74,9 +80,27 @@ export default function Login() {
 
   // 소셜 로그인 핸들러
   const handleSocialLogin = async (provider: "google" | "kakao") => {
-    const url = `${API_BASE_URL}/auth/authorize/${provider}`;
+    try {
+      const codeVerifier = generateCodeVerifier();
 
-    await Linking.openURL(url);
+      console.log("🔐 codeVerifier:", codeVerifier);
+
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      console.log("🔐 codeChallenge:", codeChallenge);
+
+      await SecureStore.setItemAsync("oauth_code_verifier", codeVerifier);
+
+      const url =
+        `${API_BASE_URL}/auth/authorize/${provider}` +
+        `?codeChallenge=${encodeURIComponent(codeChallenge)}`;
+
+      console.log("🌐 OAuth URL:", url);
+
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error("❌ 소셜 로그인 시작 실패:", error);
+    }
   };
 
   return (
