@@ -13,13 +13,16 @@ export const toastConfig = {
     </View>
   ),
 
-  error: ({ text1 }: any) => (
+  error: ({ text1, text2 }: any) => (
     <View style={styles.container}>
       <View style={styles.errorIcon}>
         <Ionicons name="close" size={15} color="#513A11" />
       </View>
 
-      <Text style={styles.text}>{text1}</Text>
+      <View>
+        <Text style={styles.text}>{text1}</Text>
+        {text2 && <Text style={styles.subText}>{text2}</Text>}
+      </View>
     </View>
   ),
 };
@@ -83,5 +86,11 @@ const styles = StyleSheet.create({
     color: "#513A11",
     fontSize: 13,
     fontWeight: "600",
+  },
+
+  subText: {
+    color: "#513A11",
+    fontSize: 11,
+    marginTop: 2,
   },
 });
