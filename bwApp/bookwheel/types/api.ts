@@ -12,7 +12,7 @@ export type ApiResponse<T> = {
 export type CursorPage<T> = {
   content: T[];
   size: number;
-  totalElements: number;
+  totalElements: number | null;
   hasNext: boolean;
   nextCursor: string | null;
 };

@@ -78,9 +78,10 @@ export type CreateBookReviewRequest = {
 export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
 
 export type InterestedBookContent = {
-  bookId: number;
-  title: string;
-  author: string;
+  bookInfoId: number;
+  isbn: string;
+  title: string | null;
+  author: string | null;
   coverImageUrl: string | null;
   interestedAt: string;
 };
@@ -88,6 +89,66 @@ export type InterestedBookContent = {
 export type InterestedBooksPage = CursorPage<InterestedBookContent>;
 export type InterestedBooksResponse = ApiResponse<InterestedBooksPage>;
 export type InterestedBooksParams = CursorParams;
+
+export type BookLikeContent = {
+  isbn: string;
+  liked: boolean;
+};
+
+export type BookLikeResponse = ApiResponse<BookLikeContent>;
+
+export type ExchangeRecommendationBasis = {
+  type: string;
+  source: string;
+  sourceName: string;
+  provider: string;
+  sourceUrl: string;
+  startDate: string | null;
+  endDate: string | null;
+  description: string;
+};
+
+export type ExchangeRecommendationReview = {
+  reviewId: number;
+  reviewerName: string;
+  comment: string;
+  likeCount: number;
+  createdAt: string;
+};
+
+export type ExchangeRecommendationBook = {
+  isbn: string;
+  title: string;
+  author: string;
+  coverImageUrl: string | null;
+  data4LibraryRank: number;
+  data4LibraryLoanCount: number;
+  likeCount: number;
+  isInterested: boolean;
+  review: ExchangeRecommendationReview | null;
+};
+
+export type ExchangeRecommendationContent = {
+  recommendationDate: string;
+  basis: ExchangeRecommendationBasis;
+  book: ExchangeRecommendationBook | null;
+};
+
+export type ExchangeRecommendationResponse =
+  ApiResponse<ExchangeRecommendationContent>;
+
+export type CurrentReadingBookContent = {
+  groupId: string;
+  title: string;
+  coverImageUrl: string;
+};
+
+export type CurrentReadingBooksContent = {
+  books: CurrentReadingBookContent[];
+};
+
+export type CurrentReadingBooksResponse =
+  ApiResponse<CurrentReadingBooksContent>;
 
 export type BookSearchSort = "accuracy" | "latest";
 

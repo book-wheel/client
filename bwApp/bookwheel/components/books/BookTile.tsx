@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -14,6 +15,7 @@ type Props = {
   width: number;
   onPressBook: () => void;
   isInterested?: boolean;
+  isUpdatingInterest?: boolean;
   onToggleInterest?: () => void;
 };
 
@@ -22,8 +24,15 @@ export default function BookTile({
   width,
   onPressBook,
   isInterested,
+  isUpdatingInterest = false,
   onToggleInterest,
 }: Props) {
+  const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [book.image]);
+
   const showInterestToggle = typeof isInterested === "boolean" && onToggleInterest;
 
   return (
@@ -32,17 +41,29 @@ export default function BookTile({
       onPress={onPressBook}
     >
       <View style={[styles.imageWrap, { width }]}>
-        <Image source={book.image} style={styles.image} />
+        {book.image && !hasImageError ? (
+          <Image
+            source={book.image}
+            style={styles.image}
+            onError={() => setHasImageError(true)}
+          />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.imagePlaceholderText}>책 이미지가 없습니다</Text>
+          </View>
+        )}
         {showInterestToggle && (
           <TouchableOpacity
             accessibilityLabel={isInterested ? "관심도서 해제" : "관심도서 등록"}
             accessibilityRole="button"
+            accessibilityState={{ disabled: isUpdatingInterest, busy: isUpdatingInterest }}
             activeOpacity={0.75}
+            disabled={isUpdatingInterest}
             onPress={(event) => {
               event.stopPropagation();
               onToggleInterest();
             }}
-            style={styles.interestButton}
+            style={[styles.interestButton, isUpdatingInterest && styles.interestButtonDisabled]}
           >
             <Ionicons
               name={isInterested ? "heart" : "heart-outline"}
@@ -74,7 +95,22 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 10,
-    resizeMode: "contain",
+    resizeMode: "cover",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    backgroundColor: "#D9D9D9",
+    paddingHorizontal: 8,
+  },
+  imagePlaceholderText: {
+    color: "#777",
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
   },
   interestButton: {
     position: "absolute",
@@ -91,6 +127,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 3,
+  },
+  interestButtonDisabled: {
+    opacity: 0.5,
   },
   title: {
     width: "100%",

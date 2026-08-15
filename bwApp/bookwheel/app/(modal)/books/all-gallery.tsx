@@ -93,6 +93,10 @@ export default function AllGallery() {
         <View style={styles.messageContainer}>
           <Text style={styles.message}>{errorMessage}</Text>
         </View>
+      ) : !isLoading && galleryItems.length === 0 ? (
+        <View style={styles.messageContainer}>
+          <Text style={styles.message}>아직 등록된 사진이 없습니다.</Text>
+        </View>
       ) : (
         <GalleryImageGrid
           items={galleryItems}

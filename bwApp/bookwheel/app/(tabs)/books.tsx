@@ -1,96 +1,115 @@
 import { getApiErrorMessage } from "@/api/axios";
-import { getGalleryFeed } from "@/api/books";
+import {
+  getCurrentReadingBooks,
+  getExchangeRecommendation,
+  getGalleryFeed,
+  getInterestedBooks,
+  toggleBookLike,
+} from "@/api/books";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Tabs, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import BookTile from "../../components/books/BookTile";
 import BooksSectionHeader from "../../components/books/BooksSectionHeader";
 import GalleryPreviewRow from "../../components/books/GalleryPreviewRow";
 import ReadingBookCard from "../../components/books/ReadingBookCard";
 import RecommendBookCard from "../../components/books/RecommendBookCard";
-import type { BookItem, GalleryItem } from "../../components/books/types";
-const bookImage = require("@/assets/images/book.png");
+import type { BookItem, GalleryItem, RecommendBookItem } from "../../components/books/types";
+import type { CurrentReadingBookContent } from "../../types/books";
 const galleryImage = require("@/assets/images/comment.png");
 
-const groupName = "책바퀴 독서모임";
-const interestTileWidth = 96;
+const interestColumns = 3;
+const interestMaxTileWidth = 96;
+const interestGap = 20;
+const contentHorizontalPadding = 20;
 
-const readingBooks: BookItem[] = [
-  {
-    id: "1",
-    title: "키친은 모든 것을 말했다",
-    author: "구병모",
-    image: bookImage,
-  },
-  {
-    id: "2",
-    title: "모임에서 읽는 책",
-    author: "책바퀴",
-    image: bookImage,
-  },
-];
+type SectionStatusProps = {
+  isLoading?: boolean;
+  message: string;
+};
 
-const interestBooks: BookItem[] = [
-  {
-    id: "1",
-    title: "관심 도서 1",
-    author: "책바퀴",
-    image: bookImage,
-  },
-  {
-    id: "2",
-    title: "관심 도서 2",
-    author: "책바퀴",
-    image: bookImage,
-  },
-  {
-    id: "3",
-    title: "관심 도서 3",
-    author: "책바퀴",
-    image: bookImage,
-  },
-];
-
-const recommendBooks: BookItem[] = [
-  {
-    id: "1",
-    title: "키친은 모든 것을 말했다",
-    author: "구병모",
-    image: bookImage,
-  },
-  {
-    id: "2",
-    title: "나미야 잡화점의 기적",
-    author: "히가시노 게이고",
-    image: bookImage,
-  },
-  {
-    id: "3",
-    title: "시한부",
-    author: "이도우",
-    image: bookImage,
-  },
-  {
-    id: "4",
-    title: "막내의 재산세는 받지 되지 않는다",
-    author: "책바퀴",
-    image: bookImage,
-  },
-  {
-    id: "5",
-    title: "모순",
-    author: "양귀자",
-    image: bookImage,
-  },
-];
+function SectionStatus({ isLoading = false, message }: SectionStatusProps) {
+  return (
+    <View style={styles.sectionStatus}>
+      {isLoading ? (
+        <ActivityIndicator color="#E4A54E" />
+      ) : (
+        <Text style={styles.sectionStatusText}>{message}</Text>
+      )}
+    </View>
+  );
+}
 
 export default function Books() {
+  const { width } = useWindowDimensions();
+  const interestTileWidth = Math.min(
+    interestMaxTileWidth,
+    (width - contentHorizontalPadding * 2 - interestGap * (interestColumns - 1)) /
+      interestColumns,
+  );
+  const [readingBooks, setReadingBooks] = useState<
+    CurrentReadingBookContent[]
+  >([]);
+  const [readingBooksLoading, setReadingBooksLoading] = useState(false);
+  const [readingBooksError, setReadingBooksError] = useState<string | null>(
+    null,
+  );
   const [galleryPreview, setGalleryPreview] = useState<GalleryItem[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryError, setGalleryError] = useState<string|null>(null);
+  const [interestBooks, setInterestBooks] = useState<BookItem[]>([]);
+  const [interestLoading, setInterestLoading] = useState(false);
+  const [interestError, setInterestError] = useState<string | null>(null);
+  const [recommendation, setRecommendation] =
+    useState<RecommendBookItem | null>(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
+  const [recommendationError, setRecommendationError] =
+    useState<string | null>(null);
+  const [isUpdatingRecommendation, setIsUpdatingRecommendation] =
+    useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadCurrentReadingBooks = useCallback(async () => {
+    setReadingBooksLoading(true);
+    setReadingBooksError(null);
+
+    try {
+      const response = await getCurrentReadingBooks();
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "현재 읽고 있는 책을 불러오지 못했습니다.",
+        );
+      }
+
+      setReadingBooks(result.data.books);
+    } catch (error) {
+      setReadingBooks([]);
+      setReadingBooksError(
+        getApiErrorMessage(
+          error,
+          "현재 읽고 있는 책을 불러오지 못했습니다.",
+        ),
+      );
+    } finally {
+      setReadingBooksLoading(false);
+    }
+  }, []);
 
   const loadGalleryPreview = useCallback(async () => {
+    setGalleryLoading(true);
     setGalleryError(null);
 
     try {
@@ -100,7 +119,7 @@ export default function Books() {
       if (!result.success || !result.data) {
         setGalleryPreview([]);
         setGalleryError(result.error?.message ?? "교환독서의 순간들을 불러오지 못했습니다.",);
-      return;
+return;
       }
 
       const items: GalleryItem[] = result.data.content.map(
@@ -117,14 +136,122 @@ export default function Books() {
         setGalleryPreview([]);
         setGalleryError(getApiErrorMessage(error,"교환독서의 순간들을 불러오지 못했습니다.",),
     );
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, []);
+
+  const loadInterestPreview = useCallback(async () => {
+    setInterestLoading(true);
+    setInterestError(null);
+
+    try {
+      const response = await getInterestedBooks({ size: 3 });
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "관심 도서를 불러오지 못했습니다.",
+        );
+      }
+
+      setInterestBooks(
+        result.data.content.map((book) => ({
+          id: String(book.bookInfoId),
+          isbn: book.isbn,
+          title: book.title ?? "제목 없음",
+          author: book.author ?? "저자 미상",
+          image: book.coverImageUrl
+            ? { uri: book.coverImageUrl }
+            : undefined,
+        })),
+      );
+    } catch (error) {
+      setInterestBooks([]);
+      setInterestError(
+        getApiErrorMessage(error, "관심 도서를 불러오지 못했습니다."),
+      );
+    } finally {
+      setInterestLoading(false);
+    }
+  }, []);
+
+  const loadRecommendation = useCallback(async () => {
+    setRecommendationLoading(true);
+    setRecommendationError(null);
+
+    try {
+      const response = await getExchangeRecommendation();
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "추천 도서를 불러오지 못했습니다.",
+        );
+      }
+
+      const book = result.data.book;
+
+      setRecommendation(
+        book
+          ? {
+              isbn: book.isbn,
+              title: book.title,
+              author: book.author,
+              image: book.coverImageUrl
+                ? { uri: book.coverImageUrl }
+                : undefined,
+              likeCount: book.likeCount,
+              isInterested: book.isInterested,
+              review: book.review
+                ? {
+                    reviewerName: book.review.reviewerName,
+                    comment: book.review.comment,
+                  }
+                : null,
+            }
+          : null,
+      );
+    } catch (error) {
+      setRecommendation(null);
+      setRecommendationError(
+        getApiErrorMessage(error, "추천 도서를 불러오지 못했습니다."),
+      );
+    } finally {
+      setRecommendationLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
+      void loadCurrentReadingBooks();
       void loadGalleryPreview();
-    }, [loadGalleryPreview]),
+      void loadInterestPreview();
+      void loadRecommendation();
+    }, [loadCurrentReadingBooks, loadGalleryPreview, loadInterestPreview, loadRecommendation]),
   );
+
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        loadCurrentReadingBooks(),
+        loadGalleryPreview(),
+        loadInterestPreview(),
+        loadRecommendation(),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [
+    isRefreshing,
+    loadCurrentReadingBooks,
+    loadGalleryPreview,
+    loadInterestPreview,
+    loadRecommendation,
+  ]);
 
   const handleSearch = () => {
     router.push({
@@ -133,14 +260,17 @@ export default function Books() {
     });
   };
 
-  const handlePressBook = () => {
-    router.push("/book-detail/1/info");
+  const handlePressBook = (isbn: string) => {
+    router.push({
+      pathname: "/book-detail/[isbn]/info",
+      params: { isbn },
+    });
   };
 
-  const handlePressGroup = () => {
+  const handlePressGroup = (groupId: string) => {
     router.push({
       pathname: "/(tabs)/group/[id]/(top)/home",
-      params: { id: "1", name: groupName },
+      params: { id: groupId },
     });
   };
 
@@ -152,6 +282,47 @@ export default function Books() {
         postId: item.id,
       },
     });
+  };
+
+  const handleToggleRecommendation = async () => {
+    if (!recommendation || isUpdatingRecommendation) return;
+
+    setIsUpdatingRecommendation(true);
+    setRecommendationError(null);
+
+    try {
+      const response = await toggleBookLike(recommendation.isbn);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "관심 도서를 변경하지 못했습니다.",
+        );
+      }
+
+      const liked = result.data.liked;
+
+      setRecommendation((current) =>
+        current
+          ? {
+              ...current,
+              isInterested: liked,
+              likeCount: Math.max(
+                0,
+                current.likeCount + (liked ? 1 : -1),
+              ),
+            }
+          : current,
+      );
+
+      await loadInterestPreview();
+    } catch (error) {
+      setRecommendationError(
+        getApiErrorMessage(error, "관심 도서를 변경하지 못했습니다."),
+      );
+    } finally {
+      setIsUpdatingRecommendation(false);
+    }
   };
 
   return (
@@ -179,33 +350,50 @@ export default function Books() {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={["#E4A54E"]}
+            tintColor="#E4A54E"
+          />
+        }
       >
         <BooksSectionHeader title="지금 읽는 책" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {readingBooks.map((book) => (
-            <ReadingBookCard
-              key={book.id}
-              book={book}
-              groupName={groupName}
-              onPressBook={handlePressBook}
-              onPressGroup={handlePressGroup}
-            />
-          ))}
-        </ScrollView>
+        {readingBooksLoading && readingBooks.length === 0 ? (
+          <SectionStatus isLoading message="현재 읽고 있는 책을 불러오는 중입니다." />
+        ) : readingBooksError ? (
+          <SectionStatus message={readingBooksError} />
+        ) : readingBooks.length === 0 ? (
+          <SectionStatus message="현재 읽고 있는 책이 없습니다." />
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          >
+            {readingBooks.map((book) => (
+              <ReadingBookCard
+                key={book.groupId}
+                title={book.title}
+                coverImageUrl={book.coverImageUrl}
+                onPress={() => handlePressGroup(book.groupId)}
+              />
+            ))}
+          </ScrollView>
+        )}
 
         <BooksSectionHeader
           title="교환독서의 순간들"
           actionText="더보기"
           onPressAction={() => router.push("/(modal)/books/all-gallery")}
         />
-        {galleryError ? (
-          <View style={styles.galleryMessageContainer}>
-            <Text style={styles.galleryMessage}>{galleryError}</Text>
-          </View>
+        {galleryLoading && galleryPreview.length === 0 ? (
+          <SectionStatus isLoading message="갤러리를 불러오는 중입니다." />
+        ) : galleryError ? (
+          <SectionStatus message={galleryError} />
+        ) : galleryPreview.length === 0 ? (
+          <SectionStatus message="아직 등록된 사진이 없습니다." />
         ) : (
           <GalleryPreviewRow
             items={galleryPreview}
@@ -213,38 +401,54 @@ export default function Books() {
           />
         )}
 
-        <BooksSectionHeader title="교환독서 추천 도서" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {recommendBooks.map((book, index) => (
+        <BooksSectionHeader title="오늘의 교환독서 추천 도서" />
+        {recommendationLoading && !recommendation ? (
+          <SectionStatus isLoading message="추천 도서를 불러오는 중입니다." />
+        ) : recommendation ? (
+          <>
             <RecommendBookCard
-              key={book.id}
-              book={book}
-              index={index}
-              total={recommendBooks.length}
-              onPressBook={handlePressBook}
+              book={recommendation}
+              isUpdatingInterest={isUpdatingRecommendation}
+              onPressBook={() => handlePressBook(recommendation.isbn)}
+              onToggleInterest={() => void handleToggleRecommendation()}
             />
-          ))}
-        </ScrollView>
+            {recommendationError ? (
+              <Text style={styles.actionError}>{recommendationError}</Text>
+            ) : null}
+          </>
+        ) : (
+          <SectionStatus
+            message={
+              recommendationError ?? "오늘의 추천 도서가 없습니다."
+            }
+          />
+        )}
 
         <BooksSectionHeader
           title="관심 도서"
           actionText="더보기"
           onPressAction={() => router.push("/(modal)/books/all-interest")}
         />
-        <View style={styles.interestList}>
-          {interestBooks.map((book) => (
-            <BookTile
-              key={book.id}
-              book={book}
-              width={interestTileWidth}
-              onPressBook={handlePressBook}
-            />
-          ))}
-        </View>
+        {interestLoading && interestBooks.length === 0 ? (
+          <SectionStatus isLoading message="관심 도서를 불러오는 중입니다." />
+        ) : interestError ? (
+          <SectionStatus message={interestError} />
+        ) : interestBooks.length === 0 ? (
+          <SectionStatus message="아직 관심 도서가 없습니다." />
+        ) : (
+          <View style={styles.interestList}>
+            {interestBooks.map((book) => (
+              <BookTile
+                key={book.id}
+                book={book}
+                width={interestTileWidth}
+                onPressBook={() => {
+                  if (book.isbn) handlePressBook(book.isbn);
+                }}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </>
   );
@@ -256,7 +460,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: contentHorizontalPadding,
     paddingTop: 18,
     paddingBottom: 48,
   },
@@ -274,16 +478,24 @@ const styles = StyleSheet.create({
   },
   interestList: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
+    gap: interestGap,
   },
-  galleryMessageContainer: {
+  sectionStatus: {
     minHeight: 100,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 16,
   },
-  galleryMessage: {
+  sectionStatusText: {
     color: "#A68D63",
     fontSize: 14,
+    textAlign: "center",
+  },
+  actionError: {
+    marginTop: 8,
+    color: "#B84A4A",
+    fontSize: 12,
     textAlign: "center",
   },
 });
