@@ -8,10 +8,10 @@ import AddBookForm from "@/components/group/add-book/AddBookForm";
 import type { BookDetail } from "@/types/books";
 
 export default function AddBook() {
-  const { id, bookId } = useLocalSearchParams();
+  const { id, isbn: rowIsbn } = useLocalSearchParams();
 
   const groupId = Array.isArray(id) ? id[0] : id;
-  const isbn = Array.isArray(bookId) ? bookId[0] : bookId;
+  const isbn = Array.isArray(rowIsbn) ? rowIsbn[0] : rowIsbn;
 
   const [selectedBook, setSelectedBook] = useState<BookDetail | null>(null);
 
