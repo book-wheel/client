@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
+import Toast from "react-native-toast-message";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -64,15 +65,24 @@ export default function Login() {
       await AsyncStorage.setItem("accessToken", accessToken);
       await AsyncStorage.setItem("refreshToken", refreshToken);
 
+      Toast.show({
+        type: "success",
+        text1: "로그인 성공",
+      });
+
       if (isProfileSet) {
         router.replace("/(tabs)");
       } else {
         router.replace("/auth/profile");
       }
     } catch (error: any) {
-      const message = "아이디 또는 비밀번호가 올바르지 않습니다";
+      Toast.show({
+        type: "error",
+        text1: "로그인 실패",
+        text2: "아이디 또는 비밀번호를 확인해주세요.",
+      });
 
-      setErrorMessage(message);
+      setErrorMessage("아이디 또는 비밀번호가 올바르지 않습니다");
     } finally {
       setLoading(false);
     }

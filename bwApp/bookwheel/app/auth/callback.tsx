@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 import { exchangeOAuthCode } from "@/api/auth";
 
@@ -51,6 +52,11 @@ export default function OAuthCallback() {
         // 사용한 verifier 즉시 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
 
+        Toast.show({
+          type: "success",
+          text1: "로그인 성공",
+        });
+
         // 로그인 후 이동
         if (isFirstLogin) {
           router.replace("/auth/profile");
@@ -62,6 +68,12 @@ export default function OAuthCallback() {
 
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
+
+        Toast.show({
+          type: "error",
+          text1: "소셜 로그인 실패",
+          text2: "잠시 후 다시 시도해주세요.",
+        });
 
         router.replace("/auth/login");
       }
