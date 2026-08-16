@@ -5,11 +5,13 @@ import SessionProgress from "@/components/group/state/SessionProgress";
 import CurrentBookSection from "@/components/group/state/CurrentBookSection";
 import MemberStatusList from "@/components/group/state/MemberStatusList";
 import BeforeStartDashboard from "@/components/group/state/BeforeStartDashboard";
+import ScheduleReadyDashboard from "@/components/group/state/ScheduleReadyDashboard";
 
 export default function State() {
   const {
     id,
     members,
+    groupMembers,
     hasBook,
     isStarted,
     dashboard,
@@ -19,8 +21,22 @@ export default function State() {
     currentReadingDay,
     remainingDays,
     canSetMemberOrder,
+    schedule,
+    isScheduleReady,
   } = useGroupState();
 
+  // 일정이 준비 완료 상태일 때
+  if (isScheduleReady && schedule) {
+    return (
+      <ScheduleReadyDashboard
+        id={id!}
+        schedule={schedule}
+        members={groupMembers}
+      />
+    );
+  }
+
+  // 시작되지 않았을 때
   if (!isStarted) {
     return (
       <BeforeStartDashboard

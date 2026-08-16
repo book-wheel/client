@@ -145,6 +145,8 @@ export function useGroupState() {
   const canSetMemberOrder =
     schedule != null && schedule.missingBookMembers.length === 0;
 
+  const isScheduleReady = schedule?.scheduleStatus === "READY";
+
   // 멤버 상태 변경
   const updateMemberStatus = (id: string, status: MemberStatus["status"]) => {
     setMemberStatuses((prev) => ({
@@ -216,7 +218,9 @@ export function useGroupState() {
 
   // 현재는 화면 테스트를 위해 true
   // 나중에 다시 dashboard.currentRound 기준으로 변경
-  const isStarted = (dashboard?.currentRound ?? 0) > 0;
+  const isStarted =
+    schedule?.scheduleStatus === "IN_PROGRESS" ||
+    (dashboard?.currentRound ?? 0) > 0;
 
   const hasBook = dashboard?.myBookStep != null;
 
@@ -224,6 +228,7 @@ export function useGroupState() {
     id,
     session,
     members,
+    groupMembers,
     totalMembers,
     completedMembers,
     currentMember,
@@ -242,5 +247,6 @@ export function useGroupState() {
     remainingDays,
 
     canSetMemberOrder,
+    isScheduleReady,
   };
 }

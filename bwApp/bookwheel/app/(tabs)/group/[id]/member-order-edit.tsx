@@ -7,6 +7,7 @@ import DraggableFlatList, {
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import { getGroupMembers, updateMemberOrder } from "@/api/group";
+import { getGroupSchedule, createSchedule } from "@/api/group-dashboard";
 
 type Member = {
   memberId: string;
@@ -69,20 +70,43 @@ export default function MemberOrderEdit() {
     }
   };
 
+  // 저장 버튼 클릭 시
   const handleSave = async () => {
-    if (!id) return;
+    if (!id || saving) return;
 
     try {
       setSaving(true);
 
+      // 1. 읽기 순서 저장
       await updateMemberOrder(id, {
         isRandom: false,
         memberIds: members.map((member) => member.memberId),
       });
 
-      router.back();
-    } catch (error) {
-      console.error("읽기 순서 저장 실패:", error);
+      // 2. 현재 일정 정보 조회
+      const schedule = await getGroupSchedule(id);
+
+      // 3. 현재 멤버 수를 목표 인원으로 사용해서 최초 일정 생성
+      await createSchedule(id, {
+        startDate: schedule.startDate,
+        readingPeriod: schedule.readingPeriod,
+        endDate: schedule.endDate,
+        excludedDates: schedule.excludedDates ?? [],
+        excludedDateRanges: schedule.excludedDateRanges ?? [],
+        targetMemberCount: schedule.currentMemberCount,
+      });
+
+      // 4. 생성된 일정 전체 확인 화면으로 이동
+      router.replace({
+        pathname: "/group/[id]/schedule",
+        params: { id },
+      });
+    } catch (error: any) {
+      console.error(
+        "읽기 순서/일정 생성 실패:",
+        error?.response?.status,
+        JSON.stringify(error?.response?.data, null, 2),
+      );
     } finally {
       setSaving(false);
     }
