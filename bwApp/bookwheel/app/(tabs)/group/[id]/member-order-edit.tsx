@@ -105,11 +105,6 @@ export default function MemberOrderEdit() {
       });
 
       // 4. 생성된 일정 전체 확인 화면으로 이동
-      router.replace({
-        pathname: "/group/[id]/state",
-        params: { id },
-      });
-
       Alert.alert("저장 완료", "읽기 순서가 저장되고 일정이 생성되었습니다.", [
         {
           text: "확인",
