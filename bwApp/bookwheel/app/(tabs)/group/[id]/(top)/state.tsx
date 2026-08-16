@@ -36,15 +36,15 @@ export default function State() {
   };
 
   // 일정이 준비 완료 상태일 때
-  // if (isScheduleReady && schedule) {
-  //   return (
-  //     <ScheduleReadyDashboard
-  //       id={id!}
-  //       schedule={schedule}
-  //       members={groupMembers}
-  //     />
-  //   );
-  // }
+  if (isScheduleReady && schedule) {
+    return (
+      <ScheduleReadyDashboard
+        id={id!}
+        schedule={schedule}
+        members={groupMembers}
+      />
+    );
+  }
 
   // 시작되지 않았을 때
   if (!isStarted) {

@@ -271,12 +271,10 @@ export function useGroupState() {
     }
   }, [memberId, newStatus]);
 
-  // 현재는 화면 테스트를 위해 true
-  const isStarted = true;
   // 일정이 시작되었는지 여부
-  // const isStarted =
-  //   schedule?.scheduleStatus === "IN_PROGRESS" ||
-  //   (dashboard?.currentRound ?? 0) > 0;
+  const isStarted =
+    schedule?.scheduleStatus === "IN_PROGRESS" ||
+    (dashboard?.currentRound ?? 0) > 0;
 
   const hasBook = dashboard?.myBookStep != null;
 
