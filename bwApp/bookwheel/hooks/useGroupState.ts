@@ -123,13 +123,16 @@ export function useGroupState() {
     fetchData();
   }, [id]);
 
-  // 현재 회차
-  const session = dashboard?.currentRound ?? 0;
+  // 현재 세션(진행 중인 라운드) 계산
+  const session =
+    schedule?.rounds.find((round) => round.executable)?.roundNumber ??
+    dashboard?.currentRound ??
+    0;
 
-  // 현재 회차 일정
   const currentRound = schedule?.rounds.find(
-    (round) => round.roundNumber === dashboard?.currentRound,
+    (round) => round.roundNumber === session,
   );
+
   const getDateOnly = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   };
@@ -269,10 +272,11 @@ export function useGroupState() {
   }, [memberId, newStatus]);
 
   // 현재는 화면 테스트를 위해 true
-  // 나중에 다시 dashboard.currentRound 기준으로 변경
-  const isStarted =
-    schedule?.scheduleStatus === "IN_PROGRESS" ||
-    (dashboard?.currentRound ?? 0) > 0;
+  const isStarted = true;
+  // 일정이 시작되었는지 여부
+  // const isStarted =
+  //   schedule?.scheduleStatus === "IN_PROGRESS" ||
+  //   (dashboard?.currentRound ?? 0) > 0;
 
   const hasBook = dashboard?.myBookStep != null;
 

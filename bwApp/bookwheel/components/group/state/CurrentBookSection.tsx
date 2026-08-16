@@ -20,8 +20,35 @@ export default function CurrentBookSection({
 }: Props) {
   if (!book) {
     return (
-      <View>
-        <Text>현재 읽고 있는 책이 없습니다.</Text>
+      <View style={{ paddingHorizontal: 20, paddingVertical: 24 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "700",
+            color: "#513A11",
+          }}
+        >
+          현재 읽고 있는 책
+        </Text>
+
+        <View
+          style={{
+            marginTop: 14,
+            padding: 20,
+            borderRadius: 18,
+            backgroundColor: "#FFF8E8",
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 14,
+              color: "#8B6D3A",
+              textAlign: "center",
+            }}
+          >
+            현재 읽고 있는 책이 없습니다.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -30,7 +57,8 @@ export default function CurrentBookSection({
     <View
       style={{
         paddingHorizontal: 20,
-        paddingVertical: 24,
+        paddingTop: 24,
+        paddingBottom: 12,
       }}
     >
       <Text
@@ -38,7 +66,7 @@ export default function CurrentBookSection({
           fontSize: 18,
           fontWeight: "700",
           color: "#513A11",
-          marginBottom: 16,
+          marginBottom: 14,
         }}
       >
         현재 읽고 있는 책
@@ -46,69 +74,81 @@ export default function CurrentBookSection({
 
       <View
         style={{
-          flexDirection: "row",
-          alignItems: "center",
+          padding: 16,
+          borderRadius: 18,
+          backgroundColor: "#FFF8E8",
         }}
       >
-        <Image
-          source={{ uri: book.image.uri }}
-          style={{
-            width: 110,
-            height: 155,
-            borderRadius: 8,
-          }}
-          resizeMode="cover"
-        />
-
         <View
           style={{
-            flex: 1,
-            marginLeft: 16,
+            flexDirection: "row",
           }}
         >
-          <Text
+          <Image
+            source={{ uri: book.image.uri }}
             style={{
-              fontSize: 18,
-              fontWeight: "700",
-              color: "#513A11",
+              width: 88,
+              height: 124,
+              borderRadius: 8,
+              backgroundColor: "#F3F3F3",
             }}
-          >
-            {book.title}
-          </Text>
+            resizeMode="cover"
+          />
 
-          <Text
+          <View
             style={{
-              marginTop: 10,
-              fontSize: 14,
-              color: "#8B6D3A",
+              flex: 1,
+              marginLeft: 14,
+              justifyContent: "center",
             }}
           >
-            {book.owner}님이 전달한 책
-          </Text>
+            <Text
+              numberOfLines={3}
+              style={{
+                fontSize: 17,
+                fontWeight: "700",
+                lineHeight: 24,
+                color: "#513A11",
+              }}
+            >
+              {book.title}
+            </Text>
+
+            <Text
+              style={{
+                marginTop: 10,
+                fontSize: 13,
+                color: "#8B6D3A",
+              }}
+            >
+              {book.owner}님이 전달한 책
+            </Text>
+          </View>
         </View>
-      </View>
 
-      <TouchableOpacity
-        onPress={onPress}
-        style={{
-          marginTop: 20,
-          height: 52,
-          borderRadius: 14,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#E4A54E",
-        }}
-      >
-        <Text
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.8}
           style={{
-            color: "#FFF",
-            fontSize: 16,
-            fontWeight: "700",
+            height: 46,
+            marginTop: 16,
+            borderRadius: 12,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#E4A54E",
           }}
         >
-          {buttonText}
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={{
+              color: "#FFF",
+              fontSize: 15,
+              fontWeight: "700",
+            }}
+          >
+            {buttonText}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
