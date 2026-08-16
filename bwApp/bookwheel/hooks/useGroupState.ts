@@ -124,10 +124,8 @@ export function useGroupState() {
   }, [id]);
 
   // 현재 세션(진행 중인 라운드) 계산
-  const session =
-    schedule?.rounds.find((round) => round.executable)?.roundNumber ??
-    dashboard?.currentRound ??
-    0;
+  // 현재 회차
+  const session = dashboard?.currentRound ?? 0;
 
   const currentRound = schedule?.rounds.find(
     (round) => round.roundNumber === session,
@@ -157,18 +155,14 @@ export function useGroupState() {
   // 남은 일수
   const remainingDays = Math.max(readingPeriod - currentReadingDay, 0);
 
-  // 현재 책
-  const currentRoundFromSchedule = schedule?.rounds.find(
-    (round) => round.executable,
-  );
-
-  const currentBook: CurrentBook | null = currentRoundFromSchedule
+  // 현재 책 정보
+  const currentBook: CurrentBook | null = currentRound
     ? {
-        id: currentRoundFromSchedule.bookId,
-        title: currentRoundFromSchedule.bookTitle,
-        owner: currentRoundFromSchedule.senderNickname,
+        id: currentRound.bookId,
+        title: currentRound.bookTitle,
+        owner: currentRound.senderNickname,
         image: {
-          uri: currentRoundFromSchedule.coverImage,
+          uri: currentRound.coverImage,
         },
       }
     : dashboard?.myStep
