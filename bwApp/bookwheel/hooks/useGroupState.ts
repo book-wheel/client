@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
+import { Alert } from "react-native";
 
 import { getDashboard, getGroupSchedule } from "@/api/group-dashboard";
 import { getGroupMembers } from "@/api/group";
@@ -78,6 +79,11 @@ export function useGroupState() {
         setSchedule(scheduleData);
       } catch (error) {
         console.error("모임 정보 조회 실패:", error);
+
+        Alert.alert(
+          "모임 정보를 불러올 수 없습니다.",
+          "잠시 후 다시 시도해주세요.",
+        );
       }
     };
 
@@ -116,16 +122,29 @@ export function useGroupState() {
   const remainingDays = Math.max(readingPeriod - currentReadingDay, 0);
 
   // 현재 책
-  const currentBook: CurrentBook | null = dashboard?.myStep
+  const currentRoundFromSchedule = schedule?.rounds.find(
+    (round) => round.executable,
+  );
+
+  const currentBook: CurrentBook | null = currentRoundFromSchedule
     ? {
-        id: dashboard.myStep.bookId,
-        title: dashboard.myStep.bookTitle,
-        owner: dashboard.myStep.senderNickname,
+        id: currentRoundFromSchedule.bookId,
+        title: currentRoundFromSchedule.bookTitle,
+        owner: currentRoundFromSchedule.senderNickname,
         image: {
-          uri: dashboard.myStep.coverImage,
+          uri: currentRoundFromSchedule.coverImage,
         },
       }
-    : null;
+    : dashboard?.myStep
+      ? {
+          id: dashboard.myStep.bookId,
+          title: dashboard.myStep.bookTitle,
+          owner: dashboard.myStep.senderNickname,
+          image: {
+            uri: dashboard.myStep.coverImage,
+          },
+        }
+      : null;
 
   // API 멤버 데이터를 화면에서 사용하는 MemberStatus 형태로 변환
   const members: MemberStatus[] = groupMembers.map((member) => ({

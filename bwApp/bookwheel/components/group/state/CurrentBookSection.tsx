@@ -1,16 +1,14 @@
-import { View, Text } from "react-native";
-import ReadingCard from "@/components/home/ReadingCard";
-
-type Book = {
-  title: string;
-  owner: string;
-  image: {
-    uri: string;
-  };
-};
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
-  book: Book | null;
+  book: {
+    id: string;
+    title: string;
+    owner: string;
+    image: {
+      uri: string;
+    };
+  } | null;
   buttonText: string;
   onPress: () => void;
 };
@@ -22,42 +20,95 @@ export default function CurrentBookSection({
 }: Props) {
   if (!book) {
     return (
-      <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            color: "#513A11",
-            marginBottom: 12,
-          }}
-        >
-          진행중인 도서
-        </Text>
+      <View>
+        <Text>현재 읽고 있는 책이 없습니다.</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+    <View
+      style={{
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+      }}
+    >
       <Text
         style={{
           fontSize: 18,
-          fontWeight: "bold",
+          fontWeight: "700",
           color: "#513A11",
-          marginBottom: 12,
+          marginBottom: 16,
         }}
       >
-        진행중인 도서
+        현재 읽고 있는 책
       </Text>
 
-      <ReadingCard
-        image={book.image}
-        title={book.title}
-        author="" // API에 없음
-        owner={book.owner}
-        buttonText={buttonText}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <Image
+          source={{ uri: book.image.uri }}
+          style={{
+            width: 110,
+            height: 155,
+            borderRadius: 8,
+          }}
+          resizeMode="cover"
+        />
+
+        <View
+          style={{
+            flex: 1,
+            marginLeft: 16,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "700",
+              color: "#513A11",
+            }}
+          >
+            {book.title}
+          </Text>
+
+          <Text
+            style={{
+              marginTop: 10,
+              fontSize: 14,
+              color: "#8B6D3A",
+            }}
+          >
+            {book.owner}님이 전달한 책
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
         onPress={onPress}
-      />
+        style={{
+          marginTop: 20,
+          height: 52,
+          borderRadius: 14,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#E4A54E",
+        }}
+      >
+        <Text
+          style={{
+            color: "#FFF",
+            fontSize: 16,
+            fontWeight: "700",
+          }}
+        >
+          {buttonText}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

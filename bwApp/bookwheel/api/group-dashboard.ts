@@ -40,3 +40,27 @@ export const getGroupSchedule = async (groupId: string) => {
 
   return response.data.data;
 };
+
+// 그룹 일정 수정 API
+export type CreateFutureScheduleRequest = {
+  totalRoundCount: number;
+  readingPeriod: number;
+  endDate: string;
+  excludedDates: string[];
+  excludedDateRanges: {
+    startDate: string;
+    endDate: string;
+  }[];
+};
+
+export const createFutureSchedule = async (
+  groupId: string,
+  data: CreateFutureScheduleRequest,
+) => {
+  const response = await axiosInstance.post(
+    `/groups/${groupId}/schedule/future`,
+    data,
+  );
+
+  return response.data.data;
+};
