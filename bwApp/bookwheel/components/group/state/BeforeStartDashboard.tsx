@@ -11,6 +11,7 @@ type Props = {
   author?: string;
   coverImage?: string;
   canSetMemberOrder?: boolean;
+  isLeader: boolean;
 };
 
 export default function BeforeStartDashboard({
@@ -22,6 +23,7 @@ export default function BeforeStartDashboard({
   author,
   coverImage,
   canSetMemberOrder = false,
+  isLeader,
 }: Props) {
   return (
     <View
@@ -170,7 +172,7 @@ export default function BeforeStartDashboard({
                 </Text>
               </TouchableOpacity>
 
-              {canSetMemberOrder && (
+              {isLeader && canSetMemberOrder && (
                 <TouchableOpacity
                   onPress={() => {
                     console.log("이동:", id);

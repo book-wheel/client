@@ -25,6 +25,7 @@ export default function State() {
     canSetMemberOrder,
     schedule,
     isScheduleReady,
+    isLeader,
   } = useGroupState();
 
   const getFutureDate = () => {
@@ -56,6 +57,7 @@ export default function State() {
         bookTitle={dashboard?.myBookStep?.bookTitle}
         coverImage={dashboard?.myBookStep?.coverImage}
         canSetMemberOrder={canSetMemberOrder}
+        isLeader={isLeader}
       />
     );
   }

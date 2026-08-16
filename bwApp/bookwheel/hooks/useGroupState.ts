@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
+import { jwtDecode } from "jwt-decode";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { getDashboard, getGroupSchedule } from "@/api/group-dashboard";
 import { getGroupMembers } from "@/api/group";
@@ -41,6 +43,10 @@ type GroupSchedule = {
   }[];
 };
 
+type TokenPayload = {
+  sub: string;
+};
+
 export function useGroupState() {
   const { id: rawId, memberId, newStatus } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -56,6 +62,33 @@ export function useGroupState() {
   const [memberStatuses, setMemberStatuses] = useState<
     Record<string, MemberStatus["status"]>
   >({});
+
+  const [currentUserPK, setCurrentUserPK] = useState<string | null>(null);
+
+  // 현재 사용자가 그룹 리더인지 여부
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!token) return;
+
+      try {
+        const payload = jwtDecode<TokenPayload>(token);
+        setCurrentUserPK(payload.sub);
+      } catch (error) {
+        console.error("토큰 디코딩 실패:", error);
+      }
+    };
+
+    loadCurrentUser();
+  }, []);
+
+  // 현재 사용자의 그룹 내 역할 확인
+  const currentUser = groupMembers.find(
+    (member) => member.userPK === currentUserPK,
+  );
+
+  const isLeader = currentUser?.role === "LEADER";
 
   // 그룹 일정 데이터
   const [schedule, setSchedule] = useState<GroupScheduleData | null>(null);
@@ -267,5 +300,6 @@ export function useGroupState() {
 
     canSetMemberOrder,
     isScheduleReady,
+    isLeader,
   };
 }
