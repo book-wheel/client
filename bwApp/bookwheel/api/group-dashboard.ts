@@ -21,6 +21,32 @@ export const registerBook = async (
   return response.data;
 };
 
+// 책 재등록 API
+export type UpdateOwnBookRequest = {
+  isbn: string;
+  title: string;
+  author: string;
+  publisher: string;
+  pubDate: string;
+  coverImage: string;
+  totalPage: number;
+  bookCondition: string;
+  noteToReader: string;
+};
+
+export const updateOwnBook = async (
+  groupId: string,
+  ownBookId: string,
+  data: UpdateOwnBookRequest,
+) => {
+  const response = await axiosInstance.patch(
+    `/groups/${groupId}/books/${ownBookId}`,
+    data,
+  );
+
+  return response.data.data;
+};
+
 // 일정 생성 API
 export const createSchedule = async (
   groupId: string,

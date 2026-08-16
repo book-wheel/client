@@ -1,60 +1,21 @@
-import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Image, ScrollView } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
+import { ScrollView, Text, TouchableOpacity, View, Image } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-import { getGroupSchedule } from "@/api/group-dashboard";
+import type { GroupMember } from "@/types/groupMembers";
+import type { GroupScheduleData } from "@/types/groupDashboard";
 
-type Round = {
-  roundNumber: number;
-  startDate: string;
-  endDate: string;
-  executable: boolean;
-  wheelStateId: string;
-  wheelStatus: string;
-  bookId: string;
-  bookTitle: string;
-  coverImage: string;
-  senderNickname: string;
+type Props = {
+  id: string;
+  schedule: GroupScheduleData;
+  members: GroupMember[];
 };
 
-type Schedule = {
-  startDate: string;
-  endDate: string | null;
-  readingPeriod: number;
-  currentMemberCount: number;
-  targetMemberCount: number | null;
-  scheduleStatus: string;
-  rounds: Round[];
-};
-
-export default function Schedule() {
-  const { id: rawId } = useLocalSearchParams<{ id: string }>();
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-
-  const [schedule, setSchedule] = useState<Schedule | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchSchedule = async () => {
-      try {
-        const data = await getGroupSchedule(id);
-
-        console.log("생성된 일정:", data);
-
-        setSchedule(data);
-      } catch (error) {
-        console.error("일정 조회 실패:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchedule();
-  }, [id]);
-
+export default function ScheduleReadyDashboard({
+  id,
+  schedule,
+  members,
+}: Props) {
   const handleMemberOrder = () => {
     router.push({
       pathname: "/group/[id]/member-order-edit",
@@ -65,56 +26,15 @@ export default function Schedule() {
   const handleBookRegister = () => {
     router.push({
       pathname: "/group/[id]/add-book",
-      params: { id },
+      params: {
+        id,
+        mode: "edit",
+      },
     });
   };
 
-  if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#FFF",
-        }}
-      >
-        <Text style={{ color: "#888" }}>독서 일정을 불러오는 중...</Text>
-      </View>
-    );
-  }
-
-  if (!schedule) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#FFF",
-          paddingHorizontal: 24,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: "600",
-            color: "#513A11",
-          }}
-        >
-          일정을 불러오지 못했어요.
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#FFF",
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: "#FFF" }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -123,7 +43,6 @@ export default function Schedule() {
           paddingBottom: 180,
         }}
       >
-        {/* 헤더 */}
         <View style={{ paddingHorizontal: 4 }}>
           <Text
             style={{
@@ -143,13 +62,11 @@ export default function Schedule() {
               lineHeight: 21,
             }}
           >
-            멤버들의 읽기 순서에 따라
-            {"\n"}
+            멤버들의 읽기 순서에 따라{"\n"}
             독서 일정이 만들어졌어요.
           </Text>
         </View>
 
-        {/* 일정 요약 */}
         <View
           style={{
             marginTop: 22,
@@ -202,7 +119,6 @@ export default function Schedule() {
           </View>
         </View>
 
-        {/* 라운드 */}
         <View style={{ marginTop: 28 }}>
           <Text
             style={{
@@ -227,7 +143,6 @@ export default function Schedule() {
                 borderColor: "#F0E5D2",
               }}
             >
-              {/* 라운드 헤더 */}
               <View
                 style={{
                   flexDirection: "row",
@@ -284,7 +199,6 @@ export default function Schedule() {
                 </Text>
               </View>
 
-              {/* 책 */}
               <View
                 style={{
                   flexDirection: "row",
@@ -306,12 +220,7 @@ export default function Schedule() {
                   }}
                 />
 
-                <View
-                  style={{
-                    flex: 1,
-                    marginLeft: 14,
-                  }}
-                >
+                <View style={{ flex: 1, marginLeft: 14 }}>
                   <Text
                     style={{
                       fontSize: 16,
@@ -349,7 +258,6 @@ export default function Schedule() {
         </View>
       </ScrollView>
 
-      {/* 하단 버튼 */}
       <View
         style={{
           position: "absolute",
@@ -365,41 +273,6 @@ export default function Schedule() {
         }}
       >
         <TouchableOpacity
-          onPress={handleBookRegister}
-          activeOpacity={0.8}
-          style={{
-            height: 48,
-            borderRadius: 14,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#FFF8E8",
-            borderWidth: 1,
-            borderColor: "#EFDDBD",
-            marginBottom: 9,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            <Ionicons name="book-outline" size={18} color="#B8873D" />
-
-            <Text
-              style={{
-                marginLeft: 7,
-                color: "#B8873D",
-                fontSize: 15,
-                fontWeight: "600",
-              }}
-            >
-              도서 다시 등록하기
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           onPress={handleMemberOrder}
           activeOpacity={0.8}
           style={{
@@ -413,51 +286,14 @@ export default function Schedule() {
             marginBottom: 9,
           }}
         >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            <Ionicons name="swap-vertical-outline" size={19} color="#B8873D" />
-
-            <Text
-              style={{
-                marginLeft: 7,
-                color: "#B8873D",
-                fontSize: 15,
-                fontWeight: "600",
-              }}
-            >
-              읽기 순서 다시 지정
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={{
-            height: 54,
-            borderRadius: 15,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#E4A54E",
-          }}
-          onPress={() =>
-            router.replace({
-              pathname: "/group/[id]/add-book",
-              params: { id },
-            })
-          }
-        >
           <Text
             style={{
-              color: "#FFF",
-              fontSize: 16,
-              fontWeight: "700",
+              color: "#B8873D",
+              fontSize: 15,
+              fontWeight: "600",
             }}
           >
-            일정 확인 완료
+            읽기 순서 다시 지정
           </Text>
         </TouchableOpacity>
       </View>

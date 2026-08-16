@@ -7,7 +7,7 @@ import SessionProgress from "@/components/group/state/SessionProgress";
 import CurrentBookSection from "@/components/group/state/CurrentBookSection";
 import MemberStatusList from "@/components/group/state/MemberStatusList";
 import BeforeStartDashboard from "@/components/group/state/BeforeStartDashboard";
-import ScheduleReadyDashboard from "@/components/group/state/ScheduleReadyDashboard";
+import ScheduleReadyDashboard from "@/components/group/state/schedule";
 
 export default function State() {
   const {
