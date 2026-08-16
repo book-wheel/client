@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet } from "react-native";
 import SimpleReadingCard from "@/components/addReview/SimpleReadingCard";
+import type { ImageSourcePropType } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 type Props = {
-    image: any;
+    image: ImageSourcePropType | null;
     title: string;
     author: string;
 };

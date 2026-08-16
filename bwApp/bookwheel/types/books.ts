@@ -1,17 +1,4 @@
-import type { ApiResponse } from "@/types/api";
-
-export type CursorPage<T> = {
-  content: T[];
-  size: number;
-  totalElements: number;
-  hasNext: boolean;
-  nextCursor: string | null;
-};
-
-export type BooksCursorParams = {
-  cursor?: string | null;
-  size?: number;
-};
+import type { ApiResponse, CursorPage, CursorParams } from "@/types/api";
 
 export type BookDetailContent = {
   title: string;
@@ -20,11 +7,17 @@ export type BookDetailContent = {
   description: string;
   cover: string | null;
   itemPage: number | null;
-  toc: string | null;
   isbn: string;
   isInterested: boolean;
   pubDate?: string;
+  usageAnalysis: AnalysisData | null;
 };
+
+export type AnalysisData = {
+  totalLoanCount: number | null;
+  mostLoanedAgeGroup: string | null;
+  keywords: string[] | null;
+}
 
 export type BookDetail = BookDetailContent;
 export type BookDetailResponse = ApiResponse<BookDetail>;
@@ -90,29 +83,78 @@ export type CreateBookReviewRequest = {
 
 export type CreateBookReviewResponse = ApiResponse<BookReviewContent>;
 
-export type BookGalleryContent = {
-  galleryId: number;
-  bookId: number;
-  thumbnailUrl: string;
-  imageCount: number;
-  createdAt: string;
-};
-
-export type BookGalleryPage = CursorPage<BookGalleryContent>;
-export type BookGalleryResponse = ApiResponse<BookGalleryPage>;
-export type BookGalleryParams = BooksCursorParams;
-
 export type InterestedBookContent = {
-  bookId: number;
-  title: string;
-  author: string;
+  bookInfoId: number;
+  isbn: string;
+  title: string | null;
+  author: string | null;
   coverImageUrl: string | null;
   interestedAt: string;
 };
 
 export type InterestedBooksPage = CursorPage<InterestedBookContent>;
 export type InterestedBooksResponse = ApiResponse<InterestedBooksPage>;
-export type InterestedBooksParams = BooksCursorParams;
+export type InterestedBooksParams = CursorParams;
+
+export type BookLikeContent = {
+  isbn: string;
+  liked: boolean;
+};
+
+export type BookLikeResponse = ApiResponse<BookLikeContent>;
+
+export type ExchangeRecommendationBasis = {
+  type: string;
+  source: string;
+  sourceName: string;
+  provider: string;
+  sourceUrl: string;
+  startDate: string | null;
+  endDate: string | null;
+  description: string;
+};
+
+export type ExchangeRecommendationReview = {
+  reviewId: number;
+  reviewerName: string;
+  comment: string;
+  likeCount: number;
+  createdAt: string;
+};
+
+export type ExchangeRecommendationBook = {
+  isbn: string;
+  title: string;
+  author: string;
+  coverImageUrl: string | null;
+  data4LibraryRank: number;
+  data4LibraryLoanCount: number;
+  likeCount: number;
+  isInterested: boolean;
+  review: ExchangeRecommendationReview | null;
+};
+
+export type ExchangeRecommendationContent = {
+  recommendationDate: string;
+  basis: ExchangeRecommendationBasis;
+  book: ExchangeRecommendationBook | null;
+};
+
+export type ExchangeRecommendationResponse =
+  ApiResponse<ExchangeRecommendationContent>;
+
+export type CurrentReadingBookContent = {
+  groupId: string;
+  title: string;
+  coverImageUrl: string;
+};
+
+export type CurrentReadingBooksContent = {
+  books: CurrentReadingBookContent[];
+};
+
+export type CurrentReadingBooksResponse =
+  ApiResponse<CurrentReadingBooksContent>;
 
 export type BookSearchSort = "accuracy" | "latest";
 
@@ -123,6 +165,7 @@ export type BookSearchItem = {
   publishedDate: string;
   thumbnail: string;
   isbn: string;
+  isInterested: boolean;
 };
 
 export type BookSearchResponse = ApiResponse<{

@@ -1,46 +1,80 @@
-import { Feather } from "@expo/vector-icons";
+import { getApiErrorMessage } from "@/api/axios";
+import { getPostGallery } from "@/api/books";
 import GalleryImageGrid from "@/components/books/GalleryImageGrid";
 import type { GalleryItem } from "@/components/books/types";
 import { Colors } from "@/constants/theme";
-import { router, useGlobalSearchParams } from "expo-router";
+import { useBookDetail } from "@/contexts/book-detail";
+import { useCursorPagination } from "@/hooks/useCursorPagination";
+import type { CursorParams } from "@/types/api";
+import type { PostGalleryContent } from "@/types/posts";
+import { Feather } from "@expo/vector-icons";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
-interface GalleryPost {
-  id: string;
-  imageUrls: string[];
-}
-
-const DUMMY_GALLERY_DATA: GalleryPost[] = [
-  {
-    id: "1",
-    imageUrls: [
-      "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
-      "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
-      "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
-      "https://img.khan.co.kr/news/2025/06/08/news-p.v1.20250608.2d62e7e6a9434f35bebb2a1fe2c6523b_P1.png",
-    ],
-  },
-  {
-    id: "2",
-    imageUrls: ["https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg"],
-  },
-  {
-    id: "3",
-    imageUrls: [
-      "https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg",
-      "https://www.kukinews.com/data/kuk/image/2025/09/27/kuk20250927000115.800x.9.jpg",
-    ],
-  },
-];
-
-const galleryItems: GalleryItem[] = DUMMY_GALLERY_DATA.map((post) => ({
-  id: post.id,
-  image: { uri: post.imageUrls[0] },
-  extraCount: post.imageUrls.length - 1,
-}));
-
 export default function Gallery() {
-  const { isbn } = useGlobalSearchParams<{ isbn: string }>();
+  const { isbn } = useBookDetail();
+
+  const fetchGalleryPage = useCallback(
+    async (params: CursorParams) => {
+      if (!isbn) return null;
+
+      const response = await getPostGallery(isbn, params);
+      const result = response.data;
+
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.error?.message ?? "갤러리를 불러오지 못했습니다.",
+        );
+      }
+
+      console.log("갤러리 목록:", result.data.content);
+      return result.data;
+    },
+    [isbn],
+  );
+
+  const {
+    items: galleryPosts,
+    isLoading,
+    error,
+    loadInitial,
+    loadMore,
+    reset,
+  } = useCursorPagination<PostGalleryContent>({
+    fetchPage: fetchGalleryPage,
+    pageSize: 20,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isbn) return;
+
+      reset();
+      void loadInitial();
+    }, [isbn, loadInitial, reset]),
+  );
+
+  useEffect(() => {
+    if (!error) return;
+
+    console.error(
+      "갤러리 조회 실패:",
+      getApiErrorMessage(error, "갤러리 조회를 실패하였습니다."),
+    );
+  }, [error]);
+
+  const galleryItems = useMemo<GalleryItem[]>(
+    () =>
+      galleryPosts.map((post) => ({
+        id: String(post.postId),
+        isbn: post.isbn,
+        image: post.thumbnailUrl ? { uri: post.thumbnailUrl } : undefined,
+        extraCount:
+          post.imageCount > 1 ? post.imageCount - 1 : undefined,
+      })),
+    [galleryPosts],
+  );
 
   const handleAddPhoto = () => {
     if (!isbn) {
@@ -48,24 +82,36 @@ export default function Gallery() {
       return;
     }
 
-    router.push("/books");
+    router.push({
+      pathname: "/book-detail/[isbn]/add-review",
+      params: { isbn },
+    });
   };
 
-  const handlePressGalleryItem = (galleryId: string) => {
+  const handlePressGalleryItem = (postId: string) => {
     router.push({
-      pathname: "../[galleryId]/post",
+      pathname: "../[postId]/post",
       params: {
         isbn,
-        galleryId,
+        postId,
       },
     });
   };
 
   return (
     <View style={styles.container}>
-      <GalleryImageGrid items={galleryItems} onPressItem={(item) => handlePressGalleryItem(item.id)} />
+      <GalleryImageGrid
+        items={galleryItems}
+        isLoading={isLoading}
+        onEndReached={() => void loadMore()}
+        onPressItem={(item) => handlePressGalleryItem(item.id)}
+      />
 
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8} onPress={handleAddPhoto}>
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.8}
+        onPress={handleAddPhoto}
+      >
         <Feather name="plus" size={32} color="#E4A54E" />
       </TouchableOpacity>
     </View>

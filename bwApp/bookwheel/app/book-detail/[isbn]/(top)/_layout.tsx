@@ -127,7 +127,7 @@ export default function BookDetailTabsLayout() {
           >
             <Ionicons name="chevron-back" size={30} color="#513A11" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>도서 검색</Text>
+          <Text style={styles.headerTitle}>도서 조회</Text>
         </View>
 
         <BookDetailHero

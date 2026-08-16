@@ -3,12 +3,20 @@ import Button from "@/components/Button";
 
 type Props = {
   onPress: () => void;
+  isSubmitting?: boolean;
 };
 
-export default function SubmitButton({ onPress }: Props) {
+export default function SubmitButton({
+  onPress,
+  isSubmitting = false,
+}: Props) {
   return (
     <View style={{ alignItems: "center", marginTop: 24 }}>
-      <Button title="리뷰 등록" onPress={onPress} />
+      <Button
+        title={isSubmitting ? "등록 중..." : "리뷰 등록"}
+        disabled={isSubmitting}
+        onPress={onPress}
+      />
     </View>
   );
 }
