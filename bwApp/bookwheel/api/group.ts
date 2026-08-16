@@ -130,3 +130,23 @@ export const getGroupDetail = async (groupId: string) => {
 
   return response.data.data;
 };
+
+// 읽기 순서 지정
+export type MemberOrder = {
+  order: number;
+  memberId: string;
+  nickname: string;
+  profileImage: string;
+};
+
+export const updateMemberOrder = async (
+  groupId: string,
+  data: {
+    isRandom: boolean;
+    memberIds?: string[];
+  },
+) => {
+  const response = await axios.post(`/groups/${groupId}/members/order`, data);
+
+  return response.data.data as MemberOrder[];
+};
