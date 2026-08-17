@@ -1,6 +1,8 @@
 import type { CursorParams } from "@/types/api";
 import type {
   CreatePostCommentResponse,
+  DeletePostCommentResponse,
+  DeletePostResponse,
   PostCommentListResponse,
   PostDetailResponse,
   PostImagePresignedRequest,
@@ -35,6 +37,10 @@ export const getPostDetail = (postId: number) => {
   return api.get<PostDetailResponse>(`/posts/${postId}`);
 };
 
+export const deletePost = (postId: number) => {
+  return api.delete<DeletePostResponse>(`/posts/${postId}`);
+};
+
 export const togglePostLike = (postId: number) => {
   return api.post<TogglePostLikeResponse>(`/posts/${postId}/likes`);
 };
@@ -52,4 +58,10 @@ export const createPostComment = (postId: number, content: string) => {
   return api.post<CreatePostCommentResponse>(`/posts/${postId}/comments`, {
     content,
   });
+};
+
+export const deletePostComment = (postId: number, commentId: number) => {
+  return api.delete<DeletePostCommentResponse>(
+    `/posts/${postId}/comments/${commentId}`,
+  );
 };

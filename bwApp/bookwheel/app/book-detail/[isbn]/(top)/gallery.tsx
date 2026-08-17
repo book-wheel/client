@@ -68,6 +68,7 @@ export default function Gallery() {
     () =>
       galleryPosts.map((post) => ({
         id: String(post.postId),
+        isbn: post.isbn,
         image: post.thumbnailUrl ? { uri: post.thumbnailUrl } : undefined,
         extraCount:
           post.imageCount > 1 ? post.imageCount - 1 : undefined,

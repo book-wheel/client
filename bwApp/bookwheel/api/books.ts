@@ -1,10 +1,13 @@
 import type {
+  BookLikeResponse,
   BookDetailResponse,
   BookReviewListParams,
   BookReviewListResponse,
   BookSearchResponse,
   CreateBookReviewRequest,
   CreateBookReviewResponse,
+  CurrentReadingBooksResponse,
+  ExchangeRecommendationResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
   ReviewLikeResponse,
@@ -18,12 +21,30 @@ import type {
 } from "@/types/posts";
 import api from "./axios";
 
+// 특정 도서의 갤러리
 export const getPostGallery = (isbn: string, params?: PostGalleryParams) => {
   return api.get<PostGalleryResponse>(`/books/${isbn}/gallery`, { params });
 };
 
+// 전체 교환독서 갤러리
+export const getGalleryFeed = (params?: PostGalleryParams) => {
+  return api.get<PostGalleryResponse>(`/books/gallery`, {
+    params,
+  });
+};
+
 export const getInterestedBooks = (params?: InterestedBooksParams) => {
-  return api.get<InterestedBooksResponse>(`/books/interests`, { params });
+  return api.get<InterestedBooksResponse>(`/books/likes`, { params });
+};
+
+export const getExchangeRecommendation = () => {
+  return api.get<ExchangeRecommendationResponse>(
+    `/books/exchange-recommendation`,
+  );
+};
+
+export const getCurrentReadingBooks = () => {
+  return api.get<CurrentReadingBooksResponse>(`/books/current-reading`);
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {
@@ -82,7 +103,7 @@ export const createBookReview = (
 };
 
 export const toggleBookLike = (isbn: string) => {
-  return api.post(`/books/${isbn}/likes`);
+  return api.post<BookLikeResponse>(`/books/${isbn}/likes`);
 };
 
 export const toggleReviewLike = (reviewId: number) => {

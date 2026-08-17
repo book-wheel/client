@@ -1,26 +1,52 @@
-import { ScrollView } from "react-native";
+import { Alert, ScrollView, TouchableOpacity, Text } from "react-native";
+import { router } from "expo-router";
 import { useGroupState } from "@/hooks/useGroupState";
+import { createFutureSchedule } from "@/api/group-dashboard";
 
 import SessionProgress from "@/components/group/state/SessionProgress";
 import CurrentBookSection from "@/components/group/state/CurrentBookSection";
 import MemberStatusList from "@/components/group/state/MemberStatusList";
 import BeforeStartDashboard from "@/components/group/state/BeforeStartDashboard";
+import ScheduleReadyDashboard from "@/components/group/state/schedule";
 
 export default function State() {
   const {
     id,
-    session,
     members,
-    totalMembers,
-    completedMembers,
-    currentBook,
-    getButtonText,
-    handleCardButtonPress,
-    isStarted,
+    groupMembers,
     hasBook,
+    isStarted,
     dashboard,
+    currentBook,
+    session,
+    readingPeriod,
+    currentReadingDay,
+    remainingDays,
+    canSetMemberOrder,
+    schedule,
+    isScheduleReady,
+    isLeader,
   } = useGroupState();
 
+  const getFutureDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+
+    return date.toISOString().split("T")[0];
+  };
+
+  // 일정이 준비 완료 상태일 때
+  if (isScheduleReady && schedule) {
+    return (
+      <ScheduleReadyDashboard
+        id={id!}
+        schedule={schedule}
+        members={groupMembers}
+      />
+    );
+  }
+
+  // 시작되지 않았을 때
   if (!isStarted) {
     return (
       <BeforeStartDashboard
@@ -30,22 +56,39 @@ export default function State() {
         hasBook={hasBook}
         bookTitle={dashboard?.myBookStep?.bookTitle}
         coverImage={dashboard?.myBookStep?.coverImage}
+        canSetMemberOrder={canSetMemberOrder}
+        isLeader={isLeader}
       />
     );
   }
 
+  if (!dashboard) {
+    return null;
+  }
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <ScrollView
+      style={{
+        flex: 1,
+        backgroundColor: "#FFF",
+      }}
+    >
       <SessionProgress
         session={session}
-        totalMembers={totalMembers}
-        completedMembers={completedMembers}
+        readingPeriod={readingPeriod}
+        currentReadingDay={currentReadingDay}
+        remainingDays={remainingDays}
       />
 
       <CurrentBookSection
         book={currentBook}
-        buttonText={getButtonText()}
-        onPress={handleCardButtonPress}
+        buttonText="완독 인증하기"
+        onPress={() => {
+          router.push({
+            pathname: "/group/[id]/completed-books",
+            params: { id },
+          });
+        }}
       />
 
       <MemberStatusList members={members} />

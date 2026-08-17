@@ -1,6 +1,7 @@
 import { getApiErrorMessage } from "@/api/axios";
 import {
   createPostComment,
+  deletePostComment,
   getPostComments,
 } from "@/api/posts";
 import CommentInputBar from "@/components/comment/CommentInputBar";
@@ -36,6 +37,9 @@ export default function CommentSheetScreen() {
 
   const [inputText, setInputText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
 
   const snapPoints = useMemo(() => ["40%", "70%", "90%"], []);
 
@@ -66,7 +70,6 @@ export default function CommentSheetScreen() {
     error,
     loadInitial,
     loadMore,
-    refresh,
     reset,
   } = useCursorPagination<PostCommentData>({
     fetchPage: fetchCommentPage,
@@ -137,8 +140,9 @@ export default function CommentSheetScreen() {
 
       setInputText("");
 
-      // 댓글 목록 다시 로딩
-      await refresh();
+      // 진행 중인 페이지 요청까지 무효화하고 작성이 반영된 첫 페이지를 조회
+      reset();
+      await loadInitial();
     } catch (submitError) {
       const message = getApiErrorMessage(
         submitError,
@@ -149,6 +153,39 @@ export default function CommentSheetScreen() {
       Alert.alert("알림", message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentIdParam: string) => {
+    const commentId = Number(commentIdParam);
+
+    if (!postId || !commentId || deletingCommentId !== null) return;
+
+    setDeletingCommentId(commentIdParam);
+
+    try {
+      const response = await deletePostComment(postId, commentId);
+      const result = response.data;
+
+      if (!result.success) {
+        throw new Error(
+          result.error?.message ?? "댓글 삭제에 실패했습니다.",
+        );
+      }
+
+      // 진행 중인 페이지 요청까지 무효화하고 삭제가 반영된 첫 페이지를 조회
+      reset();
+      await loadInitial();
+    } catch (deleteError) {
+      const message = getApiErrorMessage(
+        deleteError,
+        "댓글 삭제에 실패했습니다.",
+      );
+
+      console.error("댓글 삭제 실패:", message);
+      Alert.alert("알림", message);
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -170,6 +207,8 @@ export default function CommentSheetScreen() {
               <CommentSheetHeader count={totalElements} />
               <CommentList
                 comments={comments}
+                onDelete={(commentId) => void handleDeleteComment(commentId)}
+                deletingCommentId={deletingCommentId}
                 isLoading={isLoading}
                 onEndReached={() => void loadMore()}
                 errorMessage={
