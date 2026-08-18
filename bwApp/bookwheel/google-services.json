@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "67445204019",
+    "project_id": "bookwheel-22eee",
+    "storage_bucket": "bookwheel-22eee.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67445204019:android:6013f4af2029df9edc6f46",
+        "android_client_info": {
+          "package_name": "kr.bookwheel.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdlGlBDWZLwZ5tkFseQuPmWVGgkTQkx3c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

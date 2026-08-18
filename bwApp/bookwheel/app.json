@@ -11,9 +11,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.bookwheel"
+      "bundleIdentifier": "kr.bookwheel.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#F7EDE0",
         "backgroundImage": "./assets/images/transparent.png",
@@ -21,7 +25,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.bookwheel"
+      "package": "kr.bookwheel.app"
     },
     "web": {
       "output": "static",
