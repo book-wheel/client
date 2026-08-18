@@ -66,6 +66,27 @@ export default function State() {
     return null;
   }
 
+  const myStep = dashboard.myStep;
+
+  const isCompleted = myStep?.status === "COMPLETED";
+
+  // 현재 라운드가 마지막 라운드인지
+  const isLastRound = dashboard.currentRound === dashboard.totalRound;
+
+  // 다음 라운드가 있는지
+  const hasNextRound =
+    !isLastRound && dashboard.currentRound < dashboard.totalRound;
+
+  let buttonText = "완독 인증하기";
+  let buttonDisabled = false;
+
+  if (isCompleted && hasNextRound) {
+    buttonText = "책 준비 완료";
+  } else if (isCompleted && !hasNextRound) {
+    buttonText = "독서 완료";
+    buttonDisabled = true;
+  }
+
   return (
     <ScrollView
       style={{
@@ -82,20 +103,29 @@ export default function State() {
 
       <CurrentBookSection
         book={currentBook}
-        buttonText="완독 인증하기"
+        buttonText={buttonText}
+        disabled={buttonDisabled}
         onPress={() => {
+          if (buttonDisabled) return;
           if (!dashboard.myStep || !id) return;
 
+          // 완독 완료 후 다음 라운드가 있는 경우
+          if (isCompleted && hasNextRound) {
+            router.push({
+              pathname: "/group/[id]/this-session",
+              params: {
+                id,
+              },
+            });
+            return;
+          }
+
+          // 아직 완독하지 않은 경우
           router.push({
             pathname: "/group/[id]/completed-books",
             params: {
-              // 그룹 화면 이동용
               id,
-
-              // 완독 API용
               wheelStateId: dashboard.myStep.wheelStateId,
-
-              // 책 정보용
               bookId: dashboard.myStep.bookId,
               bookTitle: dashboard.myStep.bookTitle,
               coverImage: dashboard.myStep.coverImage,
