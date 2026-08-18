@@ -51,10 +51,17 @@ export const uploadImage = async (
 
   await uploadImageToS3(presignedUrl, imageUri, contentType);
 
-  // 실제 objectKey 반환
-  const objectKey = decodeURIComponent(
-    new URL(presignedUrl).pathname.replace(/^\/+/, ""),
-  );
+  // 서버 S3 설정은 path-style URL(`/버킷명/objectKey`)을 사용한다.
+  const [, ...objectKeySegments] = decodeURIComponent(
+    new URL(presignedUrl).pathname,
+  )
+    .split("/")
+    .filter(Boolean);
+
+  const objectKey = objectKeySegments.join("/");
+  if (!objectKey) {
+    throw new Error("업로드한 이미지의 object key를 찾을 수 없습니다.");
+  }
 
   return objectKey;
 };
