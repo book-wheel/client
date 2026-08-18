@@ -29,47 +29,68 @@ export default function PhotoUpload({
   onRemove,
 }: Props) {
   const { width: windowWidth } = useWindowDimensions();
-  const carouselWidth = windowWidth - 60;
+
+  const carouselWidth = windowWidth - 40;
+
   const listRef = useRef<FlatList<ImagePickerAsset>>(null);
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (images.length === 0) {
-      if (currentIndex !== 0) {
-        setCurrentIndex(0);
-      }
+      setCurrentIndex(0);
       return;
     }
 
     const lastIndex = images.length - 1;
 
-    // 사진 삭제 후 현재 인덱스가 범위를 벗어난 경우에만 보정한다.
     if (currentIndex <= lastIndex) return;
 
     setCurrentIndex(lastIndex);
+
     listRef.current?.scrollToIndex({
       index: lastIndex,
       animated: false,
     });
-  }, [currentIndex, images.length]);
+  }, [images.length, currentIndex]);
 
-  const handleScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
+  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const nextIndex = Math.round(
       event.nativeEvent.contentOffset.x / carouselWidth,
     );
+
     setCurrentIndex(nextIndex);
   };
 
   return (
     <View style={completedBooksStyles.sectionBox}>
-      <Text style={completedBooksStyles.sectionTitle}>
-        인증 사진 업로드 ({images.length}/{MAX_IMAGE_COUNT})
-      </Text>
+      {/* 제목 영역 */}
+      <View style={styles.titleRow}>
+        <View>
+          <Text style={completedBooksStyles.sectionTitle}>인증 사진</Text>
 
+          <Text style={completedBooksStyles.sectionDescription}>
+            책을 다 읽은 순간을 남겨주세요
+          </Text>
+        </View>
+
+        <View style={styles.countBadge}>
+          <Text style={completedBooksStyles.imageCount}>
+            {images.length}/{MAX_IMAGE_COUNT}
+          </Text>
+        </View>
+      </View>
+
+      {/* 사진이 있는 경우 */}
       {images.length > 0 ? (
-        <View style={[styles.carousel, { width: carouselWidth }]}>
+        <View
+          style={[
+            styles.carousel,
+            {
+              width: carouselWidth,
+            },
+          ]}
+        >
           <FlatList
             ref={listRef}
             data={images}
@@ -85,12 +106,17 @@ export default function PhotoUpload({
             onMomentumScrollEnd={handleScrollEnd}
             renderItem={({ item }) => (
               <View
-                style={[styles.imagePage, { width: carouselWidth }]}
+                style={[
+                  styles.imagePage,
+                  {
+                    width: carouselWidth,
+                  },
+                ]}
               >
                 <Image
                   source={{ uri: item.uri }}
                   style={styles.image}
-                  resizeMode="contain"
+                  resizeMode="cover"
                 />
 
                 {!!onRemove && (
@@ -109,26 +135,41 @@ export default function PhotoUpload({
             )}
           />
 
+          {/* 현재 사진 번호 */}
           <View style={styles.imageCounter}>
-            <Text style={styles.imageCounterText}>
+            <Text style={completedBooksStyles.imageCounterText}>
               {currentIndex + 1} / {images.length}
             </Text>
           </View>
         </View>
       ) : (
+        /* 사진이 아직 없는 경우 */
         <TouchableOpacity
           accessibilityLabel="사진 선택"
           accessibilityRole="button"
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           disabled={!onAddPress}
           onPress={onAddPress}
-          style={[styles.emptyPicker, { width: carouselWidth }]}
+          style={[
+            styles.emptyPicker,
+            {
+              width: carouselWidth,
+            },
+          ]}
         >
-          <Ionicons name="images-outline" size={38} color="#8A7657" />
-          <Text style={styles.emptyPickerText}>사진 선택</Text>
+          <View style={styles.cameraCircle}>
+            <Ionicons name="camera-outline" size={28} color="#E4A54E" />
+          </View>
+
+          <Text style={completedBooksStyles.emptyPickerText}>사진 선택</Text>
+
+          <Text style={styles.emptyPickerDescription}>
+            최대 5장까지 추가할 수 있어요
+          </Text>
         </TouchableOpacity>
       )}
 
+      {/* 사진 추가 */}
       {images.length > 0 && images.length < MAX_IMAGE_COUNT && (
         <TouchableOpacity
           accessibilityLabel="사진 추가"
@@ -138,8 +179,9 @@ export default function PhotoUpload({
           onPress={onAddPress}
           style={styles.addButton}
         >
-          <Ionicons name="add" size={20} color="#513A11" />
-          <Text style={styles.addButtonText}>사진 추가</Text>
+          <Ionicons name="add" size={20} color="#E4A54E" />
+
+          <Text style={completedBooksStyles.addButtonText}>사진 추가</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -147,72 +189,132 @@ export default function PhotoUpload({
 }
 
 const styles = StyleSheet.create({
-  carousel: {
-    height: 300,
-    position: "relative",
-    overflow: "hidden",
-    backgroundColor: "#F5F2EC",
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
-  imagePage: {
-    height: 300,
-    position: "relative",
+
+  countBadge: {
+    minWidth: 48,
+    height: 30,
+
+    paddingHorizontal: 10,
+
     alignItems: "center",
     justifyContent: "center",
+
+    borderRadius: 15,
+
+    backgroundColor: "#FCF5D7",
   },
+
+  carousel: {
+    height: 300,
+
+    overflow: "hidden",
+
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E8DDBF",
+
+    backgroundColor: "#FFFCF3",
+  },
+
+  imagePage: {
+    height: 300,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    position: "relative",
+  },
+
   image: {
     width: "100%",
     height: "100%",
   },
+
   removeButton: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+
+    top: 14,
+    right: 14,
+
+    width: 34,
+    height: 34,
+
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(81, 58, 17, 0.82)",
+
+    borderRadius: 17,
+
+    backgroundColor: "rgba(81, 58, 17, 0.72)",
   },
+
   imageCounter: {
     position: "absolute",
-    bottom: 12,
+
+    bottom: 14,
     alignSelf: "center",
+
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    backgroundColor: "rgba(81, 58, 17, 0.82)",
+    paddingVertical: 6,
+
+    borderRadius: 20,
+
+    backgroundColor: "rgba(81, 58, 17, 0.72)",
   },
-  imageCounterText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
+
+  // 사진이 없을 때
   emptyPicker: {
     height: 220,
+
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#F5F2EC",
+
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E8DDBF",
+
+    backgroundColor: "#FFFCF3",
   },
-  emptyPickerText: {
-    color: "#6F5B3E",
-    fontSize: 15,
-    fontWeight: "600",
+
+  cameraCircle: {
+    width: 52,
+    height: 52,
+
+    alignItems: "center",
+    justifyContent: "center",
+
+    borderRadius: 26,
+
+    backgroundColor: "#FCF5D7",
   },
+
+  emptyPickerDescription: {
+    marginTop: 6,
+
+    fontSize: 13,
+    fontWeight: "500",
+
+    color: "#A98B5A",
+  },
+
+  // 사진 추가 버튼
   addButton: {
-    minHeight: 44,
-    marginTop: 10,
+    height: 48,
+
+    marginTop: 12,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    borderRadius: 8,
-    backgroundColor: "#F2E8D8",
-  },
-  addButtonText: {
-    color: "#513A11",
-    fontSize: 14,
-    fontWeight: "700",
+
+    gap: 5,
+
+    borderRadius: 14,
+
+    backgroundColor: "#FCF5D7",
   },
 });

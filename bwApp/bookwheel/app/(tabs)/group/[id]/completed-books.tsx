@@ -1,5 +1,9 @@
 import { ScrollView, View } from "react-native";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import type { ImagePickerAsset } from "expo-image-picker";
+
 import BookInfo from "@/components/completedBooks/BookInfo";
 import PhotoUpload from "@/components/completedBooks/PhotoUpload";
 import ReviewInput from "@/components/completedBooks/ReviewInput";
@@ -7,33 +11,78 @@ import CompleteButton from "@/components/completedBooks/CompleteButton";
 import { useCompletedBooks } from "@/hooks/useCompletedBooks";
 
 export default function CompletedBooks() {
-  const { id: rawId, memberId: rawMemberId } = useLocalSearchParams();
+  const {
+    id: rawId,
+    wheelStateId: rawWheelStateId,
+    bookId: rawBookId,
+    bookTitle: rawBookTitle,
+    coverImage: rawCoverImage,
+    senderNickname: rawSenderNickname,
+  } = useLocalSearchParams();
 
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
-  const memberId = Array.isArray(rawMemberId) ? rawMemberId[0] : rawMemberId;
+  const groupId = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const { review, setReview, handleComplete } = useCompletedBooks(
-    id ?? "",
-    memberId ?? "",
-  );
+  const wheelStateId = Array.isArray(rawWheelStateId)
+    ? rawWheelStateId[0]
+    : rawWheelStateId;
 
-  // params 없으면 렌더 안함
-  if (!id || !memberId) return null;
+  const bookId = Array.isArray(rawBookId) ? rawBookId[0] : rawBookId;
+  const bookTitle = Array.isArray(rawBookTitle)
+    ? rawBookTitle[0]
+    : rawBookTitle;
+  const coverImage = Array.isArray(rawCoverImage)
+    ? rawCoverImage[0]
+    : rawCoverImage;
+  const senderNickname = Array.isArray(rawSenderNickname)
+    ? rawSenderNickname[0]
+    : rawSenderNickname;
+
+  const {
+    review,
+    setReview,
+    images,
+    addImages,
+    removeImage,
+    handleComplete,
+    isCompleting,
+  } = useCompletedBooks(groupId ?? "", wheelStateId ?? "");
 
   const book = {
-    image: require("@/assets/images/book.png"),
-    title: "키친은 모든 것을 말했다",
-    author: "스즈키 유키",
-    owner: "김주옥",
-    publisher: "○○출판사",
-    publishDate: "2025년 1월 25일",
+    image: coverImage,
+    title: bookTitle,
+    author: "",
+    owner: senderNickname,
+  };
+
+  console.log("완독 화면 책 정보:", {
+    bookId,
+    bookTitle,
+    coverImage,
+    senderNickname,
+  });
+
+  const handleAddImages = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - images.length,
+      quality: 1,
+    });
+
+    if (result.canceled) return;
+
+    addImages(result.assets);
   };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "#FFF" }}>
       <View style={{ padding: 20 }}>
         <BookInfo {...book} />
-        <PhotoUpload />
+        <PhotoUpload
+          images={images}
+          onAddPress={handleAddImages}
+          onRemove={removeImage}
+        />
         <ReviewInput review={review} setReview={setReview} />
         <CompleteButton onPress={handleComplete} />
       </View>

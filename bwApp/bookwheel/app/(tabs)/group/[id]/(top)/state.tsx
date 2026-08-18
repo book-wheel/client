@@ -84,9 +84,23 @@ export default function State() {
         book={currentBook}
         buttonText="완독 인증하기"
         onPress={() => {
+          if (!dashboard.myStep || !id) return;
+
           router.push({
             pathname: "/group/[id]/completed-books",
-            params: { id },
+            params: {
+              // 그룹 화면 이동용
+              id,
+
+              // 완독 API용
+              wheelStateId: dashboard.myStep.wheelStateId,
+
+              // 책 정보용
+              bookId: dashboard.myStep.bookId,
+              bookTitle: dashboard.myStep.bookTitle,
+              coverImage: dashboard.myStep.coverImage,
+              senderNickname: dashboard.myStep.senderNickname,
+            },
           });
         }}
       />
