@@ -1,4 +1,5 @@
 import axiosInstance from "@/api/axios";
+import type { ReadingHistoryResponse } from "@/types/groupDashboard";
 
 export type CompleteWheelStateRequest = {
   objectKeys: string[];
@@ -13,6 +14,18 @@ export const completeWheelState = async (
   const response = await axiosInstance.patch(
     `/wheels/${wheelStateId}/complete`,
     body,
+  );
+
+  return response.data.data;
+};
+
+// 독서 이력 조회 API
+export const getReadingHistory = async (
+  groupId: string,
+  targetUserPk: string,
+) => {
+  const response = await axiosInstance.get<ReadingHistoryResponse>(
+    `/wheels/${groupId}/history/${targetUserPk}`,
   );
 
   return response.data.data;

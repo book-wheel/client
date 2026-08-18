@@ -11,6 +11,7 @@ import { GroupDashboardData, GroupScheduleData } from "@/types/groupDashboard";
 
 export type MemberStatus = {
   id: string;
+  userPK: string;
   name: string;
   bookTitle: string;
   role: "leader" | "vice" | "member";
@@ -48,7 +49,7 @@ type TokenPayload = {
 };
 
 export function useGroupState() {
-  const { id: rawId, memberId, newStatus } = useLocalSearchParams();
+  const { id: rawId } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
   // 대시보드 데이터
@@ -56,12 +57,6 @@ export function useGroupState() {
 
   // 그룹 멤버 데이터
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
-
-  // 멤버별 상태
-  // 현재 멤버 API에는 status가 없기 때문에 상태만 임시로 관리
-  const [memberStatuses, setMemberStatuses] = useState<
-    Record<string, MemberStatus["status"]>
-  >({});
 
   const [currentUserPK, setCurrentUserPK] = useState<string | null>(null);
 
@@ -177,18 +172,33 @@ export function useGroupState() {
       : null;
 
   // API 멤버 데이터를 화면에서 사용하는 MemberStatus 형태로 변환
-  const members: MemberStatus[] = groupMembers.map((member) => ({
-    id: member.memberId,
-    name: member.nickname,
-    bookTitle: "",
-    role:
-      member.role === "LEADER"
-        ? "leader"
-        : member.role === "VICE"
-          ? "vice"
-          : "member",
-    status: memberStatuses[member.memberId] ?? "ready",
-  }));
+  const members: MemberStatus[] = groupMembers.map((member) => {
+    const assignment = member.currentRoundAssignment;
+
+    let status: MemberStatus["status"] = "ready";
+
+    if (assignment?.readingStatus === "COMPLETED") {
+      status = "completed";
+    } else if (assignment?.readingStatus === "READING") {
+      status = "reading";
+    } else if (assignment?.readingStatus === "READY") {
+      status = "ready";
+    }
+
+    return {
+      id: member.memberId,
+      userPK: member.userPK,
+      name: member.nickname,
+      bookTitle: assignment?.bookTitle ?? "",
+      role:
+        member.role === "LEADER"
+          ? "leader"
+          : member.role === "VICE"
+            ? "vice"
+            : "member",
+      status,
+    };
+  });
 
   // 멤버 순서 지정 가능 여부
   const canSetMemberOrder =
@@ -196,16 +206,10 @@ export function useGroupState() {
 
   const isScheduleReady = schedule?.scheduleStatus === "READY";
 
-  // 멤버 상태 변경
-  const updateMemberStatus = (id: string, status: MemberStatus["status"]) => {
-    setMemberStatuses((prev) => ({
-      ...prev,
-      [id]: status,
-    }));
-  };
-
   // 현재 사용자
-  const currentMember = members.find((m) => m.id === "1");
+  const currentMember = members.find(
+    (member) => member.userPK === currentUserPK,
+  );
 
   // 전체 멤버 수
   const totalMembers = members.length;
@@ -214,56 +218,6 @@ export function useGroupState() {
   const completedMembers = members.filter(
     (m) => m.status === "completed",
   ).length;
-
-  // 현재 책 카드 버튼
-  const handleCardButtonPress = () => {
-    if (!currentMember) return;
-
-    if (currentMember.status === "reading") {
-      router.push({
-        pathname: "/group/[id]/completed-books",
-        params: {
-          id,
-          memberId: "1",
-        },
-      });
-    } else if (currentMember.status === "completed") {
-      updateMemberStatus("1", "ready");
-    } else if (currentMember.status === "ready") {
-      router.push({
-        pathname: "/group/[id]/this-session",
-        params: { id },
-      });
-    }
-  };
-
-  // 현재 책 카드 버튼 텍스트
-  const getButtonText = () => {
-    if (!currentMember) return "완독 인증 하기";
-
-    switch (currentMember.status) {
-      case "reading":
-        return "완독 인증 하기";
-
-      case "completed":
-        return "전달 완료";
-
-      case "ready":
-        return "준비 완료";
-
-      default:
-        return "완독 인증 하기";
-    }
-  };
-
-  // completed-books에서 돌아왔을 때 상태 변경
-  useEffect(() => {
-    if (memberId && newStatus) {
-      const targetMemberId = Array.isArray(memberId) ? memberId[0] : memberId;
-
-      updateMemberStatus(targetMemberId, newStatus as MemberStatus["status"]);
-    }
-  }, [memberId, newStatus]);
 
   // 일정이 시작되었는지 여부
   const isStarted =
@@ -281,13 +235,12 @@ export function useGroupState() {
     completedMembers,
     currentMember,
     currentBook,
-    handleCardButtonPress,
-    getButtonText,
     isStarted,
     hasBook,
     dashboard,
 
-    // 일정
+    currentUserPK,
+
     schedule,
     currentRound,
     readingPeriod,

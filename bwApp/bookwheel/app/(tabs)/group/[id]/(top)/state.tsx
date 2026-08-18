@@ -135,7 +135,7 @@ export default function State() {
         }}
       />
 
-      <MemberStatusList members={members} />
+      <MemberStatusList id={id} members={members} />
     </ScrollView>
   );
 }

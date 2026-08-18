@@ -108,3 +108,32 @@ export type GroupScheduleData = {
   minTotalRoundCount: number;
   rounds: GroupScheduleRound[];
 };
+
+export interface ReadingHistory {
+  wheelStateId: string;
+  bookTitle: string;
+  roundNumber: number;
+  authImageUrls: string[];
+  reviewText: string;
+  reviewAt: string;
+}
+
+export interface ReadingHistory {
+  wheelStateId: string;
+  ownBookId: string;
+  bookTitle: string;
+  coverImageUrl: string;
+  roundNumber: number;
+  authImageUrls: string[];
+  reviewText: string;
+  reviewAt: string;
+}
+
+export interface ReadingHistoryResponse {
+  success: boolean;
+  data: ReadingHistory[];
+  error?: {
+    code: string;
+    message: string;
+  };
+}
