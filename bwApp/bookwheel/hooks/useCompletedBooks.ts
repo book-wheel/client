@@ -69,6 +69,7 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
         method: error.config?.method,
       });
 
+      // 실패 토스트
       Toast.show({
         type: "error",
         text1: "완독 인증에 실패했어요.",
