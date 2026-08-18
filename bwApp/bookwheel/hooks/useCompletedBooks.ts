@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 import type { ImagePickerAsset } from "expo-image-picker";
+import Toast from "react-native-toast-message";
 
 import { completeWheelState } from "@/api/wheels";
 import { uploadImage } from "@/api/images";
@@ -44,6 +45,10 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
         objectKeys,
         reviewText: review,
       });
+      Toast.show({
+        type: "success",
+        text1: "완독 인증이 완료되었어요!",
+      });
 
       // 3. 완료 후 원래 그룹 상태 화면으로 이동
       router.replace({
@@ -64,7 +69,11 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
         method: error.config?.method,
       });
 
-      Alert.alert("완독 인증 실패", message);
+      Toast.show({
+        type: "error",
+        text1: "완독 인증에 실패했어요.",
+        text2: message,
+      });
     } finally {
       setIsCompleting(false);
     }
