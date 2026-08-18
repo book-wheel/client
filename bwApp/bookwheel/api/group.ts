@@ -1,4 +1,6 @@
 import axios from "./axios";
+import type { ApiResponse } from "@/types/api";
+import type { MyGroupApiResponse } from "@/types/group";
 
 //그룹 만들기
 export const makingGroup = async (data: {
@@ -89,9 +91,11 @@ export const joinGroup = async (
 
 //내 모임 조회
 export const getMyGroups = async () => {
-  const response = await axios.get("/groups/my");
+  const response = await axios.get<ApiResponse<MyGroupApiResponse[]>>(
+    "/groups/my",
+  );
 
-  return response.data.data;
+  return response.data.data ?? [];
 };
 
 // 그룹 멤버 조회

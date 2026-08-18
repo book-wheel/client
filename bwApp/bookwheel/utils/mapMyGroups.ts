@@ -16,6 +16,7 @@ export const mapMyGroups = (groups: any[]): Group[] => {
 
     dday: group.dday,
     startDate: group.startDate,
+    needsReschedule: group.status === "reschedule_required",
 
     role: group.bottomButtonType === "LEADER_SETTING" ? "OWNER" : "MEMBER",
   }));

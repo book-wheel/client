@@ -11,7 +11,8 @@ export type Group = {
   region?: string;
   status: GroupStatus;
   startDate?: string;
-  dday?: number;
+  dday?: number | null;
+  needsReschedule?: boolean;
   title: string;
   current: number;
   maxPeople: number;
@@ -24,7 +25,9 @@ type Props = {
 
 export default function GroupList({ group }: Props) {
   const config = STATUS_CONFIG[group.status];
-  const statusText = config.label(group.dday);
+  const statusText = group.needsReschedule
+    ? "일정 재설정 필요"
+    : config.label(group.dday ?? undefined);
 
   return (
     <Pressable

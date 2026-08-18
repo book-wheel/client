@@ -15,7 +15,7 @@ export function useGroups() {
       try {
         const response = await getMyGroups();
 
-        console.log(JSON.stringify(response.data, null, 2));
+        console.log(JSON.stringify(response, null, 2));
 
         const mappedGroups = mapMyGroups(response);
 

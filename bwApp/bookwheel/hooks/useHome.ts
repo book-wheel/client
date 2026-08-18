@@ -1,52 +1,58 @@
-import { useState } from "react";
-import { Room } from "@/types/room";
-import { MyGroup } from "@/types/group";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { getMyInfo } from "@/api/auth";
+import { getCurrentReadingBooks } from "@/api/books";
+import { getMyGroups } from "@/api/group";
+import type { MyGroup } from "@/types/group";
+import type { CurrentReadingBookContent } from "@/types/books";
 
 export function useHome() {
-  const [nickname] = useState("문소희");
+  const [nickname, setNickname] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [rooms, setRooms] = useState<CurrentReadingBookContent[]>([]);
+  const [myGroups, setMyGroups] = useState<MyGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const rooms: Room[] = [
-    {
-      id: 1,
-      name: "교환독서방",
-      round: 3,
-      dDay: 4,
-      book: "괴테는 모든 것을 말했다",
-      author: "소피의 일기",
-      owner: "조혜연",
-    },
-    {
-      id: 2,
-      name: "문장수집가들",
-      round: 1,
-      dDay: 10,
-      book: "어린왕자",
-      author: "생텍쥐페리",
-      owner: "김민지",
-    },
-  ];
+  const fetchHome = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-  const myGroups: MyGroup[] = [
-    {
-      id: 1,
-      dday: 5,
-      name: "책바퀴",
-      memberCount: "8/8",
-      type: "오프라인",
-      region: "천안",
-      info: "각자 읽고 느낀 점을 자유롭게 공유하는 모임입니다.",
-    },
-    {
-      id: 2,
-      dday: 5,
-      name: "책바퀴",
-      memberCount: "4/6",
-      type: "온라인",
-      region: "",
-      info: "각자 읽고 느낀 점을 자유롭게 공유하는 모임입니다.",
-    },
-  ];
+      const [myInfoResponse, currentReadingResponse, groupResponse] =
+        await Promise.all([
+          getMyInfo(),
+          getCurrentReadingBooks(),
+          getMyGroups(),
+        ]);
+
+      setNickname(myInfoResponse.data.data?.nickname ?? "");
+      setRooms(currentReadingResponse.data.data?.books ?? []);
+      setMyGroups(
+        groupResponse.map((group) => ({
+          id: group.groupId,
+          status: group.status,
+          dday: group.dday,
+          name: group.groupName,
+          memberCount: `${group.currentMembers}/${group.maxMembers}`,
+          type: group.groupOffline ? "오프라인" : "온라인",
+          region: group.groupRegion ?? "",
+          info: group.groupComment,
+        })),
+      );
+    } catch (fetchError) {
+      console.error("홈 화면 데이터 조회 실패", fetchError);
+      setError("홈 화면 정보를 불러오지 못했어요.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchHome();
+    }, [fetchHome]),
+  );
 
   return {
     nickname,
@@ -54,5 +60,7 @@ export function useHome() {
     currentIndex,
     setCurrentIndex,
     myGroups,
+    isLoading,
+    error,
   };
 }

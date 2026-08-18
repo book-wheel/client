@@ -147,6 +147,9 @@ export type CurrentReadingBookContent = {
   groupId: string;
   title: string;
   coverImageUrl: string;
+  upcoming: boolean;
+  roundStartDate: string;
+  dday: number | null;
 };
 
 export type CurrentReadingBooksContent = {

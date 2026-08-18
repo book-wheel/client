@@ -1,14 +1,26 @@
-import { View, Text, ScrollView, Dimensions } from "react-native";
+import { View, Text, ScrollView, Dimensions, Pressable } from "react-native";
 import { router } from "expo-router";
 import ReadingCard from "@/components/home/ReadingCard";
-import { Room } from "@/types/room";
+import type { CurrentReadingBookContent } from "@/types/books";
 
 const { width } = Dimensions.get("window");
 
 type Props = {
-  rooms: Room[];
+  rooms: CurrentReadingBookContent[];
   currentIndex: number;
   setCurrentIndex: (index: number) => void;
+};
+
+const getReadingStatusLabel = (room: CurrentReadingBookContent) => {
+  if (!room.upcoming) {
+    return "현재 읽는 중";
+  }
+
+  if (room.dday === 0) {
+    return "D-Day · 아직 시작 전";
+  }
+
+  return room.dday == null ? "시작 전" : `D-${room.dday} · 시작 전`;
 };
 
 export default function ActiveRoomsCarousel({
@@ -37,7 +49,7 @@ export default function ActiveRoomsCarousel({
             color: "#513A11",
           }}
         >
-          현재 진행중인 교환 독서 모임
+          현재·예정 교환 독서 모임
         </Text>
       </View>
 
@@ -52,36 +64,37 @@ export default function ActiveRoomsCarousel({
           setCurrentIndex(index);
         }}
       >
-        {rooms.map((room) => (
-          <View key={room.id} style={{ width }}>
-            <Text
-              style={{
-                paddingHorizontal: 20,
-                marginTop: 20,
-                fontSize: 17,
-                color: "#513A11",
-              }}
-            >
-              {`<${room.name}> · ${room.round}회차 진행중 `}
-              <Text style={{ color: "#E4A54E", fontWeight: "bold" }}>
-                {`( D-${room.dDay} )`}
-              </Text>
-            </Text>
-
-            <ReadingCard
-              image={require("@/assets/images/book.png")}
-              title={room.book}
-              author={room.author}
-              owner={room.owner}
+        {rooms.length > 0 ? (
+          rooms.map((room) => (
+            <Pressable
+              key={room.groupId}
+              style={{ width }}
               onPress={() =>
                 router.push({
-                  pathname: "/group/[id]/state",
-                  params: { id: room.id },
+                  pathname: "/(tabs)/group/[id]/(top)/home",
+                  params: { id: room.groupId },
                 })
               }
-            />
+            >
+              <ReadingCard
+                image={
+                  room.coverImageUrl
+                    ? { uri: room.coverImageUrl }
+                    : require("@/assets/images/book.png")
+                }
+                title={room.title}
+                titleOnly
+                statusLabel={getReadingStatusLabel(room)}
+              />
+            </Pressable>
+          ))
+        ) : (
+          <View style={{ width, paddingHorizontal: 20, paddingVertical: 36 }}>
+            <Text style={{ color: "#7B6A4A" }}>
+              현재 읽거나 시작 예정인 책이 없어요.
+            </Text>
           </View>
-        ))}
+        )}
       </ScrollView>
 
       {/* 인디케이터 */}
