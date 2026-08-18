@@ -205,6 +205,7 @@ export function useGroupState() {
     schedule != null && schedule.missingBookMembers.length === 0;
 
   const isScheduleReady = schedule?.scheduleStatus === "READY";
+  const isCompleted = schedule?.scheduleStatus === "COMPLETE";
 
   // 현재 사용자
   const currentMember = members.find(
@@ -249,6 +250,7 @@ export function useGroupState() {
 
     canSetMemberOrder,
     isScheduleReady,
+    isCompleted,
     isLeader,
   };
 }
