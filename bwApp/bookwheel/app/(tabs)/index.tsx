@@ -1,7 +1,4 @@
-import { ScrollView, View, Text, Image, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
-import HomeHeader from "@/components/home/HomeHeader";
+import { ScrollView, View } from "react-native";
 import Greeting from "@/components/home/Greeting";
 import ActiveRoomsCarousel from "@/components/home/ActiveRoomsCarousel";
 import MyGroupsSection from "@/components/home/MyGroupsSection";
@@ -12,28 +9,24 @@ export default function Index() {
     useHome();
 
   return (
-    <>
-      <Stack screenOptions={HomeHeader} />
+    <ScrollView
+      contentContainerStyle={{
+        paddingBottom: 40,
+        backgroundColor: "#FFF",
+      }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={{ flex: 1, paddingTop: 40 }}>
+        <Greeting nickname={nickname} />
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingBottom: 40,
-          backgroundColor: "#FFF",
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={{ flex: 1, paddingTop: 40 }}>
-          <Greeting nickname={nickname} />
+        <ActiveRoomsCarousel
+          rooms={rooms}
+          currentIndex={currentIndex}
+          setCurrentIndex={setCurrentIndex}
+        />
 
-          <ActiveRoomsCarousel
-            rooms={rooms}
-            currentIndex={currentIndex}
-            setCurrentIndex={setCurrentIndex}
-          />
-
-          <MyGroupsSection groups={myGroups} />
-        </View>
-      </ScrollView>
-    </>
+        <MyGroupsSection groups={myGroups} />
+      </View>
+    </ScrollView>
   );
 }
