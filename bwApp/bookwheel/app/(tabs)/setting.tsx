@@ -5,6 +5,7 @@ import { logout, deleteAccount, getMyInfo } from "@/api/auth";
 import { useState, useEffect } from "react";
 import ProfileImage from "@/components/profile/image";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
+import { unregisterPushNotifications } from "@/services/pushNotifications";
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null);
@@ -34,6 +35,13 @@ export default function Settings() {
 
   //로그아웃----------------------------------------
   const handleLogout = async () => {
+    try {
+      // 다른 사용자가 같은 기기를 쓰더라도 이전 계정 알림이 오지 않게 한다.
+      await unregisterPushNotifications();
+    } catch (e) {
+      console.log("푸시 토큰 해제 실패", e);
+    }
+
     try {
       await logout();
     } catch (e) {
