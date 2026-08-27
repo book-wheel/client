@@ -1,12 +1,24 @@
 import axiosInstance from "@/api/axios";
 import {
   CreateScheduleRequest,
+  GroupDashboardApiResponse,
+  GroupDashboardData,
   RegisterBookRequest,
 } from "@/types/groupDashboard";
 
 // 그룹 대시보드 정보 조회 API
-export const getDashboard = async (groupId: string) => {
-  const response = await axiosInstance.get(`/groups/${groupId}/dashboard`);
+export const getDashboard = async (
+  groupId: string,
+): Promise<GroupDashboardData> => {
+  const response = await axiosInstance.get<GroupDashboardApiResponse>(
+    `/groups/${groupId}/dashboard`,
+  );
+
+  if (!response.data.data) {
+    throw new Error(
+      response.data.error?.message ?? "모임 대시보드를 불러오지 못했어요.",
+    );
+  }
 
   return response.data.data;
 };

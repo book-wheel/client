@@ -1,7 +1,6 @@
-import { Alert, ScrollView, TouchableOpacity, Text } from "react-native";
+import { ScrollView } from "react-native";
 import { router } from "expo-router";
 import { useGroupState } from "@/hooks/useGroupState";
-import { createFutureSchedule } from "@/api/group-dashboard";
 
 import SessionProgress from "@/components/group/state/SessionProgress";
 import CurrentBookSection from "@/components/group/state/CurrentBookSection";
@@ -21,19 +20,11 @@ export default function State() {
     session,
     readingPeriod,
     currentReadingDay,
-    remainingDays,
     canSetMemberOrder,
     schedule,
     isScheduleReady,
     isLeader,
   } = useGroupState();
-
-  const getFutureDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + 30);
-
-    return date.toISOString().split("T")[0];
-  };
 
   // 일정이 준비 완료 상태일 때
   if (isScheduleReady && schedule) {
@@ -55,7 +46,7 @@ export default function State() {
         startDate={dashboard?.startDate}
         hasBook={hasBook}
         bookTitle={dashboard?.myBookStep?.bookTitle}
-        coverImage={dashboard?.myBookStep?.coverImage}
+        coverImage={dashboard?.myBookStep?.coverImage ?? undefined}
         canSetMemberOrder={canSetMemberOrder}
         isLeader={isLeader}
       />
@@ -77,7 +68,7 @@ export default function State() {
         session={session}
         readingPeriod={readingPeriod}
         currentReadingDay={currentReadingDay}
-        remainingDays={remainingDays}
+        dDay={dashboard.dDay}
       />
 
       <CurrentBookSection

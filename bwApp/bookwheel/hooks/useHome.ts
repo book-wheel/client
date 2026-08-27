@@ -1,15 +1,14 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getMyInfo } from "@/api/auth";
-import { getCurrentReadingBooks } from "@/api/books";
-import { getMyGroups } from "@/api/group";
+import { getMyGroups, getMyReadingCards } from "@/api/group";
 import type { MyGroup } from "@/types/group";
-import type { CurrentReadingBookContent } from "@/types/books";
+import type { HomeReadingRoom } from "@/types/room";
 
 export function useHome() {
   const [nickname, setNickname] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [rooms, setRooms] = useState<CurrentReadingBookContent[]>([]);
+  const [rooms, setRooms] = useState<HomeReadingRoom[]>([]);
   const [myGroups, setMyGroups] = useState<MyGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,15 +18,14 @@ export function useHome() {
       setIsLoading(true);
       setError(null);
 
-      const [myInfoResponse, currentReadingResponse, groupResponse] =
-        await Promise.all([
-          getMyInfo(),
-          getCurrentReadingBooks(),
-          getMyGroups(),
-        ]);
+      const [myInfoResponse, groupResponse, readingCards] = await Promise.all([
+        getMyInfo(),
+        getMyGroups(),
+        getMyReadingCards(),
+      ]);
 
       setNickname(myInfoResponse.data.data?.nickname ?? "");
-      setRooms(currentReadingResponse.data.data?.books ?? []);
+      setRooms(readingCards);
       setMyGroups(
         groupResponse.map((group) => ({
           id: group.groupId,

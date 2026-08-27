@@ -1,26 +1,35 @@
 import { View, Text, ScrollView, Dimensions, Pressable } from "react-native";
 import { router } from "expo-router";
-import ReadingCard from "@/components/home/ReadingCard";
-import type { CurrentReadingBookContent } from "@/types/books";
+import ReadingGroupCard from "@/components/home/ReadingGroupCard";
+import type { HomeReadingRoom } from "@/types/room"; // 홈 카드 전용 타입 추가
 
 const { width } = Dimensions.get("window");
 
 type Props = {
-  rooms: CurrentReadingBookContent[];
+  rooms: HomeReadingRoom[];
   currentIndex: number;
   setCurrentIndex: (index: number) => void;
 };
 
-const getReadingStatusLabel = (room: CurrentReadingBookContent) => {
-  if (!room.upcoming) {
-    return "현재 읽는 중";
+const formatDDay = (dDay: number | null) => {
+  if (dDay == null) return "종료일 확인 중";
+  if (dDay === 0) return "D-Day";
+  if (dDay < 0) return `D+${Math.abs(dDay)}`;
+  return `D-${dDay}`;
+};
+
+const getReadingStatusLabel = (room: HomeReadingRoom) => {
+  if (room.status === "reschedule_required") {
+    return "일정 재설정 필요";
   }
 
-  if (room.dday === 0) {
-    return "D-Day · 아직 시작 전";
+  if (room.status === "scheduled") {
+    return room.dDay == null
+      ? "시작일 미정"
+      : `${formatDDay(room.dDay)} · 시작 예정`;
   }
 
-  return room.dday == null ? "시작 전" : `D-${room.dday} · 시작 전`;
+  return `${room.currentRound}회차 · ${formatDDay(room.dDay)}`;
 };
 
 export default function ActiveRoomsCarousel({
@@ -76,14 +85,8 @@ export default function ActiveRoomsCarousel({
                 })
               }
             >
-              <ReadingCard
-                image={
-                  room.coverImageUrl
-                    ? { uri: room.coverImageUrl }
-                    : require("@/assets/images/book.png")
-                }
-                title={room.title}
-                titleOnly
+              <ReadingGroupCard
+                room={room}
                 statusLabel={getReadingStatusLabel(room)}
               />
             </Pressable>
@@ -91,7 +94,7 @@ export default function ActiveRoomsCarousel({
         ) : (
           <View style={{ width, paddingHorizontal: 20, paddingVertical: 36 }}>
             <Text style={{ color: "#7B6A4A" }}>
-              현재 읽거나 시작 예정인 책이 없어요.
+              현재 또는 시작 예정인 모임이 없어요.
             </Text>
           </View>
         )}

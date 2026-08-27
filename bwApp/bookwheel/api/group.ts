@@ -1,6 +1,7 @@
 import axios from "./axios";
 import type { ApiResponse } from "@/types/api";
 import type { MyGroupApiResponse } from "@/types/group";
+import type { HomeReadingRoom } from "@/types/room";
 
 //그룹 만들기
 export const makingGroup = async (data: {
@@ -96,6 +97,22 @@ export const getMyGroups = async () => {
   );
 
   return response.data.data ?? [];
+};
+
+// 홈 현재·예정 교환독서 모임 조회
+export const getMyReadingCards = async () => {
+  const response = await axios.get<ApiResponse<HomeReadingRoom[]>>(
+    "/groups/my/reading-cards",
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(
+      response.data.error?.message ??
+        "현재·예정 교환독서 모임을 불러오지 못했어요.",
+    );
+  }
+
+  return response.data.data;
 };
 
 // 그룹 멤버 조회
