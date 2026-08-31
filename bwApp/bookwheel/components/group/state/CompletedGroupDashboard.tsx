@@ -74,13 +74,16 @@ export default function CompletedGroupDashboard({
   };
 
   const handleHistoryPress = () => {
+    console.log("🔥 선택한 책:", selectedBook);
+    console.log("🔥 선택한 책 bookId:", selectedBook?.bookId);
+
     if (!id || !selectedBook) return;
 
     router.push({
       pathname: "/group/[id]/book-history",
       params: {
         id,
-        bookId: selectedBook.bookId,
+        ownBookId: selectedBook.ownBookId,
         bookTitle: selectedBook.bookTitle,
         coverImage: selectedBook.coverImage,
       },
@@ -95,10 +98,9 @@ export default function CompletedGroupDashboard({
     >
       {/* 완료 안내 */}
       <View style={styles.completedHeader}>
-        <Text style={styles.completedTitle}>모임이 완료되었습니다</Text>{" "}
+        <Text style={styles.completedTitle}>모임이 완료되었습니다</Text>
         <Text style={styles.completedDescription}>
-          {" "}
-          함께 읽은 모든 여정을 마쳤어요.{" "}
+          함께 읽은 모든 여정을 마쳤어요.
         </Text>
         <View style={styles.dateContainer}>
           <Text style={styles.date}>{formatDate(startDate)}</Text>
