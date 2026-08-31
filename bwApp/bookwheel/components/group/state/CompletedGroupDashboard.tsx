@@ -34,8 +34,8 @@ export default function CompletedGroupDashboard({
   const books = schedule.rounds ?? [];
   const selectedBook = books[selectedBookIndex];
 
-  const startDate = dashboard.startDate;
-  const endDate = dashboard.endDate;
+  const startDate = schedule.startDate;
+  const endDate = schedule.executableEndDate;
 
   const formatDate = (date?: string) => {
     if (!date) return "";
