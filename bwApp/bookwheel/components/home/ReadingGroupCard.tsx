@@ -71,6 +71,12 @@ export default function ReadingGroupCard({ room, statusLabel }: Props) {
           detail={registeredBookDetail}
         />
       </View>
+
+      {room.status === "reschedule_required" ? (
+        <Text style={styles.rescheduleNotice}>
+          일정 변경 시 배정이 달라질 수 있어요
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -147,5 +153,11 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     backgroundColor: "#E7D8B8",
+  },
+  rescheduleNotice: {
+    marginTop: 14,
+    color: "#9B7B45",
+    fontSize: 12,
+    textAlign: "center",
   },
 });

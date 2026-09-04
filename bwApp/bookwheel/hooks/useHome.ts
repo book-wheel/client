@@ -5,6 +5,29 @@ import { getMyGroups, getMyReadingCards } from "@/api/group";
 import type { MyGroup } from "@/types/group";
 import type { HomeReadingRoom } from "@/types/room";
 
+const GROUP_REGION_LABELS: Record<string, string> = {
+  SEOUL: "서울",
+  GYEONGGI: "경기",
+  INCHEON: "인천",
+  GANGWON: "강원",
+  CHUNG_BUK: "충북",
+  CHUNG_NAM: "충남",
+  DAEJEON: "대전",
+  SEJONG: "세종",
+  JEON_BUK: "전북",
+  JEON_NAM: "전남",
+  GWANGJU: "광주",
+  GYEONG_BUK: "경북",
+  GYEONG_NAM: "경남",
+  DAEGU: "대구",
+  ULSAN: "울산",
+  BUSAN: "부산",
+  JEJU: "제주",
+};
+
+const getGroupRegionLabel = (region: string | null) =>
+  region ? (GROUP_REGION_LABELS[region] ?? region) : "";
+
 export function useHome() {
   const [nickname, setNickname] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,7 +57,7 @@ export function useHome() {
           name: group.groupName,
           memberCount: `${group.currentMembers}/${group.maxMembers}`,
           type: group.groupOffline ? "오프라인" : "온라인",
-          region: group.groupRegion ?? "",
+          region: getGroupRegionLabel(group.groupRegion),
           info: group.groupComment,
         })),
       );
