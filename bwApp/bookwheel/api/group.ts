@@ -96,7 +96,13 @@ export const getMyGroups = async () => {
     "/groups/my",
   );
 
-  return response.data.data ?? [];
+  if (!response.data.success || response.data.data == null) {
+    throw new Error(
+      response.data.error?.message ?? "내 모임을 불러오지 못했어요.",
+    );
+  }
+
+  return response.data.data;
 };
 
 // 홈 현재·예정 교환독서 모임 조회
