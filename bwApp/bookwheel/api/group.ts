@@ -1,4 +1,6 @@
 import axios from "./axios";
+import type { ApiResponse } from "@/types/api";
+import type { GroupDetail, GroupUpdateRequest } from "@/types/group";
 
 //그룹 만들기
 export const makingGroup = async (data: {
@@ -125,8 +127,35 @@ export const updateMemberStatus = async (
 };
 
 // 그룹 상세 조회
-export const getGroupDetail = async (groupId: string) => {
-  const response = await axios.get(`/groups/${groupId}`);
+export const getGroupDetail = async (groupId: string): Promise<GroupDetail> => {
+  const response = await axios.get<ApiResponse<GroupDetail>>(
+    `/groups/${groupId}`,
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(
+      response.data.error?.message ?? "모임 정보를 불러오지 못했습니다.",
+    );
+  }
+
+  return response.data.data;
+};
+
+// 그룹 기본 정보 수정
+export const updateGroup = async (
+  groupId: string,
+  data: GroupUpdateRequest,
+): Promise<GroupDetail> => {
+  const response = await axios.patch<ApiResponse<GroupDetail>>(
+    `/groups/${groupId}`,
+    data,
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(
+      response.data.error?.message ?? "모임 설정을 저장하지 못했습니다.",
+    );
+  }
 
   return response.data.data;
 };

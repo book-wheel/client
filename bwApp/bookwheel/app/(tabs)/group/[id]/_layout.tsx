@@ -1,7 +1,6 @@
 import {
   Stack,
   useRouter,
-  useGlobalSearchParams,
   useLocalSearchParams,
 } from "expo-router";
 import { TouchableOpacity } from "react-native";
@@ -25,6 +24,7 @@ export default function GroupIdLayout() {
         }}
       />
       <Stack.Screen name="completed-books" options={{ title: "완독한 책" }} />
+      <Stack.Screen name="group-settings" options={{ title: "모임 설정" }} />
     </Stack>
   );
 }
