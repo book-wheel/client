@@ -6,7 +6,6 @@ import type {
   BookSearchResponse,
   CreateBookReviewRequest,
   CreateBookReviewResponse,
-  CurrentReadingBooksResponse,
   ExchangeRecommendationResponse,
   InterestedBooksParams,
   InterestedBooksResponse,
@@ -41,10 +40,6 @@ export const getExchangeRecommendation = () => {
   return api.get<ExchangeRecommendationResponse>(
     `/books/exchange-recommendation`,
   );
-};
-
-export const getCurrentReadingBooks = () => {
-  return api.get<CurrentReadingBooksResponse>(`/books/current-reading`);
 };
 
 export const searchBooks = (query: string, page = 1, size = 20) => {

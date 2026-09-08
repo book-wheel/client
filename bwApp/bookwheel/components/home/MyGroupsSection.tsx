@@ -48,27 +48,36 @@ export default function MyGroupsSection({ groups }: Props) {
       </View>
 
       {/* 카드 리스트 */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          gap: 15,
-          marginTop: 20,
-        }}
-      >
-        {groups.map((group) => (
-          <MyGroupCard
-            key={group.id}
-            dday={group.dday}
-            name={group.name}
-            memberCount={group.memberCount}
-            type={group.type}
-            regen={group.region}
-            info={group.info}
-          />
-        ))}
-      </ScrollView>
+      {groups.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            gap: 15,
+            marginTop: 20,
+          }}
+        >
+          {groups.map((group) => (
+            <MyGroupCard
+              key={group.id}
+              id={group.id}
+              status={group.status}
+              dday={group.dday}
+              startDate={group.startDate}
+              name={group.name}
+              memberCount={group.memberCount}
+              type={group.type}
+              regen={group.region}
+              info={group.info}
+            />
+          ))}
+        </ScrollView>
+      ) : (
+        <Text style={{ color: "#7B6A4A", margin: 20 }}>
+          참여 중인 모임이 없어요.
+        </Text>
+      )}
     </>
   );
 }
