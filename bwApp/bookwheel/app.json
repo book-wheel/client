@@ -8,19 +8,22 @@
     "backgroundColor": "#F7EDE0",
     "scheme": "bookwheel",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "kr.bookwheel.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#F7EDE0",
         "backgroundImage": "./assets/images/transparent.png",
         "foregroundImage": "./assets/images/logo.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.bookwheel"
+      "package": "kr.bookwheel.app"
     },
     "web": {
       "output": "static",
@@ -42,11 +45,29 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/logo-clear.png",
+          "color": "#E4A54E",
+          "defaultChannel": "default"
+        }
+      ],
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2bfe882f-f235-4137-b47b-c2bfef685ca9"
+      }
+    },
+    "owner": "purple-bookwheel"
   }
 }

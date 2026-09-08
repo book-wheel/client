@@ -1,7 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet } from "react-native";
+import { useState } from "react";
 import * as Linking from "expo-linking";
 import Toast from "react-native-toast-message";
 
@@ -22,19 +21,11 @@ import {
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 export default function Login() {
+  // 토큰 삭제는 로그아웃·401에서 처리한다. 화면 진입만으로 정상 세션을 지우지 않는다.
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  // 로그인 시 기존 토큰 제거
-  useEffect(() => {
-    const clearToken = async () => {
-      await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
-    };
-
-    clearToken();
-  }, []);
 
   const handleLogin = async () => {
     if (loading) return;
@@ -75,7 +66,7 @@ export default function Login() {
       } else {
         router.replace("/auth/profile");
       }
-    } catch (error: any) {
+    } catch {
       Toast.show({
         type: "error",
         text1: "로그인 실패",

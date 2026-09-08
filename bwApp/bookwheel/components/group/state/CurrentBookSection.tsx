@@ -11,12 +11,14 @@ type Props = {
   } | null;
   buttonText: string;
   onPress: () => void;
+  disabled?: boolean;
 };
 
 export default function CurrentBookSection({
   book,
   buttonText,
   onPress,
+  disabled = false,
 }: Props) {
   if (!book) {
     return (
@@ -130,6 +132,7 @@ export default function CurrentBookSection({
 
         <TouchableOpacity
           onPress={onPress}
+          disabled={disabled}
           activeOpacity={0.8}
           style={{
             height: 46,
@@ -137,17 +140,19 @@ export default function CurrentBookSection({
             borderRadius: 12,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: "#E4A54E",
+            backgroundColor: disabled ? "#F8F5EC" : "#E4A54E",
+            borderWidth: disabled ? 1 : 0,
+            borderColor: disabled ? "#F0D98A" : "transparent",
           }}
         >
           <Text
             style={{
-              color: "#FFF",
+              color: disabled ? "#D89A3D" : "#FFF",
               fontSize: 15,
               fontWeight: "700",
             }}
           >
-            {buttonText}
+            {disabled ? "독서 완료" : buttonText}
           </Text>
         </TouchableOpacity>
       </View>

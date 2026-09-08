@@ -1,4 +1,18 @@
 import api from "./axios";
+import type { ApiResponse } from "@/types/api";
+
+export type SocialProvider = "NONE" | "GOOGLE" | "KAKAO";
+
+export type MyProfile = {
+  userPK: string;
+  loginId: string;
+  nickname: string;
+  mail: string;
+  social: SocialProvider;
+  comment: string | null;
+  // GET /users/me에서는 object key가 아닌 표시용 Presigned URL이 내려온다.
+  profileImageKey: string | null;
+};
 
 // ==================== AUTH ====================
 
@@ -87,14 +101,15 @@ export const logout = () => {
 
 //내 정보 조회
 export const getMyInfo = () => {
-  return api.get("/users/me");
+  return api.get<ApiResponse<MyProfile>>("/users/me");
 };
 
 //회원탈퇴
-export const deleteAccount = (password: string) => {
-  return api.delete("/users/me", {
-    data: { password },
-  });
+export const deleteAccount = (password?: string) => {
+  return api.delete<ApiResponse<null>>(
+    "/users/me",
+    password ? { data: { password } } : undefined,
+  );
 };
 
 //토큰교환

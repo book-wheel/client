@@ -82,6 +82,7 @@ export type GroupScheduleRound = {
   endDate: string;
   executable: boolean;
   wheelStateId: string;
+  ownBookId: string;
   wheelStatus: string;
   bookId: string;
   bookTitle: string;
@@ -115,4 +116,59 @@ export type GroupScheduleData = {
   protectedRoundCount: number;
   minTotalRoundCount: number;
   rounds: GroupScheduleRound[];
+};
+
+export interface ReadingHistory {
+  wheelStateId: string;
+  bookTitle: string;
+  roundNumber: number;
+  authImageUrls: string[];
+  reviewText: string;
+  reviewAt: string;
+}
+
+export interface ReadingHistory {
+  wheelStateId: string;
+  ownBookId: string;
+  bookTitle: string;
+  coverImageUrl: string;
+  roundNumber: number;
+  authImageUrls: string[];
+  reviewText: string;
+  reviewAt: string;
+}
+
+export interface ReadingHistoryResponse {
+  success: boolean;
+  data: ReadingHistory[];
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export type BookHistory = {
+  wheelStateId: string;
+  roundNumber: number;
+  readerName: string;
+  authImageUrls: string[];
+  reviewText: string;
+  completedAt: string;
+};
+
+export type BookHistoryData = {
+  ownBookId: string;
+  bookTitle: string;
+  author: string;
+  coverImageUrl: string;
+  histories: BookHistory[];
+};
+
+export type BookHistoryResponse = {
+  success: boolean;
+  data: BookHistoryData;
+  error: {
+    code: string;
+    message: string;
+  } | null;
 };

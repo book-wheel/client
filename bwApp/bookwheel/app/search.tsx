@@ -118,10 +118,12 @@ export default function Search() {
         );
       }
 
+      const isInterested = result.data.liked;
+
       setBooks((currentBooks) =>
         currentBooks.map((book) =>
           book.isbn === isbn
-            ? { ...book, isInterested: result.data.liked }
+            ? { ...book, isInterested }
             : book,
         ),
       );
