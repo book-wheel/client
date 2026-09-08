@@ -8,6 +8,7 @@ export type MyGroup = {
   id: string;
   status: MyGroupStatus;
   dday: number | null;
+  startDate: string | null;
   name: string;
   memberCount: string;
   type: string;
@@ -26,4 +27,5 @@ export type MyGroupApiResponse = {
   groupState: "RECRUITING" | "IN_PROGRESS" | "COMPLETE";
   status: MyGroupStatus;
   dday: number | null;
+  startDate: string | null;
 };

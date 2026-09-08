@@ -54,6 +54,7 @@ export function useHome() {
           id: group.groupId,
           status: group.status,
           dday: group.dday,
+          startDate: group.startDate,
           name: group.groupName,
           memberCount: `${group.currentMembers}/${group.maxMembers}`,
           type: group.groupOffline ? "오프라인" : "온라인",

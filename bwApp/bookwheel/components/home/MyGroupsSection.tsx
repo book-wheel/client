@@ -64,6 +64,7 @@ export default function MyGroupsSection({ groups }: Props) {
               id={group.id}
               status={group.status}
               dday={group.dday}
+              startDate={group.startDate}
               name={group.name}
               memberCount={group.memberCount}
               type={group.type}

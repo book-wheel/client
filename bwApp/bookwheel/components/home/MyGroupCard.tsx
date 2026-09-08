@@ -6,6 +6,7 @@ type Props = {
   id: string;
   status: MyGroupStatus;
   dday: number | null;
+  startDate: string | null;
   name: string;
   memberCount: string;
   type: string;
@@ -17,6 +18,7 @@ export default function ReadingCard({
   id,
   status,
   dday,
+  startDate,
   name,
   memberCount,
   type,
@@ -31,6 +33,8 @@ export default function ReadingCard({
         ? "종료"
         : isRescheduleRequired
           ? "일정 재설정 필요"
+          : startDate == null
+            ? "시작일 미정"
           : dday === 0
             ? "D-Day"
             : `D-${dday ?? "?"}`;
