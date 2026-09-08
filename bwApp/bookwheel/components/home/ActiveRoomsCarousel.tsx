@@ -29,6 +29,10 @@ const getReadingStatusLabel = (room: HomeReadingRoom) => {
       : `${formatDDay(room.dDay)} · 시작 예정`;
   }
 
+  if (room.currentRound === 0) {
+    return "현재 회차 없음";
+  }
+
   return `${room.currentRound}회차 · ${formatDDay(room.dDay)}`;
 };
 
