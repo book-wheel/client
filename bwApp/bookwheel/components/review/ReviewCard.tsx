@@ -177,14 +177,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   spoilerFakeOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(245, 240, 232, 0.82)",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(220, 205, 180, 0.55)",
   },
   spoilerMessageLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 16,

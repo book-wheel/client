@@ -1,5 +1,8 @@
 import axiosInstance from "@/api/axios";
-import type { ReadingHistoryResponse } from "@/types/groupDashboard";
+import type {
+  BookHistoryResponse,
+  ReadingHistoryResponse,
+} from "@/types/groupDashboard";
 
 export type CompleteWheelStateRequest = {
   objectKeys: string[];
@@ -26,6 +29,15 @@ export const getReadingHistory = async (
 ) => {
   const response = await axiosInstance.get<ReadingHistoryResponse>(
     `/wheels/${groupId}/history/${targetUserPk}`,
+  );
+
+  return response.data.data;
+};
+
+// 책 별 히스토리 API
+export const getBookHistory = async (groupId: string, ownBookId: string) => {
+  const response = await axiosInstance.get<BookHistoryResponse>(
+    `/wheels/${groupId}/history/books/${ownBookId}`,
   );
 
   return response.data.data;
