@@ -16,6 +16,18 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+### Push notification setup
+
+Remote push notifications require an Expo/EAS project ID. An EAS development
+build provides it automatically, or it can be set locally in `.env`:
+
+```bash
+EXPO_PUBLIC_EAS_PROJECT_ID=your-eas-project-id
+```
+
+Use a development build on a physical device to test remote notifications.
+Expo Go and iOS/Android simulators cannot complete the remote push flow.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

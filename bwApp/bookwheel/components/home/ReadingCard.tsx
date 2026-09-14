@@ -23,7 +23,10 @@ export default function ReadingCard({
     <>
       <View style={styles.card}>
         {/* 책 이미지 */}
-        <Image source={image} style={styles.bookImage} />
+        <Image
+          source={typeof image === "string" ? { uri: image } : image}
+          style={styles.bookImage}
+        />
 
         {/* 텍스트 영역 */}
         <View style={styles.info}>

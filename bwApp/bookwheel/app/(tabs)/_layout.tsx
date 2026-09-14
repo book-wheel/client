@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { NotificationButton } from "@/components/home/HomeHeader";
 
 export default function TabsLayout() {
   return (
@@ -41,7 +42,14 @@ export default function TabsLayout() {
         },
       })}
     >
-      <Tabs.Screen name="index" options={{ title: "홈", headerShown: true }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "홈",
+          headerShown: true,
+          headerRight: () => <NotificationButton />,
+        }}
+      />
       <Tabs.Screen name="groups" options={{ title: "모임" }} />
       <Tabs.Screen name="books" options={{ title: "책" }} />
       <Tabs.Screen name="setting" options={{ title: "설정" }} />
