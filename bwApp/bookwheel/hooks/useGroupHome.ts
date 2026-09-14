@@ -29,6 +29,9 @@ export function useGroupHome() {
     name?: string;
   }>();
 
+  console.log("🔥 현재 그룹 ID:", id);
+  console.log("🔥 현재 그룹 이름:", name);
+
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLeader, setIsLeader] = useState(false);
 
@@ -44,10 +47,16 @@ export function useGroupHome() {
   useEffect(() => {
     const fetchGroupDetail = async () => {
       try {
+        console.log("📤 그룹 상세 요청 ID:", id);
+
         const data = await getGroupDetail(id);
+
+        console.log("📥 그룹 상세 응답 ID:", id);
+        console.log("📥 그룹 상세 응답 데이터:", data);
 
         if (!name) {
           navigation.getParent()?.setOptions({ title: data.groupName });
+
           navigation.getParent()?.getParent()?.setOptions({
             title: data.groupName,
           });
@@ -56,10 +65,8 @@ export function useGroupHome() {
         setGroupInfo({
           intro: data.groupComment,
           rules: data.groupRule,
-
           currentMembers: data.currentMembers,
           maxMembers: data.maxMembers,
-
           isOffline: data.groupOffline,
         });
       } catch (error) {
@@ -77,14 +84,13 @@ export function useGroupHome() {
 
     const fetchGroupData = async () => {
       try {
-        // 멤버 조회
+        console.log("📤 멤버 조회 요청 ID:", id);
+
         const memberData = await getGroupMembers(id);
 
-        console.log("멤버목록", memberData);
+        console.log("📥 멤버 조회 응답 ID:", id);
+        console.log("📥 멤버 데이터:", memberData);
 
-        // 임시:
-        // 리더 존재하면 리더라고 처리
-        // 나중엔 로그인 유저 PK 비교해야됨
         const leader = memberData.members.find(
           (member: any) => member.role === "LEADER",
         );
