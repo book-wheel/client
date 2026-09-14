@@ -5,7 +5,8 @@ import {
 } from "@/api/notifications";
 import { useNotificationContext } from "@/contexts/notifications";
 import type { NotificationItem } from "@/types/notifications";
-import { useFocusEffect, useIsFocused } from "expo-router";
+import { useFocusEffect } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const NOTIFICATION_PAGE_SIZE = 20;
