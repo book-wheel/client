@@ -53,7 +53,7 @@ export default function GroupsFab({ open, setOpen }: Props) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(255,255,255,0.8)",
   },
 
