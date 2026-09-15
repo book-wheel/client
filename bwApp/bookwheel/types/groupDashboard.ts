@@ -1,19 +1,30 @@
+import type { ApiResponse } from "@/types/api";
+
+export type WheelStatus =
+  | "PLANNED"
+  | "WAITING"
+  | "READY"
+  | "READING"
+  | "COMPLETED"
+  | "UNFINISHED";
+
 export interface MyStep {
-  wheelStateId: string;
+  wheelStateId: string | null;
   bookId: string;
-  status: string;
+  status: WheelStatus;
   bookTitle: string;
-  coverImage: string;
-  senderNickname: string;
+  coverImage: string | null;
+  senderNickname: string | null;
 }
 
 export interface MyBookStep {
   bookId: string;
   bookTitle: string;
-  holderNickname: string;
-  status: string;
-  location: string;
-  coverImage: string;
+  coverImage: string | null;
+  author: string | null;
+  holderNickname: string | null;
+  status: WheelStatus | null;
+  location: string | null;
 }
 
 export interface GroupDashboardData {
@@ -28,10 +39,7 @@ export interface GroupDashboardData {
   myBookStep: MyBookStep | null;
 }
 
-export interface GroupDashboardResponse {
-  success: boolean;
-  data: GroupDashboardData;
-}
+export type GroupDashboardApiResponse = ApiResponse<GroupDashboardData>;
 
 export interface RegisterBookRequest {
   isbn: string;
