@@ -4,7 +4,7 @@ type Props = {
   book: {
     id: string;
     title: string;
-    owner: string;
+    senderNickname: string | null;
     image: {
       uri: string;
     };
@@ -116,15 +116,17 @@ export default function CurrentBookSection({
               {book.title}
             </Text>
 
-            <Text
-              style={{
-                marginTop: 10,
-                fontSize: 13,
-                color: "#8B6D3A",
-              }}
-            >
-              {book.owner}님이 전달한 책
-            </Text>
+            {book.senderNickname ? (
+              <Text
+                style={{
+                  marginTop: 10,
+                  fontSize: 13,
+                  color: "#8B6D3A",
+                }}
+              >
+                {book.senderNickname}님이 전달한 책
+              </Text>
+            ) : null}
           </View>
         </View>
 

@@ -1,6 +1,5 @@
 import { getApiErrorMessage } from "@/api/axios";
 import {
-  getCurrentReadingBooks,
   getExchangeRecommendation,
   getGalleryFeed,
   getInterestedBooks,
@@ -24,10 +23,9 @@ import BookTile from "../../components/books/BookTile";
 import BookDataSource from "../../components/books/BookDataSource";
 import BooksSectionHeader from "../../components/books/BooksSectionHeader";
 import GalleryPreviewRow from "../../components/books/GalleryPreviewRow";
-import ReadingBookCard from "../../components/books/ReadingBookCard";
 import RecommendBookCard from "../../components/books/RecommendBookCard";
 import type { BookItem, GalleryItem, RecommendBookItem } from "../../components/books/types";
-import type { CurrentReadingBookContent, ExchangeRecommendationBasis } from "../../types/books";
+import type { ExchangeRecommendationBasis } from "../../types/books";
 const galleryImage = require("@/assets/images/comment.png");
 
 const interestColumns = 3;
@@ -59,13 +57,6 @@ export default function Books() {
     (width - contentHorizontalPadding * 2 - interestGap * (interestColumns - 1)) /
       interestColumns,
   );
-  const [readingBooks, setReadingBooks] = useState<
-    CurrentReadingBookContent[]
-  >([]);
-  const [readingBooksLoading, setReadingBooksLoading] = useState(false);
-  const [readingBooksError, setReadingBooksError] = useState<string | null>(
-    null,
-  );
   const [galleryPreview, setGalleryPreview] = useState<GalleryItem[]>([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [galleryError, setGalleryError] = useState<string|null>(null);
@@ -82,34 +73,6 @@ export default function Books() {
   const [isUpdatingRecommendation, setIsUpdatingRecommendation] =
     useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const loadCurrentReadingBooks = useCallback(async () => {
-    setReadingBooksLoading(true);
-    setReadingBooksError(null);
-
-    try {
-      const response = await getCurrentReadingBooks();
-      const result = response.data;
-
-      if (!result.success || !result.data) {
-        throw new Error(
-          result.error?.message ?? "현재 읽고 있는 책을 불러오지 못했습니다.",
-        );
-      }
-
-      setReadingBooks(result.data.books);
-    } catch (error) {
-      setReadingBooks([]);
-      setReadingBooksError(
-        getApiErrorMessage(
-          error,
-          "현재 읽고 있는 책을 불러오지 못했습니다.",
-        ),
-      );
-    } finally {
-      setReadingBooksLoading(false);
-    }
-  }, []);
 
   const loadGalleryPreview = useCallback(async () => {
     setGalleryLoading(true);
@@ -229,11 +192,10 @@ return;
 
   useFocusEffect(
     useCallback(() => {
-      void loadCurrentReadingBooks();
       void loadGalleryPreview();
       void loadInterestPreview();
       void loadRecommendation();
-    }, [loadCurrentReadingBooks, loadGalleryPreview, loadInterestPreview, loadRecommendation]),
+    }, [loadGalleryPreview, loadInterestPreview, loadRecommendation]),
   );
 
   const handleRefresh = useCallback(async () => {
@@ -242,7 +204,6 @@ return;
     setIsRefreshing(true);
     try {
       await Promise.all([
-        loadCurrentReadingBooks(),
         loadGalleryPreview(),
         loadInterestPreview(),
         loadRecommendation(),
@@ -252,7 +213,6 @@ return;
     }
   }, [
     isRefreshing,
-    loadCurrentReadingBooks,
     loadGalleryPreview,
     loadInterestPreview,
     loadRecommendation,
@@ -269,13 +229,6 @@ return;
     router.push({
       pathname: "/book-detail/[isbn]/info",
       params: { isbn },
-    });
-  };
-
-  const handlePressGroup = (groupId: string) => {
-    router.push({
-      pathname: "/(tabs)/group/[id]/(top)/home",
-      params: { id: groupId },
     });
   };
 
@@ -364,30 +317,6 @@ return;
           />
         }
       >
-        <BooksSectionHeader title="지금 읽는 책" />
-        {readingBooksLoading && readingBooks.length === 0 ? (
-          <SectionStatus isLoading message="현재 읽고 있는 책을 불러오는 중입니다." />
-        ) : readingBooksError ? (
-          <SectionStatus message={readingBooksError} />
-        ) : readingBooks.length === 0 ? (
-          <SectionStatus message="현재 읽고 있는 책이 없습니다." />
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-          >
-            {readingBooks.map((book) => (
-              <ReadingBookCard
-                key={book.groupId}
-                title={book.title}
-                coverImageUrl={book.coverImageUrl}
-                onPress={() => handlePressGroup(book.groupId)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
         <BooksSectionHeader
           title="교환독서의 순간들"
           actionText="더보기"
@@ -485,11 +414,6 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-  },
-  horizontalList: {
-    flexDirection: "row",
-    gap: 16,
-    paddingRight: 20,
   },
   interestList: {
     flexDirection: "row",

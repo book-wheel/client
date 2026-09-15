@@ -1,52 +1,80 @@
-import { useState } from "react";
-import { Room } from "@/types/room";
-import { MyGroup } from "@/types/group";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { getMyInfo } from "@/api/auth";
+import { getMyGroups, getMyReadingCards } from "@/api/group";
+import type { MyGroup } from "@/types/group";
+import type { HomeReadingRoom } from "@/types/room";
+
+const GROUP_REGION_LABELS: Record<string, string> = {
+  SEOUL: "서울",
+  GYEONGGI: "경기",
+  INCHEON: "인천",
+  GANGWON: "강원",
+  CHUNG_BUK: "충북",
+  CHUNG_NAM: "충남",
+  DAEJEON: "대전",
+  SEJONG: "세종",
+  JEON_BUK: "전북",
+  JEON_NAM: "전남",
+  GWANGJU: "광주",
+  GYEONG_BUK: "경북",
+  GYEONG_NAM: "경남",
+  DAEGU: "대구",
+  ULSAN: "울산",
+  BUSAN: "부산",
+  JEJU: "제주",
+};
+
+const getGroupRegionLabel = (region: string | null) =>
+  region ? (GROUP_REGION_LABELS[region] ?? region) : "";
 
 export function useHome() {
-  const [nickname] = useState("문소희");
+  const [nickname, setNickname] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [rooms, setRooms] = useState<HomeReadingRoom[]>([]);
+  const [myGroups, setMyGroups] = useState<MyGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const rooms: Room[] = [
-    {
-      id: 1,
-      name: "교환독서방",
-      round: 3,
-      dDay: 4,
-      book: "괴테는 모든 것을 말했다",
-      author: "소피의 일기",
-      owner: "조혜연",
-    },
-    {
-      id: 2,
-      name: "문장수집가들",
-      round: 1,
-      dDay: 10,
-      book: "어린왕자",
-      author: "생텍쥐페리",
-      owner: "김민지",
-    },
-  ];
+  const fetchHome = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-  const myGroups: MyGroup[] = [
-    {
-      id: 1,
-      dday: 5,
-      name: "책바퀴",
-      memberCount: "8/8",
-      type: "오프라인",
-      region: "천안",
-      info: "각자 읽고 느낀 점을 자유롭게 공유하는 모임입니다.",
-    },
-    {
-      id: 2,
-      dday: 5,
-      name: "책바퀴",
-      memberCount: "4/6",
-      type: "온라인",
-      region: "",
-      info: "각자 읽고 느낀 점을 자유롭게 공유하는 모임입니다.",
-    },
-  ];
+      const [myInfoResponse, groupResponse, readingCards] = await Promise.all([
+        getMyInfo(),
+        getMyGroups(),
+        getMyReadingCards(),
+      ]);
+
+      setNickname(myInfoResponse.data.data?.nickname ?? "");
+      setRooms(readingCards);
+      setMyGroups(
+        groupResponse.map((group) => ({
+          id: group.groupId,
+          status: group.status,
+          dday: group.dday,
+          startDate: group.startDate,
+          name: group.groupName,
+          memberCount: `${group.currentMembers}/${group.maxMembers}`,
+          type: group.groupOffline ? "오프라인" : "온라인",
+          region: getGroupRegionLabel(group.groupRegion),
+          info: group.groupComment,
+        })),
+      );
+    } catch (fetchError) {
+      console.error("홈 화면 데이터 조회 실패", fetchError);
+      setError("홈 화면 정보를 불러오지 못했어요.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchHome();
+    }, [fetchHome]),
+  );
 
   return {
     nickname,
@@ -54,5 +82,7 @@ export function useHome() {
     currentIndex,
     setCurrentIndex,
     myGroups,
+    isLoading,
+    error,
   };
 }
