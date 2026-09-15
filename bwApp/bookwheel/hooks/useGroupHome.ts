@@ -42,13 +42,16 @@ export function useGroupHome() {
 
   // 그룹 상세 정보 조회
   useEffect(() => {
+    let active = true;
+
     const fetchGroupDetail = async () => {
       try {
         const data = await getGroupDetail(id);
 
+        if (!active) return;
+
         if (!name) {
           navigation.getParent()?.setOptions({ title: data.groupName });
-
           navigation.getParent()?.getParent()?.setOptions({
             title: data.groupName,
           });
@@ -69,14 +72,23 @@ export function useGroupHome() {
     if (id) {
       fetchGroupDetail();
     }
+
+    return () => {
+      active = false;
+    };
   }, [id, name, navigation]);
 
+  // 그룹 멤버 및 가입 신청자 조회
   useEffect(() => {
     if (!id) return;
+
+    let active = true;
 
     const fetchGroupData = async () => {
       try {
         const memberData = await getGroupMembers(id);
+
+        if (!active) return;
 
         const leader = memberData.members.find(
           (member: any) => member.role === "LEADER",
@@ -85,10 +97,9 @@ export function useGroupHome() {
         if (leader) {
           setIsLeader(true);
 
-          // 가입 요청 목록 조회
           const requestData = await getGroupRequests(id);
 
-          console.log("가입요청", requestData);
+          if (!active) return;
 
           const mappedApplicants = requestData.map((item: any) => ({
             id: item.memberId,
@@ -106,6 +117,10 @@ export function useGroupHome() {
     };
 
     fetchGroupData();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const [groupInfo, setGroupInfo] = useState<GroupInfo>({
