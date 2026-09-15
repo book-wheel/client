@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import type { HomeReadingRoom } from "@/types/room";
@@ -15,15 +16,22 @@ type BookColumnProps = {
 };
 
 function BookColumn({ label, title, coverImage, detail }: BookColumnProps) {
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setImageLoadFailed(false);
+  }, [coverImage]);
+
   return (
     <View style={styles.bookColumn}>
       <Text style={styles.bookLabel}>{label}</Text>
       <Image
         source={
-          coverImage
+          coverImage && !imageLoadFailed
             ? { uri: coverImage }
             : require("@/assets/images/book.png")
         }
+        onError={() => setImageLoadFailed(true)}
         style={styles.cover}
         resizeMode="cover"
       />
