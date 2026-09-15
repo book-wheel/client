@@ -1,17 +1,24 @@
 import api from "./axios";
 
+type PresignedUrlResponse = {
+  presignedUrl: string;
+  objectKey: string;
+};
+
 // 이미지 업로드를 위해 백엔드에게 presigned URL을 요청하는 함수
 export const getImagePresignedUrl = async (
   prefix: string,
   fileName: string,
 ) => {
-  const response = await api.get<string>("/images/presigned-url", {
-    params: {
-      prefix,
-      fileName,
+  const response = await api.get<PresignedUrlResponse>(
+    "/images/presigned-url",
+    {
+      params: {
+        prefix,
+        fileName,
+      },
     },
-  });
-  // 문자열 반환
+  );
   return response.data;
 };
 
@@ -47,21 +54,12 @@ export const uploadImage = async (
   prefix = "reviews",
   contentType = "image/jpeg",
 ) => {
-  const presignedUrl = await getImagePresignedUrl(prefix, fileName);
+  const { presignedUrl, objectKey } = await getImagePresignedUrl(
+    prefix,
+    fileName,
+  );
 
   await uploadImageToS3(presignedUrl, imageUri, contentType);
-
-  // 서버 S3 설정은 path-style URL(`/버킷명/objectKey`)을 사용한다.
-  const [, ...objectKeySegments] = decodeURIComponent(
-    new URL(presignedUrl).pathname,
-  )
-    .split("/")
-    .filter(Boolean);
-
-  const objectKey = objectKeySegments.join("/");
-  if (!objectKey) {
-    throw new Error("업로드한 이미지의 object key를 찾을 수 없습니다.");
-  }
 
   return objectKey;
 };
