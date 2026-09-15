@@ -12,9 +12,13 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
-import { checkNicknameDuplicate, setupProfile, type MyProfile } from "@/api/auth";
+import {
+  checkNicknameDuplicate,
+  setupProfile,
+  type MyProfile,
+} from "@/api/auth";
 import { getApiErrorMessage } from "@/api/axios";
-import { uploadImage } from "@/api/images";
+import { uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ProfileImage from "@/components/profile/image";
@@ -101,7 +105,10 @@ export default function EditProfileModal({
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("사진 권한 필요", "프로필 사진을 변경하려면 사진 접근 권한이 필요합니다.");
+      Alert.alert(
+        "사진 권한 필요",
+        "프로필 사진을 변경하려면 사진 접근 권한이 필요합니다.",
+      );
       return;
     }
 
@@ -152,17 +159,19 @@ export default function EditProfileModal({
           throw new Error("선택한 이미지를 찾을 수 없습니다.");
         }
 
-        payload.profileImageKey = await uploadImage(
+        payload.profileImageKey = await uploadProfileImage(
           newImageUri,
           `profile_${Date.now()}.jpg`,
-          "profiles",
           "image/jpeg",
         );
+        console.log("업로드된 profileImageKey:", payload.profileImageKey);
       }
 
       const response = await setupProfile(payload);
       if (!response.data.success) {
-        throw new Error(response.data.error?.message ?? "프로필 수정에 실패했습니다.");
+        throw new Error(
+          response.data.error?.message ?? "프로필 수정에 실패했습니다.",
+        );
       }
 
       await onSaved();
@@ -186,7 +195,10 @@ export default function EditProfileModal({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.sheet}>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.title}>프로필 수정</Text>
 
             <View style={styles.imageSection}>
@@ -222,7 +234,11 @@ export default function EditProfileModal({
             </View>
 
             {nicknameMessage && (
-              <Text style={nicknameChecked ? styles.successText : styles.messageText}>
+              <Text
+                style={
+                  nicknameChecked ? styles.successText : styles.messageText
+                }
+              >
                 {nicknameMessage}
               </Text>
             )}
@@ -244,7 +260,9 @@ export default function EditProfileModal({
               multiline
             />
 
-            {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+            {errorMessage && (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            )}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity

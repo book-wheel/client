@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 
 import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
-import { uploadImage } from "@/api/images";
+import { uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
@@ -98,21 +98,16 @@ export default function Profile() {
       if (imageUri) {
         const fileName = `profile_${Date.now()}.jpg`;
 
-        const profileImageKey = await uploadImage(
+        const profileImageKey = await uploadProfileImage(
           imageUri,
           fileName,
-          "profiles",
           "image/jpeg",
         );
 
         payload.profileImageKey = profileImageKey;
       }
 
-      console.log("📤 setup-profile payload:", payload);
-
       const res = await setupProfile(payload);
-
-      console.log("📥 setup-profile response:", res.data);
 
       if (res.data.success) {
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
