@@ -42,6 +42,8 @@ export default function EditProfileModal({
   const [comment, setComment] = useState(user.comment ?? "");
   const [imageMode, setImageMode] = useState<ImageMode>("unchanged");
   const [newImageUri, setNewImageUri] = useState<string>();
+  const [newImageFileName, setNewImageFileName] = useState<string | null>(null);
+  const [newImageMimeType, setNewImageMimeType] = useState<string | null>(null);
   const [nicknameChecked, setNicknameChecked] = useState(false);
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -55,6 +57,8 @@ export default function EditProfileModal({
     setComment(user.comment ?? "");
     setImageMode("unchanged");
     setNewImageUri(undefined);
+    setNewImageFileName(null);
+    setNewImageMimeType(null);
     setNicknameChecked(false);
     setNicknameMessage("");
     setErrorMessage("");
@@ -121,7 +125,11 @@ export default function EditProfileModal({
 
     if (result.canceled) return;
 
-    setNewImageUri(result.assets[0].uri);
+    const asset = result.assets[0];
+
+    setNewImageUri(asset.uri);
+    setNewImageFileName(asset.fileName ?? null);
+    setNewImageMimeType(asset.mimeType ?? null);
     setImageMode("new");
     setErrorMessage("");
   };
@@ -161,8 +169,8 @@ export default function EditProfileModal({
 
         payload.profileImageKey = await uploadProfileImage(
           newImageUri,
-          `profile_${Date.now()}.jpg`,
-          "image/jpeg",
+          newImageFileName ?? `profile_${Date.now()}.jpg`,
+          newImageMimeType ?? "image/jpeg",
         );
         console.log("업로드된 profileImageKey:", payload.profileImageKey);
       }
@@ -216,6 +224,8 @@ export default function EditProfileModal({
                     onPress={() => {
                       setImageMode("removed");
                       setNewImageUri(undefined);
+                      setNewImageFileName(null);
+                      setNewImageMimeType(null);
                     }}
                     disabled={saving}
                   >
@@ -224,7 +234,12 @@ export default function EditProfileModal({
                 )}
                 {imageMode === "removed" && (
                   <TouchableOpacity
-                    onPress={() => setImageMode("unchanged")}
+                    onPress={() => {
+                      setImageMode("unchanged");
+                      setNewImageUri(undefined);
+                      setNewImageFileName(null);
+                      setNewImageMimeType(null);
+                    }}
                     disabled={saving}
                   >
                     <Text style={styles.actionText}>기존 사진 유지</Text>
