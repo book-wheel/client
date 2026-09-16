@@ -20,10 +20,12 @@ import {
 } from "react-native";
 
 import BookTile from "../../components/books/BookTile";
+import BookDataSource from "../../components/books/BookDataSource";
 import BooksSectionHeader from "../../components/books/BooksSectionHeader";
 import GalleryPreviewRow from "../../components/books/GalleryPreviewRow";
 import RecommendBookCard from "../../components/books/RecommendBookCard";
 import type { BookItem, GalleryItem, RecommendBookItem } from "../../components/books/types";
+import type { ExchangeRecommendationBasis } from "../../types/books";
 const galleryImage = require("@/assets/images/comment.png");
 
 const interestColumns = 3;
@@ -63,6 +65,8 @@ export default function Books() {
   const [interestError, setInterestError] = useState<string | null>(null);
   const [recommendation, setRecommendation] =
     useState<RecommendBookItem | null>(null);
+  const [recommendationBasis, setRecommendationBasis] =
+    useState<ExchangeRecommendationBasis | null>(null);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [recommendationError, setRecommendationError] =
     useState<string | null>(null);
@@ -153,6 +157,7 @@ return;
       }
 
       const book = result.data.book;
+      setRecommendationBasis(book ? result.data.basis : null);
 
       setRecommendation(
         book
@@ -176,6 +181,7 @@ return;
       );
     } catch (error) {
       setRecommendation(null);
+      setRecommendationBasis(null);
       setRecommendationError(
         getApiErrorMessage(error, "추천 도서를 불러오지 못했습니다."),
       );
@@ -340,6 +346,16 @@ return;
               onPressBook={() => handlePressBook(recommendation.isbn)}
               onToggleInterest={() => void handleToggleRecommendation()}
             />
+            {recommendationBasis?.source === "DATA4LIBRARY" ? (
+              <BookDataSource
+                label="추천 데이터 출처"
+                sourceName={recommendationBasis.sourceName}
+                provider={recommendationBasis.provider}
+                sourceUrl={recommendationBasis.sourceUrl}
+                startDate={recommendationBasis.startDate}
+                endDate={recommendationBasis.endDate}
+              />
+            ) : null}
             {recommendationError ? (
               <Text style={styles.actionError}>{recommendationError}</Text>
             ) : null}
