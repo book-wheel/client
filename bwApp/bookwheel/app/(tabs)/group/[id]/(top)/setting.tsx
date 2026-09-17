@@ -28,9 +28,18 @@ function MenuRow({ label, onPress }: MenuRowProps) {
 }
 
 export default function Setting() {
-  const { id } = useLocalSearchParams<{
+  const { id, name } = useLocalSearchParams<{
     id: string;
+    name?: string;
   }>();
+
+  const openSettingsPage = (
+    pathname:
+      | "/group/[id]/member-management"
+      | "/group/[id]/schedule-settings",
+  ) => {
+    router.push({ pathname, params: { id, name: name ?? "" } });
+  };
 
   return (
     <ScrollView
@@ -38,7 +47,7 @@ export default function Setting() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.sectionTitle}>MY</Text>
+      <Text style={styles.sectionTitle}>my</Text>
       <MenuRow label="내 정보" onPress={() => router.push("/(tabs)/setting")} />
 
       <Text style={[styles.sectionTitle, styles.groupSectionTitle]}>모임</Text>
@@ -46,9 +55,14 @@ export default function Setting() {
         label="모임 설정"
         onPress={() => router.push(`/group/${id}/group-settings` as Href)}
       />
-      <MenuRow label="멤버 관리" />
-      <MenuRow label="일정 관리" />
-      <MenuRow label="알림 설정" />
+      <MenuRow
+        label="멤버 관리"
+        onPress={() => openSettingsPage("/group/[id]/member-management")}
+      />
+      <MenuRow
+        label="일정 관리"
+        onPress={() => openSettingsPage("/group/[id]/schedule-settings")}
+      />
     </ScrollView>
   );
 }

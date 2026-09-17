@@ -39,7 +39,7 @@ export default function GroupTopTabs() {
       <Tab.Screen
         name="setting"
         component={Setting}
-        options={{ title: "세팅" }}
+        options={{ title: "설정" }}
       />
     </Tab.Navigator>
   );
