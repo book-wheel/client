@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import { jwtDecode } from "jwt-decode";
@@ -25,23 +25,6 @@ type CurrentBook = {
   image: {
     uri: string;
   };
-};
-
-type GroupSchedule = {
-  scheduleStatus:
-    | "NOT_CONFIGURED"
-    | "CONFIGURED"
-    | "READY"
-    | "RESCHEDULE_REQUIRED"
-    | "IN_PROGRESS"
-    | "COMPLETE";
-  targetMemberCount: number;
-  currentMemberCount: number;
-  canStart: boolean;
-  missingBookMembers: {
-    userPK: string;
-    nickname: string;
-  }[];
 };
 
 type TokenPayload = {
@@ -164,7 +147,8 @@ export function useGroupState() {
       ? {
           id: dashboard.myStep.bookId,
           title: dashboard.myStep.bookTitle,
-          owner: dashboard.myStep.senderNickname,
+          owner:
+            dashboard.myStep.ownerNickname ?? dashboard.myStep.senderNickname,
           image: {
             uri: dashboard.myStep.coverImage,
           },
@@ -193,7 +177,7 @@ export function useGroupState() {
       role:
         member.role === "LEADER"
           ? "leader"
-          : member.role === "VICE"
+          : member.role === "SUB_LEADER" || member.role === "VICE"
             ? "vice"
             : "member",
       status,

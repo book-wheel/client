@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 
+import { getMyInfo } from "@/api/auth";
 import { getGroupMembers, getGroupRequests, getGroupDetail } from "@/api/group";
+import type { GroupMembersData } from "@/types/groupMembers";
 
 export type Applicant = {
   id: string;
@@ -31,6 +33,13 @@ export function useGroupHome() {
 
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLeader, setIsLeader] = useState(false);
+  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
+    intro: "",
+    rules: "",
+    currentMembers: 0,
+    maxMembers: 0,
+    isOffline: false,
+  });
 
   // 화면 타이틀
   useEffect(() => {
@@ -77,21 +86,22 @@ export function useGroupHome() {
 
     const fetchGroupData = async () => {
       try {
-        // 멤버 조회
-        const memberData = await getGroupMembers(id);
+        const [memberData, myInfoResponse] = await Promise.all([
+          getGroupMembers(id) as Promise<GroupMembersData>,
+          getMyInfo(),
+        ]);
 
         console.log("멤버목록", memberData);
 
-        // 임시:
-        // 리더 존재하면 리더라고 처리
-        // 나중엔 로그인 유저 PK 비교해야됨
+        const currentUserPK = myInfoResponse.data.data?.userPK;
         const leader = memberData.members.find(
-          (member: any) => member.role === "LEADER",
+          (member) =>
+            member.role === "LEADER" && member.userPK === currentUserPK,
         );
 
-        if (leader) {
-          setIsLeader(true);
+        setIsLeader(Boolean(leader));
 
+        if (leader) {
           // 가입 요청 목록 조회
           const requestData = await getGroupRequests(id);
 
@@ -106,24 +116,18 @@ export function useGroupHome() {
           }));
 
           setApplicants(mappedApplicants);
+        } else {
+          setApplicants([]);
         }
       } catch (error) {
+        setIsLeader(false);
+        setApplicants([]);
         console.error(error);
       }
     };
 
     fetchGroupData();
   }, [id]);
-
-  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
-    intro: "",
-    rules: "",
-
-    currentMembers: 0,
-    maxMembers: 0,
-
-    isOffline: false,
-  });
 
   return {
     id,
