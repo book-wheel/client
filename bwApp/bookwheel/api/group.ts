@@ -1,6 +1,7 @@
 import axios from "./axios";
 import type { ApiResponse } from "@/types/api";
 import type { GroupDetail, GroupUpdateRequest } from "@/types/group";
+import type { GroupMemberRole } from "@/types/groupMembers";
 
 //그룹 만들기
 export const makingGroup = async (data: {
@@ -156,6 +157,66 @@ export const updateGroup = async (
       response.data.error?.message ?? "모임 설정을 저장하지 못했습니다.",
     );
   }
+
+  return response.data.data;
+};
+
+// 그룹 삭제
+export const deleteGroup = async (groupId: string): Promise<void> => {
+  const response = await axios.delete<ApiResponse<null>>(`/groups/${groupId}`);
+
+  if (!response.data.success) {
+    throw new Error(
+      response.data.error?.message ?? "모임을 삭제하지 못했습니다.",
+    );
+  }
+};
+
+// 그룹 탈퇴
+export const leaveGroup = async (groupId: string): Promise<void> => {
+  const response = await axios.delete<ApiResponse<null>>(`/groups/${groupId}/me`);
+
+  if (!response.data.success) {
+    throw new Error(
+      response.data.error?.message ?? "모임에서 탈퇴하지 못했습니다.",
+    );
+  }
+};
+
+// 부방장 등록/해제
+export const changeGroupMemberRole = async (
+  groupId: string,
+  targetUserPK: string,
+  memberRole: Extract<GroupMemberRole, "SUB_LEADER" | "MEMBER">,
+) => {
+  const response = await axios.patch(
+    `/groups/${groupId}/members/${targetUserPK}/role`,
+    { memberRole },
+  );
+
+  return response.data.data;
+};
+
+// 그룹장 위임
+export const transferGroupLeadership = async (
+  groupId: string,
+  targetUserPK: string,
+) => {
+  const response = await axios.post(
+    `/groups/${groupId}/members/${targetUserPK}/leader`,
+  );
+
+  return response.data.data;
+};
+
+// 멤버 강제 탈퇴
+export const kickGroupMember = async (
+  groupId: string,
+  targetUserPK: string,
+) => {
+  const response = await axios.delete(
+    `/groups/${groupId}/members/${targetUserPK}`,
+  );
 
   return response.data.data;
 };
