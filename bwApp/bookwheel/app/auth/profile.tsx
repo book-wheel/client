@@ -22,6 +22,8 @@ export default function Profile() {
   const [nickname, setNickname] = React.useState("");
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
@@ -70,7 +72,11 @@ export default function Profile() {
 
     if (result.canceled) return;
 
-    setImageUri(result.assets[0].uri);
+    const asset = result.assets[0];
+
+    setImageUri(asset.uri);
+    setImageFileName(asset.fileName ?? null);
+    setImageMimeType(asset.mimeType ?? null);
   };
 
   //회원가입(프로필저장)로직
@@ -96,12 +102,13 @@ export default function Profile() {
 
     try {
       if (imageUri) {
-        const fileName = `profile_${Date.now()}.jpg`;
+        const fileName = imageFileName ?? `profile_${Date.now()}.jpg`;
+        const mimeType = imageMimeType ?? "image/jpeg";
 
         const profileImageKey = await uploadProfileImage(
           imageUri,
           fileName,
-          "image/jpeg",
+          mimeType,
         );
 
         payload.profileImageKey = profileImageKey;

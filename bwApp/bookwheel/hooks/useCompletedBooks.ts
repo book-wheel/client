@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Alert } from "react-native";
 import { router } from "expo-router";
 import type { ImagePickerAsset } from "expo-image-picker";
 import Toast from "react-native-toast-message";
@@ -36,6 +35,8 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
           uploadImage(
             image.uri,
             image.fileName ?? `review-${Date.now()}-${index}.jpg`,
+            "reviews",
+            image.mimeType ?? "image/jpeg",
           ),
         ),
       );
