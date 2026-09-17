@@ -98,7 +98,7 @@ export default function MemberOrderEdit() {
       await createSchedule(id, {
         startDate: schedule.startDate,
         readingPeriod: schedule.readingPeriod,
-        endDate: schedule.endDate,
+        ...(schedule.endDate ? { endDate: schedule.endDate } : {}),
         excludedDates: schedule.excludedDates ?? [],
         excludedDateRanges: schedule.excludedDateRanges ?? [],
         targetMemberCount: schedule.currentMemberCount,

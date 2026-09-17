@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,7 +18,12 @@ import {
 import Toast from "react-native-toast-message";
 
 import { getApiErrorMessage } from "@/api/axios";
-import { getGroupDetail, updateGroup } from "@/api/group";
+import {
+  deleteGroup,
+  getGroupDetail,
+  leaveGroup,
+  updateGroup,
+} from "@/api/group";
 import type {
   GroupDetail,
   GroupRegion,
@@ -27,15 +33,16 @@ import type {
 const COLORS = {
   brown: "#513A11",
   amber: "#E4A54E",
-  cream: "#FCF5D7",
+  cream: "#FFF8E7",
   muted: "#A99E8A",
-  border: "#D8C9AB",
-  danger: "#D94A45",
-  dangerBackground: "#FFE1DE",
+  border: "#9B8B6B",
+  line: "#E8DECB",
+  danger: "#F04B43",
+  dangerBackground: "#FFD2CD",
 };
 
 const STEPS = ["정보입력", "운영방식", "기타"] as const;
-
+const MEMBER_OPTIONS = Array.from({ length: 11 }, (_, index) => index + 2);
 const REGION_OPTIONS: { value: GroupRegion; label: string }[] = [
   { value: "SEOUL", label: "서울" },
   { value: "GYEONGGI", label: "경기" },
@@ -87,6 +94,7 @@ type FieldProps = {
   multiline?: boolean;
   secureTextEntry?: boolean;
   editable?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
   helper?: string;
 };
 
@@ -99,34 +107,45 @@ function Field({
   multiline = false,
   secureTextEntry = false,
   editable = true,
+  icon,
   helper,
 }: FieldProps) {
   return (
     <View style={styles.fieldBlock}>
-      <View style={styles.labelRow}>
-        <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldLabel}>
+        {label}
         {maxLength ? (
-          <Text style={styles.counter}>
-            {value.length}/{maxLength}
-          </Text>
+          <Text style={styles.counter}> ({value.length}/{maxLength})</Text>
         ) : null}
-      </View>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#B8AE9B"
-        maxLength={maxLength}
-        multiline={multiline}
-        secureTextEntry={secureTextEntry}
-        editable={editable}
-        textAlignVertical={multiline ? "top" : "center"}
+      </Text>
+      <View
         style={[
-          styles.input,
-          multiline && styles.textArea,
+          styles.inputShell,
+          multiline && styles.textAreaShell,
           !editable && styles.readOnlyInput,
         ]}
-      />
+      >
+        {icon ? (
+          <Ionicons
+            name={icon}
+            size={18}
+            color={COLORS.brown}
+            style={styles.inputIcon}
+          />
+        ) : null}
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#B8AE9B"
+          maxLength={maxLength}
+          multiline={multiline}
+          secureTextEntry={secureTextEntry}
+          editable={editable}
+          textAlignVertical={multiline ? "top" : "center"}
+          style={[styles.input, multiline && styles.textArea]}
+        />
+      </View>
       {helper ? <Text style={styles.helper}>{helper}</Text> : null}
     </View>
   );
@@ -175,19 +194,55 @@ function Choice<T extends string | boolean>({
   );
 }
 
-type RegionModalProps = {
+type SelectFieldProps = {
+  label: string;
+  value: string;
+  placeholder?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+};
+
+function SelectField({
+  label,
+  value,
+  placeholder = false,
+  disabled = false,
+  onPress,
+}: SelectFieldProps) {
+  return (
+    <View style={styles.fieldBlock}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Pressable
+        disabled={disabled}
+        onPress={onPress}
+        style={[styles.selectInput, disabled && styles.readOnlyInput]}
+      >
+        <Text style={[styles.selectText, placeholder && styles.placeholderText]}>
+          {value}
+        </Text>
+        <Ionicons name="chevron-down" size={18} color={COLORS.brown} />
+      </Pressable>
+    </View>
+  );
+}
+
+type SelectionModalProps<T extends string | number> = {
   visible: boolean;
-  selected: GroupRegion | null;
-  onSelect: (region: GroupRegion) => void;
+  title: string;
+  selected: T;
+  options: { value: T; label: string }[];
+  onSelect: (value: T) => void;
   onClose: () => void;
 };
 
-function RegionModal({
+function SelectionModal<T extends string | number>({
   visible,
+  title,
   selected,
+  options,
   onSelect,
   onClose,
-}: RegionModalProps) {
+}: SelectionModalProps<T>) {
   return (
     <Modal
       visible={visible}
@@ -198,31 +253,35 @@ function RegionModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <Pressable style={styles.modalSheet} onPress={() => {}}>
           <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>지역 선택</Text>
-          <View style={styles.regionGrid}>
-            {REGION_OPTIONS.map((region) => {
-              const active = selected === region.value;
+          <Text style={styles.modalTitle}>{title}</Text>
+          <ScrollView
+            style={styles.modalList}
+            contentContainerStyle={styles.optionGrid}
+            showsVerticalScrollIndicator={false}
+          >
+            {options.map((option) => {
+              const active = selected === option.value;
               return (
                 <Pressable
-                  key={region.value}
+                  key={String(option.value)}
                   onPress={() => {
-                    onSelect(region.value);
+                    onSelect(option.value);
                     onClose();
                   }}
-                  style={[styles.regionChip, active && styles.regionChipActive]}
+                  style={[styles.optionChip, active && styles.optionChipActive]}
                 >
                   <Text
                     style={[
-                      styles.regionChipText,
-                      active && styles.regionChipTextActive,
+                      styles.optionChipText,
+                      active && styles.optionChipTextActive,
                     ]}
                   >
-                    {region.label}
+                    {option.label}
                   </Text>
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
           <TouchableOpacity style={styles.modalClose} onPress={onClose}>
             <Text style={styles.modalCloseText}>닫기</Text>
           </TouchableOpacity>
@@ -245,6 +304,11 @@ function formFromDetail(group: GroupDetail): FormState {
   };
 }
 
+function formatDate(date: string | null) {
+  if (!date) return "설정되지 않음";
+  return date.replaceAll("-", " / ");
+}
+
 export default function GroupSettings() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [step, setStep] = useState(0);
@@ -252,10 +316,13 @@ export default function GroupSettings() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [message, setMessage] = useState("");
   const [messageIsError, setMessageIsError] = useState(false);
   const [regionModalVisible, setRegionModalVisible] = useState(false);
+  const [memberModalVisible, setMemberModalVisible] = useState(false);
 
   const loadGroup = useCallback(async () => {
     if (!id) {
@@ -286,6 +353,9 @@ export default function GroupSettings() {
   );
 
   const canEdit = group?.bottomButtonType === "LEADER_SETTING";
+  const canLeave = group?.bottomButtonType === "JOINED";
+  const busy = saving || deleting || leaving;
+
   const updateForm = <K extends keyof FormState>(
     key: K,
     value: FormState[K],
@@ -296,10 +366,10 @@ export default function GroupSettings() {
 
   const validate = () => {
     if (!form.groupName.trim()) return "모임 이름을 입력해주세요.";
-    if (!form.groupComment.trim()) return "모임 한줄 소개를 입력해주세요.";
+    if (!form.groupComment.trim()) return "코멘트를 입력해주세요.";
     if (!form.groupRule.trim()) return "모임 규칙을 입력해주세요.";
-    if (!form.groupPublic && !form.groupPassword.trim()) {
-      return "비공개 모임을 저장하려면 새 비밀번호를 입력해주세요.";
+    if (group?.groupPublic && !form.groupPublic && !form.groupPassword.trim()) {
+      return "비공개 모임으로 바꾸려면 비밀번호를 입력해주세요.";
     }
     if (form.groupOffline && !form.groupRegion) {
       return "오프라인 모임의 지역을 선택해주세요.";
@@ -311,8 +381,7 @@ export default function GroupSettings() {
   };
 
   const handleSave = async () => {
-    if (!id || !group || saving) return;
-
+    if (!id || !group || busy) return;
     if (!canEdit) {
       setMessageIsError(true);
       setMessage("그룹장만 모임 설정을 수정할 수 있습니다.");
@@ -361,6 +430,66 @@ export default function GroupSettings() {
     }
   };
 
+  const runDelete = async () => {
+    if (!id || busy) return;
+    try {
+      setDeleting(true);
+      await deleteGroup(id);
+      Toast.show({ type: "success", text1: "모임이 삭제되었습니다." });
+      router.replace("/(tabs)/groups");
+    } catch (error) {
+      const errorMessage = getApiErrorMessage(
+        error,
+        "모임을 삭제하지 못했습니다.",
+      );
+      setMessageIsError(true);
+      setMessage(errorMessage);
+      Toast.show({ type: "error", text1: "삭제 실패", text2: errorMessage });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (!canEdit) return;
+    Alert.alert(
+      "그룹 삭제",
+      "그룹을 삭제하면 되돌릴 수 없습니다. 정말 삭제하시겠습니까?",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: () => void runDelete() },
+      ],
+    );
+  };
+
+  const runLeave = async () => {
+    if (!id || busy) return;
+    try {
+      setLeaving(true);
+      await leaveGroup(id);
+      Toast.show({ type: "success", text1: "모임에서 탈퇴했습니다." });
+      router.replace("/(tabs)/groups");
+    } catch (error) {
+      const errorMessage = getApiErrorMessage(
+        error,
+        "모임에서 탈퇴하지 못했습니다.",
+      );
+      setMessageIsError(true);
+      setMessage(errorMessage);
+      Toast.show({ type: "error", text1: "탈퇴 실패", text2: errorMessage });
+    } finally {
+      setLeaving(false);
+    }
+  };
+
+  const handleLeave = () => {
+    if (!canLeave) return;
+    Alert.alert("모임 탈퇴", "모임에서 탈퇴하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      { text: "탈퇴", style: "destructive", onPress: () => void runLeave() },
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -390,33 +519,34 @@ export default function GroupSettings() {
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={96}
+      keyboardVerticalOffset={92}
     >
+      <View style={styles.steps}>
+        {STEPS.map((label, index) => (
+          <View key={label} style={styles.stepItem}>
+            <Pressable onPress={() => setStep(index)} hitSlop={10}>
+              <Text
+                style={[styles.stepText, step === index && styles.stepTextActive]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+            {index < STEPS.length - 1 ? (
+              <Text style={styles.stepDivider}>·</Text>
+            ) : null}
+          </View>
+        ))}
+      </View>
+
       <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.steps}>
-          {STEPS.map((label, index) => (
-            <View key={label} style={styles.stepItem}>
-              <Pressable onPress={() => setStep(index)} hitSlop={8}>
-                <Text
-                  style={[styles.stepText, step === index && styles.stepTextActive]}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-              {index < STEPS.length - 1 ? (
-                <Text style={styles.stepDivider}>·</Text>
-              ) : null}
-            </View>
-          ))}
-        </View>
-
         {!canEdit ? (
           <View style={styles.permissionBanner}>
-            <Ionicons name="lock-closed-outline" size={16} color="#8C6D35" />
+            <Ionicons name="lock-closed-outline" size={15} color="#8C6D35" />
             <Text style={styles.permissionText}>
               모임 설정을 확인할 수 있지만 수정은 그룹장만 가능합니다.
             </Text>
@@ -432,45 +562,29 @@ export default function GroupSettings() {
               onChangeText={(value) => updateForm("groupName", value)}
               maxLength={20}
               placeholder="모임 이름"
-              editable={canEdit && !saving}
+              editable={canEdit && !busy}
             />
             <Field
-              label="한줄 소개"
+              label="코멘트"
               value={form.groupComment}
               onChangeText={(value) => updateForm("groupComment", value)}
               maxLength={50}
               placeholder="모임을 소개해주세요"
-              editable={canEdit && !saving}
+              editable={canEdit && !busy}
             />
-
-            <View style={styles.fieldBlock}>
-              <Text style={styles.fieldLabel}>최대 인원</Text>
-              <View style={styles.memberStepper}>
-                <TouchableOpacity
-                  disabled={!canEdit || saving || form.maxMembers <= 2}
-                  onPress={() =>
-                    updateForm("maxMembers", Math.max(2, form.maxMembers - 1))
-                  }
-                  style={styles.stepperButton}
-                >
-                  <Ionicons name="remove" size={18} color={COLORS.brown} />
-                </TouchableOpacity>
-                <Text style={styles.memberCount}>{form.maxMembers}명</Text>
-                <TouchableOpacity
-                  disabled={!canEdit || saving || form.maxMembers >= 12}
-                  onPress={() =>
-                    updateForm("maxMembers", Math.min(12, form.maxMembers + 1))
-                  }
-                  style={styles.stepperButton}
-                >
-                  <Ionicons name="add" size={18} color={COLORS.brown} />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.helper}>
-                현재 {group.currentMembers}명이 참여하고 있어요. 최대 12명까지 설정할 수
-                있어요.
-              </Text>
-            </View>
+            <SelectField
+              label="최대 인원"
+              value={`${form.maxMembers}명`}
+              disabled={!canEdit || busy}
+              onPress={() => setMemberModalVisible(true)}
+            />
+            <Field
+              label="시작 예정일"
+              value={formatDate(group.startDate)}
+              editable={false}
+              icon="calendar-outline"
+              helper="시작일은 일정 관리에서 변경할 수 있어요."
+            />
           </View>
         ) : null}
 
@@ -478,97 +592,74 @@ export default function GroupSettings() {
           <View>
             <Text style={styles.pageTitle}>운영 방식</Text>
             <Field
-              label="모임 규칙"
+              label="규칙"
               value={form.groupRule}
               onChangeText={(value) => updateForm("groupRule", value)}
               placeholder="모임 규칙을 입력해주세요"
               multiline
-              editable={canEdit && !saving}
+              editable={canEdit && !busy}
             />
-
             <View style={styles.fieldBlock}>
-              <Text style={styles.fieldLabel}>공개 여부</Text>
+              <Text style={styles.fieldLabel}>공개여부</Text>
               <Choice
                 value={form.groupPublic}
                 options={[
                   { value: false, label: "비공개" },
                   { value: true, label: "공개" },
                 ]}
-                disabled={!canEdit || saving}
+                disabled={!canEdit || busy}
                 onChange={(value) => {
                   updateForm("groupPublic", value);
                   if (value) updateForm("groupPassword", "");
                 }}
               />
             </View>
-
-            {!form.groupPublic && canEdit ? (
+            {!form.groupPublic ? (
               <Field
-                label="새 비밀번호"
+                label="비밀번호 설정"
                 value={form.groupPassword}
                 onChangeText={(value) => updateForm("groupPassword", value)}
-                placeholder="저장할 때 사용할 새 비밀번호"
+                placeholder="새 비밀번호를 입력해주세요"
                 secureTextEntry
-                editable={!saving}
-                helper="보안을 위해 기존 비밀번호는 표시되지 않습니다."
+                editable={canEdit && !busy}
+                helper="비공개 모임으로 바꿀 때만 새 비밀번호가 필요해요."
               />
             ) : null}
           </View>
         ) : null}
 
-        {step === 2 ? (
+        {step === 2 && (canEdit || canLeave) ? (
           <View>
             <Text style={styles.pageTitle}>기타</Text>
             <View style={styles.fieldBlock}>
-              <Text style={styles.fieldLabel}>모임 방식</Text>
+              <Text style={styles.fieldLabel}>방식</Text>
               <Choice
                 value={form.groupOffline}
                 options={[
                   { value: true, label: "오프라인" },
                   { value: false, label: "온라인" },
                 ]}
-                disabled={!canEdit || saving}
+                disabled={!canEdit || busy}
                 onChange={(value) => {
                   updateForm("groupOffline", value);
                   if (!value) updateForm("groupRegion", null);
                 }}
               />
             </View>
-
             {form.groupOffline ? (
-              <View style={styles.fieldBlock}>
-                <Text style={styles.fieldLabel}>지역</Text>
-                <Pressable
-                  disabled={!canEdit || saving}
-                  onPress={() => setRegionModalVisible(true)}
-                  style={[
-                    styles.selectInput,
-                    (!canEdit || saving) && styles.readOnlyInput,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.selectText,
-                      !form.groupRegion && styles.placeholderText,
-                    ]}
-                  >
-                    {regionLabel}
-                  </Text>
-                  <Ionicons name="chevron-down" size={18} color={COLORS.brown} />
-                </Pressable>
-              </View>
+              <SelectField
+                label="지역"
+                value={regionLabel}
+                placeholder={!form.groupRegion}
+                disabled={!canEdit || busy}
+                onPress={() => setRegionModalVisible(true)}
+              />
             ) : null}
-
             <Field
               label="독서 기간"
               value={group.readingPeriod ? `${group.readingPeriod}일` : "설정되지 않음"}
               editable={false}
-              helper="독서 기간과 시작일은 일정 설정에서 변경할 수 있어요."
-            />
-            <Field
-              label="시작일"
-              value={group.startDate ?? "설정되지 않음"}
-              editable={false}
+              helper="독서 기간은 일정 관리에서 변경할 수 있어요."
             />
           </View>
         ) : null}
@@ -595,16 +686,33 @@ export default function GroupSettings() {
             </Text>
           </View>
         ) : null}
+      </ScrollView>
+
+      <View style={styles.bottomArea}>
+        {step === 2 ? (
+          <TouchableOpacity
+            disabled={busy}
+            onPress={canEdit ? handleDelete : handleLeave}
+            style={[styles.deleteButton, busy && styles.disabledButton]}
+          >
+            {deleting || leaving ? (
+              <ActivityIndicator color={COLORS.danger} />
+            ) : (
+              <Text style={styles.deleteButtonText}>
+                {canEdit ? "그룹 삭제하기" : "그룹 탈퇴하기"}
+              </Text>
+            )}
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.footer}>
           {step > 0 ? (
             <TouchableOpacity
-              disabled={saving}
+              disabled={busy}
               onPress={() => setStep((current) => current - 1)}
               style={[styles.footerButton, styles.secondaryButton]}
             >
-              <Ionicons name="chevron-back" size={18} color="#B8873D" />
-              <Text style={styles.secondaryButtonText}>이전</Text>
+              <Ionicons name="chevron-back" size={18} color="#D79B42" />
             </TouchableOpacity>
           ) : (
             <View style={styles.footerButton} />
@@ -612,36 +720,48 @@ export default function GroupSettings() {
 
           {step < STEPS.length - 1 ? (
             <TouchableOpacity
+              disabled={busy}
               onPress={() => setStep((current) => current + 1)}
               style={[styles.footerButton, styles.primaryButton]}
             >
-              <Text style={styles.primaryButtonText}>다음</Text>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.brown} />
+              <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              disabled={!canEdit || saving}
+              disabled={!canEdit || busy}
               onPress={() => void handleSave()}
               style={[
                 styles.footerButton,
                 styles.primaryButton,
-                (!canEdit || saving) && styles.disabledButton,
+                (!canEdit || busy) && styles.disabledButton,
               ]}
             >
               {saving ? (
-                <ActivityIndicator color={COLORS.brown} />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>저장하기</Text>
+                <Text style={styles.saveButtonText}>저장</Text>
               )}
             </TouchableOpacity>
           )}
         </View>
-      </ScrollView>
+      </View>
 
-      <RegionModal
+      <SelectionModal
+        visible={memberModalVisible}
+        title="최대 인원"
+        selected={form.maxMembers}
+        options={MEMBER_OPTIONS.map((value) => ({ value, label: `${value}명` }))}
+        onSelect={(value) => updateForm("maxMembers", value)}
+        onClose={() => setMemberModalVisible(false)}
+      />
+      <SelectionModal<GroupRegion | "">
         visible={regionModalVisible}
-        selected={form.groupRegion}
-        onSelect={(region) => updateForm("groupRegion", region)}
+        title="지역 선택"
+        selected={form.groupRegion ?? ""}
+        options={REGION_OPTIONS}
+        onSelect={(value) => {
+          if (value) updateForm("groupRegion", value);
+        }}
         onClose={() => setRegionModalVisible(false)}
       />
     </KeyboardAvoidingView>
@@ -649,16 +769,7 @@ export default function GroupSettings() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 40,
-  },
+  screen: { flex: 1, backgroundColor: "#FFFFFF" },
   centered: {
     flex: 1,
     alignItems: "center",
@@ -666,16 +777,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     backgroundColor: "#FFFFFF",
   },
-  loadingText: {
-    marginTop: 12,
-    color: COLORS.muted,
-    fontSize: 13,
-  },
-  errorTitle: {
-    color: COLORS.brown,
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  loadingText: { marginTop: 12, color: COLORS.muted, fontSize: 13 },
+  errorTitle: { color: COLORS.brown, fontSize: 16, fontWeight: "700" },
   errorDescription: {
     marginTop: 8,
     color: COLORS.danger,
@@ -689,235 +792,173 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 10,
   },
-  retryText: {
-    color: COLORS.brown,
-    fontWeight: "700",
-  },
+  retryText: { color: COLORS.brown, fontWeight: "700" },
   steps: {
+    height: 58,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.line,
+    backgroundColor: "#FFFFFF",
   },
-  stepItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  stepText: {
-    color: "#B5B5B5",
-    fontSize: 13,
-  },
-  stepTextActive: {
-    color: COLORS.amber,
-    fontWeight: "800",
-  },
-  stepDivider: {
-    marginHorizontal: 12,
-    color: "#DDD3C1",
+  stepItem: { flexDirection: "row", alignItems: "center" },
+  stepText: { color: "#D8D0C2", fontSize: 12, fontWeight: "500" },
+  stepTextActive: { color: COLORS.amber, fontWeight: "800" },
+  stepDivider: { marginHorizontal: 20, color: COLORS.amber, fontSize: 12 },
+  scroll: { flex: 1 },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 28,
+    paddingTop: 32,
+    paddingBottom: 20,
   },
   permissionBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 18,
-    borderRadius: 12,
+    marginBottom: 20,
+    borderRadius: 10,
     backgroundColor: COLORS.cream,
-    padding: 12,
+    padding: 11,
   },
   permissionText: {
     flex: 1,
     color: "#8C6D35",
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  pageTitle: {
-    marginBottom: 24,
-    color: COLORS.brown,
-    fontSize: 19,
-    fontWeight: "800",
-  },
-  fieldBlock: {
-    marginBottom: 22,
-  },
-  labelRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  fieldLabel: {
-    marginBottom: 8,
-    color: COLORS.brown,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  counter: {
-    color: COLORS.muted,
-    fontSize: 11,
-  },
-  input: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: COLORS.brown,
-    borderRadius: 24,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    color: COLORS.brown,
-    fontSize: 14,
-  },
-  textArea: {
-    minHeight: 132,
-    borderRadius: 22,
-    paddingTop: 16,
-  },
-  readOnlyInput: {
-    borderColor: COLORS.border,
-    backgroundColor: "#F7F5F0",
-    color: "#796F60",
-  },
-  helper: {
-    marginTop: 7,
-    color: COLORS.muted,
     fontSize: 11,
     lineHeight: 16,
   },
-  choiceRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  choice: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 22,
-    backgroundColor: "#FFFCF4",
-  },
-  choiceSelected: {
-    borderColor: COLORS.brown,
-    backgroundColor: COLORS.amber,
-  },
-  choiceText: {
-    color: "#9B8B6B",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  choiceTextSelected: {
-    color: COLORS.brown,
-  },
-  disabledControl: {
-    opacity: 0.65,
-  },
-  memberStepper: {
-    height: 52,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 18,
-    backgroundColor: "#F7F2E8",
-    paddingHorizontal: 10,
-  },
-  stepperButton: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 17,
-    backgroundColor: COLORS.cream,
-  },
-  memberCount: {
+  pageTitle: {
+    marginBottom: 28,
     color: COLORS.brown,
     fontSize: 18,
     fontWeight: "800",
   },
+  fieldBlock: { marginBottom: 22 },
+  fieldLabel: {
+    marginBottom: 8,
+    marginLeft: 12,
+    color: COLORS.brown,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  counter: { color: COLORS.muted, fontSize: 11, fontWeight: "400" },
+  inputShell: {
+    minHeight: 47,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 24,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 17,
+  },
+  textAreaShell: {
+    minHeight: 150,
+    alignItems: "stretch",
+    borderRadius: 22,
+    paddingVertical: 4,
+  },
+  inputIcon: { marginRight: 10 },
+  input: {
+    minWidth: 0,
+    flex: 1,
+    paddingVertical: 11,
+    color: COLORS.brown,
+    fontSize: 13,
+  },
+  textArea: { minHeight: 140, paddingTop: 12 },
+  readOnlyInput: { backgroundColor: "#F7F7F7", opacity: 0.82 },
+  helper: {
+    marginTop: 6,
+    marginLeft: 12,
+    color: COLORS.muted,
+    fontSize: 10,
+    lineHeight: 15,
+  },
+  choiceRow: { flexDirection: "row", gap: 22 },
+  choice: {
+    minHeight: 43,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.line,
+    borderRadius: 22,
+    backgroundColor: COLORS.cream,
+  },
+  choiceSelected: { borderColor: COLORS.amber, backgroundColor: COLORS.amber },
+  choiceText: { color: "#8E816B", fontSize: 12, fontWeight: "600" },
+  choiceTextSelected: { color: COLORS.brown },
+  disabledControl: { opacity: 0.62 },
   selectInput: {
-    minHeight: 48,
+    minHeight: 47,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: COLORS.brown,
+    borderColor: COLORS.border,
     borderRadius: 24,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 18,
   },
-  selectText: {
-    color: COLORS.brown,
-    fontSize: 14,
-  },
-  placeholderText: {
-    color: "#B8AE9B",
-  },
+  selectText: { color: COLORS.brown, fontSize: 13 },
+  placeholderText: { color: "#B8AE9B" },
   messageBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 4,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 11,
   },
-  errorBox: {
-    backgroundColor: COLORS.dangerBackground,
+  errorBox: { backgroundColor: COLORS.dangerBackground },
+  successBox: { backgroundColor: "#EDF5E7" },
+  messageText: { flex: 1, fontSize: 11, lineHeight: 16 },
+  errorText: { color: COLORS.danger },
+  successText: { color: "#5B7B46" },
+  bottomArea: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.line,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 28,
+    paddingTop: 10,
+    paddingBottom: 14,
   },
-  successBox: {
-    backgroundColor: "#EDF5E7",
-  },
-  messageText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  errorText: {
-    color: COLORS.danger,
-  },
-  successText: {
-    color: "#5B7B46",
-  },
-  footer: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: "auto",
-    paddingTop: 28,
-  },
-  footerButton: {
-    minHeight: 46,
-    flex: 1,
-    flexDirection: "row",
+  deleteButton: {
+    minHeight: 38,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    borderRadius: 8,
-  },
-  secondaryButton: {
-    backgroundColor: COLORS.cream,
-  },
-  primaryButton: {
+    marginBottom: 9,
     borderWidth: 1,
-    borderColor: COLORS.brown,
-    backgroundColor: COLORS.amber,
+    borderColor: "#FF928A",
+    borderRadius: 4,
+    backgroundColor: COLORS.dangerBackground,
   },
-  secondaryButtonText: {
-    color: "#B8873D",
-    fontSize: 13,
-    fontWeight: "700",
+  deleteButtonText: { color: COLORS.danger, fontSize: 12, fontWeight: "700" },
+  footer: {
+    minHeight: 42,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 70,
   },
-  primaryButtonText: {
-    color: COLORS.brown,
-    fontSize: 13,
-    fontWeight: "800",
+  footerButton: {
+    minHeight: 42,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 4,
   },
-  disabledButton: {
-    opacity: 0.45,
-  },
+  secondaryButton: { backgroundColor: "#FFF8D9" },
+  primaryButton: { backgroundColor: COLORS.amber },
+  saveButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+  disabledButton: { opacity: 0.45 },
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
   modalSheet: {
+    maxHeight: "72%",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     backgroundColor: "#FFFFFF",
@@ -939,33 +980,21 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "800",
   },
-  regionGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 9,
-  },
-  regionChip: {
+  modalList: { flexGrow: 0 },
+  optionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  optionChip: {
     width: "23%",
     minHeight: 38,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.line,
     borderRadius: 10,
     backgroundColor: "#FFFCF4",
   },
-  regionChipActive: {
-    borderColor: COLORS.amber,
-    backgroundColor: COLORS.amber,
-  },
-  regionChipText: {
-    color: "#7B6A4A",
-    fontSize: 12,
-  },
-  regionChipTextActive: {
-    color: COLORS.brown,
-    fontWeight: "700",
-  },
+  optionChipActive: { borderColor: COLORS.amber, backgroundColor: COLORS.amber },
+  optionChipText: { color: "#7B6A4A", fontSize: 12 },
+  optionChipTextActive: { color: COLORS.brown, fontWeight: "700" },
   modalClose: {
     alignItems: "center",
     marginTop: 22,
@@ -973,8 +1002,5 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     paddingVertical: 12,
   },
-  modalCloseText: {
-    color: COLORS.brown,
-    fontWeight: "700",
-  },
+  modalCloseText: { color: COLORS.brown, fontWeight: "700" },
 });
