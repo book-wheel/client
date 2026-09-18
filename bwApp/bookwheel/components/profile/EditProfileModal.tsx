@@ -12,9 +12,13 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
-import { checkNicknameDuplicate, setupProfile, type MyProfile } from "@/api/auth";
+import {
+  checkNicknameDuplicate,
+  setupProfile,
+  type MyProfile,
+} from "@/api/auth";
 import { getApiErrorMessage } from "@/api/axios";
-import { uploadImage } from "@/api/images";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ProfileImage from "@/components/profile/image";
@@ -38,6 +42,8 @@ export default function EditProfileModal({
   const [comment, setComment] = useState(user.comment ?? "");
   const [imageMode, setImageMode] = useState<ImageMode>("unchanged");
   const [newImageUri, setNewImageUri] = useState<string>();
+  const [newImageFileName, setNewImageFileName] = useState<string | null>(null);
+  const [newImageMimeType, setNewImageMimeType] = useState<string | null>(null);
   const [nicknameChecked, setNicknameChecked] = useState(false);
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,6 +57,8 @@ export default function EditProfileModal({
     setComment(user.comment ?? "");
     setImageMode("unchanged");
     setNewImageUri(undefined);
+    setNewImageFileName(null);
+    setNewImageMimeType(null);
     setNicknameChecked(false);
     setNicknameMessage("");
     setErrorMessage("");
@@ -101,7 +109,10 @@ export default function EditProfileModal({
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("사진 권한 필요", "프로필 사진을 변경하려면 사진 접근 권한이 필요합니다.");
+      Alert.alert(
+        "사진 권한 필요",
+        "프로필 사진을 변경하려면 사진 접근 권한이 필요합니다.",
+      );
       return;
     }
 
@@ -114,7 +125,11 @@ export default function EditProfileModal({
 
     if (result.canceled) return;
 
-    setNewImageUri(result.assets[0].uri);
+    const asset = result.assets[0];
+
+    setNewImageUri(asset.uri);
+    setNewImageFileName(asset.fileName ?? null);
+    setNewImageMimeType(asset.mimeType ?? null);
     setImageMode("new");
     setErrorMessage("");
   };
@@ -152,17 +167,25 @@ export default function EditProfileModal({
           throw new Error("선택한 이미지를 찾을 수 없습니다.");
         }
 
-        payload.profileImageKey = await uploadImage(
-          newImageUri,
-          `profile_${Date.now()}.jpg`,
-          "profiles",
-          "image/jpeg",
+        const { fileName, mimeType } = getImageFileInfo(
+          newImageFileName,
+          newImageMimeType,
+          `profile_${Date.now()}`,
         );
+
+        payload.profileImageKey = await uploadProfileImage(
+          newImageUri,
+          fileName,
+          mimeType,
+        );
+        console.log("업로드된 profileImageKey:", payload.profileImageKey);
       }
 
       const response = await setupProfile(payload);
       if (!response.data.success) {
-        throw new Error(response.data.error?.message ?? "프로필 수정에 실패했습니다.");
+        throw new Error(
+          response.data.error?.message ?? "프로필 수정에 실패했습니다.",
+        );
       }
 
       await onSaved();
@@ -186,7 +209,10 @@ export default function EditProfileModal({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.sheet}>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.title}>프로필 수정</Text>
 
             <View style={styles.imageSection}>
@@ -204,6 +230,8 @@ export default function EditProfileModal({
                     onPress={() => {
                       setImageMode("removed");
                       setNewImageUri(undefined);
+                      setNewImageFileName(null);
+                      setNewImageMimeType(null);
                     }}
                     disabled={saving}
                   >
@@ -212,7 +240,12 @@ export default function EditProfileModal({
                 )}
                 {imageMode === "removed" && (
                   <TouchableOpacity
-                    onPress={() => setImageMode("unchanged")}
+                    onPress={() => {
+                      setImageMode("unchanged");
+                      setNewImageUri(undefined);
+                      setNewImageFileName(null);
+                      setNewImageMimeType(null);
+                    }}
                     disabled={saving}
                   >
                     <Text style={styles.actionText}>기존 사진 유지</Text>
@@ -222,7 +255,11 @@ export default function EditProfileModal({
             </View>
 
             {nicknameMessage && (
-              <Text style={nicknameChecked ? styles.successText : styles.messageText}>
+              <Text
+                style={
+                  nicknameChecked ? styles.successText : styles.messageText
+                }
+              >
                 {nicknameMessage}
               </Text>
             )}
@@ -244,7 +281,9 @@ export default function EditProfileModal({
               multiline
             />
 
-            {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+            {errorMessage && (
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            )}
 
             <View style={styles.buttonRow}>
               <TouchableOpacity
