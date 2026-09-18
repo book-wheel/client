@@ -4,7 +4,7 @@ import type { ImagePickerAsset } from "expo-image-picker";
 import Toast from "react-native-toast-message";
 
 import { completeWheelState } from "@/api/wheels";
-import { uploadImage } from "@/api/images";
+import { getImageFileInfo, uploadImage } from "@/api/images";
 
 const MAX_IMAGE_COUNT = 5;
 
@@ -31,14 +31,15 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
 
       // 1. 사진을 S3에 업로드
       const objectKeys = await Promise.all(
-        images.map((image, index) =>
-          uploadImage(
-            image.uri,
-            image.fileName ?? `review-${Date.now()}-${index}.jpg`,
-            "reviews",
-            image.mimeType ?? "image/jpeg",
-          ),
-        ),
+        images.map((image, index) => {
+          const { fileName, mimeType } = getImageFileInfo(
+            image.fileName,
+            image.mimeType,
+            `review-${Date.now()}-${index}`,
+          );
+
+          return uploadImage(image.uri, fileName, "reviews", mimeType);
+        }),
       );
 
       // 2. 완독 인증 API 호출

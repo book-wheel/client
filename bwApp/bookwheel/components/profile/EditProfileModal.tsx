@@ -18,7 +18,7 @@ import {
   type MyProfile,
 } from "@/api/auth";
 import { getApiErrorMessage } from "@/api/axios";
-import { uploadProfileImage } from "@/api/images";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ProfileImage from "@/components/profile/image";
@@ -167,10 +167,16 @@ export default function EditProfileModal({
           throw new Error("선택한 이미지를 찾을 수 없습니다.");
         }
 
+        const { fileName, mimeType } = getImageFileInfo(
+          newImageFileName,
+          newImageMimeType,
+          `profile_${Date.now()}`,
+        );
+
         payload.profileImageKey = await uploadProfileImage(
           newImageUri,
-          newImageFileName ?? `profile_${Date.now()}.jpg`,
-          newImageMimeType ?? "image/jpeg",
+          fileName,
+          mimeType,
         );
         console.log("업로드된 profileImageKey:", payload.profileImageKey);
       }

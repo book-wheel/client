@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 
 import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
-import { uploadProfileImage } from "@/api/images";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
@@ -102,8 +102,11 @@ export default function Profile() {
 
     try {
       if (imageUri) {
-        const fileName = imageFileName ?? `profile_${Date.now()}.jpg`;
-        const mimeType = imageMimeType ?? "image/jpeg";
+        const { fileName, mimeType } = getImageFileInfo(
+          imageFileName,
+          imageMimeType,
+          `profile_${Date.now()}`,
+        );
 
         const profileImageKey = await uploadProfileImage(
           imageUri,

@@ -142,3 +142,38 @@ export const uploadImage = async (
 
   return objectKey;
 };
+
+// 파일 이름과 MIME 타입을 기반으로 파일 정보를 반환하는 유틸리티 함수
+export const getImageFileInfo = (
+  fileName: string | null | undefined,
+  mimeType: string | null | undefined,
+  fallbackBaseName: string,
+) => {
+  const resolvedMimeType = mimeType ?? "image/jpeg";
+
+  const extensionMap: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/heic": "heic",
+    "image/heif": "heif",
+    "image/gif": "gif",
+    "image/svg+xml": "svg",
+  };
+
+  const fallbackExtension = extensionMap[resolvedMimeType] ?? "jpg";
+
+  if (!fileName) {
+    return {
+      fileName: `${fallbackBaseName}.${fallbackExtension}`,
+      mimeType: resolvedMimeType,
+    };
+  }
+
+  const fileNameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
+
+  return {
+    fileName: `${fileNameWithoutExtension}.${fallbackExtension}`,
+    mimeType: resolvedMimeType,
+  };
+};
