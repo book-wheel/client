@@ -272,21 +272,37 @@ export default function Signup() {
             <Text style={styles.checkText}>전체 동의</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.checkRow}
-            onPress={() => setAgreeTerms(!agreeTerms)}
-          >
-            <View style={[styles.checkbox, agreeTerms && styles.checked]} />
-            <Text style={styles.checkText}>이용약관 동의 (필수)</Text>
-          </TouchableOpacity>
+          <View style={styles.checkRow}>
+            <TouchableOpacity
+              style={styles.checkContent}
+              onPress={() => setAgreeTerms(!agreeTerms)}
+            >
+              <View style={[styles.checkbox, agreeTerms && styles.checked]} />
 
-          <TouchableOpacity
-            style={styles.checkRow}
-            onPress={() => setAgreePrivacy(!agreePrivacy)}
-          >
-            <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
-            <Text style={styles.checkText}>개인정보 처리방침 동의 (필수)</Text>
-          </TouchableOpacity>
+              <Text style={styles.checkText}>이용약관 동의 (필수)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/auth/terms")}>
+              <Text style={styles.linkText}>보기</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.checkRow}>
+            <TouchableOpacity
+              style={styles.checkContent}
+              onPress={() => setAgreePrivacy(!agreePrivacy)}
+            >
+              <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
+
+              <Text style={styles.checkText}>
+                개인정보 처리방침 동의 (필수)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/auth/privacy")}>
+              <Text style={styles.linkText}>보기</Text>
+            </TouchableOpacity>
+          </View>
 
           {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
         </View>
@@ -329,12 +345,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  checkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
   checkbox: {
     width: 18,
     height: 18,
@@ -352,5 +362,24 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 13,
     color: "#513A11",
+  },
+
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+
+  checkContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  linkText: {
+    fontSize: 13,
+    color: "#A66A16",
+    textDecorationLine: "underline",
   },
 });
