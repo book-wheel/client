@@ -22,13 +22,18 @@ import type {
 const ROWS: {
   key: keyof Pick<
     NotificationPreferences,
-    "groupEnabled" | "roundEnabled" | "communityEnabled" | "pushEnabled"
+    | "groupEnabled"
+    | "roundEnabled"
+    | "communityEnabled"
+    | "chatEnabled"
+    | "pushEnabled"
   >;
   label: string;
 }[] = [
   { key: "groupEnabled", label: "초대 알림" },
   { key: "roundEnabled", label: "독서 일정 알림" },
   { key: "communityEnabled", label: "커뮤니티 알림" },
+  { key: "chatEnabled", label: "채팅 알림" },
   { key: "pushEnabled", label: "푸시 알림" },
 ];
 
@@ -139,7 +144,11 @@ function Toggle({
       accessibilityState={{ checked: value, disabled }}
       disabled={disabled}
       onPress={() => onValueChange(!value)}
-      style={[styles.toggle, value ? styles.toggleOn : styles.toggleOff, disabled && styles.toggleDisabled]}
+      style={[
+        styles.toggle,
+        value ? styles.toggleOn : styles.toggleOff,
+        disabled && styles.toggleDisabled,
+      ]}
     >
       <View style={[styles.toggleThumb, value && styles.toggleThumbOn]} />
     </Pressable>
