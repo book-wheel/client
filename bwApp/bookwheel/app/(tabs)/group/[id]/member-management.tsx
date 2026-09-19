@@ -42,6 +42,13 @@ function normalizeRole(role: GroupMemberRole) {
   return role === "VICE" ? "SUB_LEADER" : role;
 }
 
+const ROLE_ORDER: Record<ReturnType<typeof normalizeRole>, number> = {
+  LEADER: 0,
+  SUB_LEADER: 1,
+  MEMBER: 2,
+  OUT: 3,
+};
+
 type RoleDraft = Record<string, "SUB_LEADER" | "MEMBER">;
 
 export default function MemberManagement() {
@@ -95,6 +102,19 @@ export default function MemberManagement() {
 
   const currentMember = members.find((member) => member.userPK === myUserPK);
   const canManage = normalizeRole(currentMember?.role ?? "MEMBER") === "LEADER";
+
+  const sortedMembers = useMemo(
+    () =>
+      members
+        .map((member, index) => ({ member, index }))
+        .sort(
+          (a, b) =>
+            ROLE_ORDER[normalizeRole(a.member.role)] -
+              ROLE_ORDER[normalizeRole(b.member.role)] || a.index - b.index,
+        )
+        .map(({ member }) => member),
+    [members],
+  );
 
   const changedRoles = useMemo(
     () =>
@@ -193,7 +213,7 @@ export default function MemberManagement() {
           <ScrollView contentContainerStyle={styles.content}>
             <Text style={styles.title}>멤버 관리</Text>
 
-            {members.map((member) => {
+            {sortedMembers.map((member) => {
               const role = normalizeRole(member.role);
               const isLeader = role === "LEADER";
               const draftRole = draftRoles[member.userPK] ?? "MEMBER";
