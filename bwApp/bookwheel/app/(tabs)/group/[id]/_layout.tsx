@@ -38,6 +38,7 @@ export default function GroupIdLayout() {
       <Stack.Screen
         name="member-management"
         options={{
+          headerBackButtonDisplayMode: "minimal",
           title: groupTitle,
           headerTintColor: "#513A11",
           headerTitleStyle: { fontSize: 18, fontWeight: "800" },
@@ -47,6 +48,7 @@ export default function GroupIdLayout() {
       <Stack.Screen
         name="schedule-settings"
         options={{
+          headerBackButtonDisplayMode: "minimal",
           title: groupTitle,
           headerTintColor: "#513A11",
           headerTitleStyle: { fontSize: 18, fontWeight: "800" },
