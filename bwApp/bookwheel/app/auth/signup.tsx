@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
-import { signup, login, sendEmail, verifyEmail } from "@/api/auth";
+import {
+  signup,
+  login,
+  sendEmail,
+  verifyEmail,
+  getCurrentConsentPolicies,
+  type ConsentPolicies,
+} from "@/api/auth";
 import api from "@/api/axios";
 
 import useSignupForm from "@/hooks/useSignupForm";
@@ -20,6 +27,8 @@ export default function Signup() {
   const [agreeAll, setAgreeAll] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [policies, setPolicies] = useState<ConsentPolicies | null>(null);
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
 
   const [emailMessage, setEmailMessage] = useState("");
 
@@ -107,6 +116,30 @@ export default function Signup() {
     }
   };
 
+  // 현재 약관 버전 조회
+  useEffect(() => {
+    const fetchConsentPolicies = async () => {
+      try {
+        const res = await getCurrentConsentPolicies();
+
+        if (res.data.success) {
+          setPolicies(res.data.data);
+        }
+      } catch (error) {
+        console.log("약관 버전 조회 실패:", error);
+
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          terms: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+        }));
+      } finally {
+        setIsLoadingPolicies(false);
+      }
+    };
+
+    fetchConsentPolicies();
+  }, []);
+
   // 회원가입
   const handleSignup = async () => {
     const validationErrors = validateSignup({
@@ -124,6 +157,14 @@ export default function Signup() {
       return;
     }
 
+    if (!policies) {
+      setErrors((prev: typeof errors) => ({
+        ...prev,
+        terms: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      }));
+      return;
+    }
+
     try {
       setIsSigningUp(true);
 
@@ -131,6 +172,15 @@ export default function Signup() {
         loginId: form.loginId,
         password: form.password,
         mail: form.email,
+
+        termsAgreed: agreeTerms,
+        privacyAgreed: agreePrivacy,
+
+        termsVersion: policies.termsVersion,
+        privacyVersion: policies.privacyVersion,
+
+        marketingAgreed: false,
+        marketingVersion: null,
       });
 
       if (!signupRes.data.success) return;
@@ -272,28 +322,51 @@ export default function Signup() {
             <Text style={styles.checkText}>전체 동의</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.checkRow}
-            onPress={() => setAgreeTerms(!agreeTerms)}
-          >
-            <View style={[styles.checkbox, agreeTerms && styles.checked]} />
-            <Text style={styles.checkText}>이용약관 동의 (필수)</Text>
-          </TouchableOpacity>
+          <View style={styles.checkRow}>
+            <TouchableOpacity
+              style={styles.checkContent}
+              onPress={() => setAgreeTerms(!agreeTerms)}
+            >
+              <View style={[styles.checkbox, agreeTerms && styles.checked]} />
 
-          <TouchableOpacity
-            style={styles.checkRow}
-            onPress={() => setAgreePrivacy(!agreePrivacy)}
-          >
-            <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
-            <Text style={styles.checkText}>개인정보 처리방침 동의 (필수)</Text>
-          </TouchableOpacity>
+              <Text style={styles.checkText}>이용약관 동의 (필수)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/auth/terms")}>
+              <Text style={styles.linkText}>보기</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.checkRow}>
+            <TouchableOpacity
+              style={styles.checkContent}
+              onPress={() => setAgreePrivacy(!agreePrivacy)}
+            >
+              <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
+
+              <Text style={styles.checkText}>
+                개인정보 처리방침 동의 (필수)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/auth/privacy")}>
+              <Text style={styles.linkText}>보기</Text>
+            </TouchableOpacity>
+          </View>
 
           {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
         </View>
 
         <Button
-          title={isSigningUp ? "가입 중..." : "회원가입"}
+          title={
+            isLoadingPolicies
+              ? "약관 확인 중..."
+              : isSigningUp
+                ? "가입 중..."
+                : "회원가입"
+          }
           onPress={handleSignup}
+          disabled={isLoadingPolicies || isSigningUp}
         />
       </View>
     </>
@@ -329,12 +402,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  checkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
   checkbox: {
     width: 18,
     height: 18,
@@ -352,5 +419,24 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 13,
     color: "#513A11",
+  },
+
+  checkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+
+  checkContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  linkText: {
+    fontSize: 13,
+    color: "#A66A16",
+    textDecorationLine: "underline",
   },
 });
