@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 
+import { getMyInfo } from "@/api/auth";
 import { getGroupMembers, getGroupRequests, getGroupDetail } from "@/api/group";
+import type { GroupMembersData } from "@/types/groupMembers";
 
 export type Applicant = {
   id: string;
@@ -31,6 +33,13 @@ export function useGroupHome() {
 
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLeader, setIsLeader] = useState(false);
+  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
+    intro: "",
+    rules: "",
+    currentMembers: 0,
+    maxMembers: 0,
+    isOffline: false,
+  });
 
   // 화면 타이틀
   useEffect(() => {
@@ -86,17 +95,22 @@ export function useGroupHome() {
 
     const fetchGroupData = async () => {
       try {
-        const memberData = await getGroupMembers(id);
+        const [memberData, myInfoResponse] = await Promise.all([
+          getGroupMembers(id) as Promise<GroupMembersData>,
+          getMyInfo(),
+        ]);
 
         if (!active) return;
 
+        const currentUserPK = myInfoResponse.data.data?.userPK;
         const leader = memberData.members.find(
-          (member: any) => member.role === "LEADER",
+          (member) =>
+            member.role === "LEADER" && member.userPK === currentUserPK,
         );
 
-        if (leader) {
-          setIsLeader(true);
+        setIsLeader(Boolean(leader));
 
+        if (leader) {
           const requestData = await getGroupRequests(id);
 
           if (!active) return;
@@ -110,8 +124,12 @@ export function useGroupHome() {
           }));
 
           setApplicants(mappedApplicants);
+        } else {
+          setApplicants([]);
         }
       } catch (error) {
+        setIsLeader(false);
+        setApplicants([]);
         console.error(error);
       }
     };
@@ -122,16 +140,6 @@ export function useGroupHome() {
       active = false;
     };
   }, [id]);
-
-  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
-    intro: "",
-    rules: "",
-
-    currentMembers: 0,
-    maxMembers: 0,
-
-    isOffline: false,
-  });
 
   return {
     id,

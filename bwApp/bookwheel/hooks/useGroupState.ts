@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
 import { Alert } from "react-native";
 import { jwtDecode } from "jwt-decode";
@@ -164,7 +164,7 @@ export function useGroupState() {
       role:
         member.role === "LEADER"
           ? "leader"
-          : member.role === "VICE"
+          : member.role === "SUB_LEADER" || member.role === "VICE"
             ? "vice"
             : "member",
       status,

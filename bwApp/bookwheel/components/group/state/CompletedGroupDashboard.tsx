@@ -37,7 +37,7 @@ export default function CompletedGroupDashboard({
   const startDate = schedule.startDate;
   const endDate = schedule.executableEndDate;
 
-  const formatDate = (date?: string) => {
+  const formatDate = (date?: string | null) => {
     if (!date) return "";
 
     const formatted = new Date(date).toLocaleDateString("ko-KR", {
