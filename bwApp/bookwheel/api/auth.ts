@@ -14,6 +14,19 @@ export type MyProfile = {
   profileImageKey: string | null;
 };
 
+export type AuthTokens = {
+  accessToken: string;
+  refreshToken: string | null;
+};
+
+export type LoginResponse = AuthTokens & { isProfileSet: boolean };
+export type OAuthResponse = AuthTokens & { isFirstLogin: boolean };
+export type ProfileSetupRequest = {
+  profileImageKey?: string | null;
+  nickname: string;
+  comment: string;
+};
+
 // ==================== AUTH ====================
 
 //회원가입
@@ -22,12 +35,12 @@ export const signup = (data: {
   password: string;
   mail: string;
 }) => {
-  return api.post("/auth/signup", data);
+  return api.post<ApiResponse<AuthTokens>>("/auth/signup", data);
 };
 
 //로그인
 export const login = (data: { loginId: string; password: string }) => {
-  return api.post("/auth/login", data);
+  return api.post<ApiResponse<LoginResponse>>("/auth/login", data);
 };
 
 // 이메일 인증 요청
@@ -48,12 +61,20 @@ export const verifyEmail = (email: string, code: string) => {
 // ==================== USERS ====================
 
 //프로필 설정
-export const setupProfile = (data: {
-  profileImageKey?: string;
-  nickname: string;
-  comment: string;
+export const setupProfile = (data: ProfileSetupRequest) => {
+  return api.patch<ApiResponse<AuthTokens>>("/users/setup-profile", data);
+};
+
+export const getProfileImagePresignedUrl = (data: {
+  fileName: string;
+  contentType: string;
+  fileSize: number;
 }) => {
-  return api.patch("/users/setup-profile", data);
+  return api.post<ApiResponse<{
+    presignedUrl: string;
+    objectKey: string;
+    contentType: string;
+  }>>("/users/profile-image/presigned-url", data);
 };
 
 // 닉네임 중복 확인
@@ -117,5 +138,5 @@ export const exchangeOAuthCode = (data: {
   code: string;
   codeVerifier: string;
 }) => {
-  return api.post("/auth/oauth2/token", data);
+  return api.post<ApiResponse<OAuthResponse>>("/auth/oauth2/token", data);
 };

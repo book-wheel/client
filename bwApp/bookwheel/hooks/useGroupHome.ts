@@ -1,3 +1,6 @@
+import { getMyInfo } from "@/api/auth";
+import type { GroupMember } from "@/types/groupMembers";
+import { getApiErrorMessage } from "@/api/axios";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -23,6 +26,9 @@ export type GroupInfo = {
 
 export function useGroupHome() {
   const navigation = useNavigation();
+  const [detailError, setDetailError] = useState("");
+  const [membersError, setMembersError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   const { id, name } = useLocalSearchParams<{
     id: string;
@@ -45,6 +51,7 @@ export function useGroupHome() {
     let active = true;
 
     const fetchGroupDetail = async () => {
+      setDetailError("");
       try {
         const data = await getGroupDetail(id);
 
@@ -65,7 +72,7 @@ export function useGroupHome() {
           isOffline: data.groupOffline,
         });
       } catch (error) {
-        console.error(error);
+        if (active) setDetailError(getApiErrorMessage(error, "모임 정보를 불러오지 못했습니다."));
       }
     };
 
@@ -76,7 +83,7 @@ export function useGroupHome() {
     return () => {
       active = false;
     };
-  }, [id, name, navigation]);
+  }, [id, name, navigation, retryCount]);
 
   // 그룹 멤버 및 가입 신청자 조회
   useEffect(() => {
@@ -85,17 +92,24 @@ export function useGroupHome() {
     let active = true;
 
     const fetchGroupData = async () => {
+      setMembersError("");
       try {
-        const memberData = await getGroupMembers(id);
+        const [memberData, profileResponse] = await Promise.all([
+          getGroupMembers(id),
+          getMyInfo(),
+        ]);
+        const profile = profileResponse.data.data;
+        if (!profile) throw new Error("내 정보를 불러오지 못했습니다.");
 
         if (!active) return;
 
-        const leader = memberData.members.find(
-          (member: any) => member.role === "LEADER",
+        const currentMember = memberData.members.find(
+          (member: GroupMember) => member.userPK === profile.userPK,
         );
+        const leader = currentMember?.role === "LEADER";
+        setIsLeader(leader);
 
         if (leader) {
-          setIsLeader(true);
 
           const requestData = await getGroupRequests(id);
 
@@ -110,9 +124,11 @@ export function useGroupHome() {
           }));
 
           setApplicants(mappedApplicants);
+        } else {
+          setApplicants([]);
         }
       } catch (error) {
-        console.error(error);
+        if (active) setMembersError(getApiErrorMessage(error, "모임 멤버와 가입 신청을 불러오지 못했습니다."));
       }
     };
 
@@ -121,7 +137,7 @@ export function useGroupHome() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, retryCount]);
 
   const [groupInfo, setGroupInfo] = useState<GroupInfo>({
     intro: "",
@@ -136,6 +152,9 @@ export function useGroupHome() {
   return {
     id,
     name,
+    detailError,
+    membersError,
+    retry: () => setRetryCount((count) => count + 1),
     groupInfo,
     applicants,
     isLeader,

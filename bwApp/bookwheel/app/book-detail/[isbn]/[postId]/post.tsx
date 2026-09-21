@@ -1,4 +1,6 @@
-import { getApiErrorMessage } from "@/api/axios";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { HeaderBackButton } from "@react-navigation/elements";
+import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
 import {
   deletePost,
   getPostDetail,
@@ -11,17 +13,13 @@ import PostImageSection from "@/components/post/PostImageSection";
 import { ThemedView } from "@/components/themed-view";
 import { getRelativeTime } from "@/components/utils/date";
 import type { PostDetailData } from "@/types/posts";
-import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -75,7 +73,7 @@ export default function PostDetailScreen() {
 
         setPost(result.data);
       } catch (error) {
-        console.error("게시글 상세 조회 실패:", error);
+        logApiError("게시글 상세 조회 실패:", error);
         setErrorMessage(
           getApiErrorMessage(error, "게시글을 불러오지 못했습니다."),
         );
@@ -117,11 +115,8 @@ export default function PostDetailScreen() {
         };
       });
     } catch (error) {
-      console.error("게시글 좋아요 변경 실패:", error);
-      Alert.alert(
-        "알림",
-        getApiErrorMessage(error, "좋아요 변경에 실패했습니다."),
-      );
+      logApiError("게시글 좋아요 변경 실패:", error);
+      showApiError(error, "좋아요 변경에 실패했습니다.");
     } finally {
       setIsLikeLoading(false);
     }
@@ -144,36 +139,30 @@ export default function PostDetailScreen() {
 
       handleGoBack();
     } catch (error) {
-      console.error("게시글 삭제 실패:", error);
-      Alert.alert(
-        "알림",
-        getApiErrorMessage(error, "게시글 삭제에 실패했습니다."),
-      );
+      logApiError("게시글 삭제 실패:", error);
+      showApiError(error, "게시글 삭제에 실패했습니다.");
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["bottom", "left", "right"]} style={styles.safeArea}>
       <Stack.Screen
         options={{
-          headerShown: false,
+          title: "게시글 상세",
+          headerShown: true,
+          headerBackVisible: false,
+          headerLeft: (props) => (
+            <HeaderBackButton
+              {...props}
+              displayMode="minimal"
+              accessibilityLabel="뒤로가기"
+              onPress={handleGoBack}
+            />
+          ),
         }}
       />
-
-      <View style={styles.header}>
-        <TouchableOpacity
-          accessibilityLabel="뒤로가기"
-          accessibilityRole="button"
-          activeOpacity={0.7}
-          onPress={handleGoBack}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={30} color="#513A11" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>게시글 상세</Text>
-      </View>
 
       {isLoading ? (
         <View style={styles.center}>
@@ -237,24 +226,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    marginLeft: 6,
-    color: "#513A11",
-    fontSize: 27,
-    fontWeight: "900",
   },
   center: {
     flex: 1,

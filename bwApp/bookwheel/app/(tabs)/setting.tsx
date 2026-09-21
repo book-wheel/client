@@ -10,6 +10,7 @@ import EditProfileModal from "@/components/profile/EditProfileModal";
 import { unregisterPushNotifications } from "@/services/pushNotifications";
 
 export default function Settings() {
+  const [loadError, setLoadError] = useState("");
   const [user, setUser] = useState<MyProfile | null>(null);
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -21,13 +22,14 @@ export default function Settings() {
   const fetchMyInfo = async () => {
     try {
       setLoading(true);
+      setLoadError("");
       const res = await getMyInfo();
 
       if (res.data.success && res.data.data) {
         setUser(res.data.data);
       }
     } catch (error) {
-      console.log(error);
+      setLoadError(getApiErrorMessage(error, "유저 정보를 불러올 수 없어요"));
     } finally {
       setLoading(false);
     }
@@ -126,7 +128,7 @@ export default function Settings() {
           padding: 20,
         }}
       >
-        <Text>유저 정보를 불러올 수 없어요</Text>
+        <Text>{loadError || "유저 정보를 불러올 수 없어요"}</Text>
         <TouchableOpacity onPress={() => void fetchMyInfo()} style={{ marginTop: 12 }}>
           <Text style={{ color: "#E4A54E" }}>다시 시도</Text>
         </TouchableOpacity>

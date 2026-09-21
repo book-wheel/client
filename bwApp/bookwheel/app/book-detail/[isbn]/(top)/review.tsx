@@ -1,7 +1,8 @@
+import ErrorNotice from "@/components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
-import { getApiErrorMessage } from "@/api/axios";
+import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
 import {
   createBookReview,
   deleteReviewVote,
@@ -52,6 +53,9 @@ function mapBookReviewToReviewItem(
 
 
 export default function Review() {
+  const [statsError, setStatsError] = useState("");
+  const [reviewsError, setReviewsError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const { isbn } = useBookDetail();
   const reviewRequestId = useRef(0);
   const loadingMoreReviewsRef = useRef(false);
@@ -73,7 +77,9 @@ export default function Review() {
   useEffect(() => {
     if (!isbn) return;
 
+    let active = true;
     const fetchReviewStats = async () => {
+      setStatsError("");
       try {
         const response = await getReviewStats(isbn);
         const result = response.data;
@@ -82,6 +88,7 @@ export default function Review() {
           throw new Error(result.error?.message ?? "추천 통계를 불러오지 못했습니다.");
         }
 
+        if (!active) return;
         const stats = result.data;
 
         setVoteStats({
@@ -97,15 +104,14 @@ export default function Review() {
           setMyVote(null);
         }
       } catch (fetchError) {
-        console.error(
-          "추천 통계 조회 실패:",
-          getApiErrorMessage(fetchError, "추천 통계를 불러오지 못했습니다."),
-        );
+        if (!active) return;
+        setStatsError(getApiErrorMessage(fetchError, "추천 통계를 불러오지 못했습니다."));
       }
     };
 
     void fetchReviewStats();
-  }, [isbn]);
+    return () => { active = false; };
+  }, [isbn, retryCount]);
 
   
 
@@ -119,6 +125,7 @@ export default function Review() {
     setIsLoadingMoreReviews(false);
 
     const fetchReviews = async () => {
+      setReviewsError("");
       try {
         const response = await getBookReviews(
           isbn,
@@ -147,15 +154,13 @@ export default function Review() {
       } catch (error) {
         if (requestId !== reviewRequestId.current) return;
 
-        console.error(
-          "리뷰 조회 실패:",
-          getApiErrorMessage(error, "리뷰를 불러오지 못했습니다."),
-        );
+        setReviewsError(getApiErrorMessage(error, "리뷰를 불러오지 못했습니다."));
       }
     };
 
     void fetchReviews();
-  }, [isbn, sortType]);
+    return () => { reviewRequestId.current += 1; };
+  }, [isbn, sortType, retryCount]);
 
 
   const handleVote = async (vote: VoteKind) => {
@@ -192,8 +197,8 @@ export default function Review() {
         "추천 상태를 변경하지 못했습니다.",
       );
 
-      console.error("추천 상태 변경 실패:", message);
-      Alert.alert("오류", message);
+      logApiError("추천 상태 변경 실패:", error);
+      showApiError(error, message);
     }
   };
 
@@ -244,10 +249,7 @@ export default function Review() {
     } catch (error) {
       if (requestId !== reviewRequestId.current) return;
 
-      console.error(
-        "리뷰 추가 조회 실패:",
-        getApiErrorMessage(error, "리뷰를 더 불러오지 못했습니다."),
-      );
+      showApiError(error, "리뷰를 더 불러오지 못했습니다. 다시 시도해주세요.");
     } finally {
       if (requestId === reviewRequestId.current) {
         loadingMoreReviewsRef.current = false;
@@ -279,10 +281,7 @@ export default function Review() {
         ),
       );
     } catch (error) {
-      console.error(
-        "리뷰 공감 변경 실패:",
-        getApiErrorMessage(error, "리뷰 공감 변경에 실패했습니다."),
-      );
+      showApiError(error, "리뷰 공감 변경에 실패했습니다.");
     }
   };
 
@@ -296,12 +295,12 @@ export default function Review() {
     const trimmedText = inputText.trim();
 
     if (!trimmedText) {
-      Alert.alert("알림", "리뷰 내용을 입력해주세요.");
+      Alert.alert("오류", "리뷰 내용을 입력해주세요.", [{ text: "확인" }]);
       return;
     }
 
     if (!isbn) {
-      Alert.alert("오류", "책 정보를 불러오지 못했습니다.");
+      Alert.alert("오류", "책 정보를 불러오지 못했습니다.", [{ text: "확인" }]);
       return;
     }
 
@@ -327,22 +326,26 @@ export default function Review() {
     setInputText("");
     setIsSpoilerChecked(false);
 
-    Alert.alert("알림", "리뷰가 등록되었습니다.");
+    Alert.alert("완료", "리뷰가 등록되었습니다.");
     } catch (error) {
       const message = getApiErrorMessage(
         error,
         "리뷰 등록에 실패했습니다. 다시 시도해주세요.",
       );
 
-      console.error("리뷰 등록 실패:", message);
-      Alert.alert("오류", message);
+      logApiError("리뷰 등록 실패:", error);
+      showApiError(error, message);
     }
 
   };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <ReviewVoteSection myVote={myVote} voteStats={voteStats} onVote={handleVote} />
+      {statsError ? (
+        <ErrorNotice message={statsError} onRetry={() => setRetryCount((count) => count + 1)} />
+      ) : (
+        <ReviewVoteSection myVote={myVote} voteStats={voteStats} onVote={handleVote} />
+      )}
       <View style={styles.thickDivider} />
       <ReviewComposer
         value={inputText}
@@ -353,6 +356,9 @@ export default function Review() {
         onSubmit={handleSubmitComment}
       />
       <View style={styles.thickDivider} />
+      {reviewsError ? (
+        <ErrorNotice message={reviewsError} onRetry={() => setRetryCount((count) => count + 1)} />
+      ) : (
       <ReviewList
         reviews={reviews}
         sortType={sortType}
@@ -366,6 +372,7 @@ export default function Review() {
         onRevealSpoiler={revealSpoiler}
         onLoadMore={handleLoadMoreReviews}
       />
+      )}
     </ScrollView>
   );
 }

@@ -1,3 +1,4 @@
+import { showApiError } from "@/api/axios";
 import {
   Alert,
   Text,
@@ -9,8 +10,9 @@ import {
 import { router } from "expo-router";
 import React, { useState } from "react";
 
-import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
-import { getImageFileInfo, uploadProfileImage } from "@/api/images";
+import { setupProfile, checkNicknameDuplicate, type ProfileSetupRequest } from "@/api/auth";
+import { uploadProfileImage } from "@/api/images";
+import { saveAuthTokens } from "@/utils/authTokens";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
@@ -21,9 +23,7 @@ export default function Profile() {
   const [comment, setComment] = useState("");
   const [nickname, setNickname] = React.useState("");
   const [nicknameMessage, setNicknameMessage] = useState("");
-  const [imageUri, setImageUri] = useState<string | undefined>();
-  const [imageFileName, setImageFileName] = useState<string | null>(null);
-  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset>();
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
@@ -59,7 +59,7 @@ export default function Profile() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("알림", "사진 접근 권한이 필요합니다.");
+      Alert.alert("오류", "사진 접근 권한이 필요합니다.", [{ text: "확인" }]);
       return;
     }
 
@@ -72,11 +72,7 @@ export default function Profile() {
 
     if (result.canceled) return;
 
-    const asset = result.assets[0];
-
-    setImageUri(asset.uri);
-    setImageFileName(asset.fileName ?? null);
-    setImageMimeType(asset.mimeType ?? null);
+    setImage(result.assets[0]);
   };
 
   //회원가입(프로필저장)로직
@@ -95,31 +91,24 @@ export default function Profile() {
 
     setLoading(true);
 
-    const payload: any = {
+    const payload: ProfileSetupRequest = {
       nickname,
       comment: comment || "",
+      profileImageKey: null,
     };
 
     try {
-      if (imageUri) {
-        const { fileName, mimeType } = getImageFileInfo(
-          imageFileName,
-          imageMimeType,
-          `profile_${Date.now()}`,
-        );
-
-        const profileImageKey = await uploadProfileImage(
-          imageUri,
-          fileName,
-          mimeType,
-        );
-
-        payload.profileImageKey = profileImageKey;
+      if (image) {
+        payload.profileImageKey = await uploadProfileImage(image);
       }
 
       const res = await setupProfile(payload);
 
-      if (res.data.success) {
+      if (res.data.success && res.data.data) {
+        if (!res.data.data.accessToken || !res.data.data.refreshToken) {
+          throw new Error("프로필 설정 후 인증 토큰을 받지 못했습니다. 다시 로그인해주세요.");
+        }
+        await saveAuthTokens(res.data.data);
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {
             text: "확인",
@@ -128,18 +117,15 @@ export default function Profile() {
         ]);
       } else {
         Alert.alert(
-          "프로필 설정 실패",
+          "오류",
           res.data.error?.message ?? "프로필 설정에 실패하였습니다.",
+          [{ text: "확인" }],
         );
       }
     } catch (error: any) {
       console.log("프로필 설정 에러:", error);
 
-      Alert.alert(
-        "프로필 설정 실패",
-        error.response?.data?.error?.message ??
-          "프로필 설정 중 오류가 발생하였습니다.",
-      );
+      showApiError(error, "프로필 설정 중 오류가 발생하였습니다.");
     } finally {
       setLoading(false);
     }
@@ -168,7 +154,7 @@ export default function Profile() {
           >
             프로필 설정
           </Text>
-          <ProfileImage uri={imageUri} onCameraPress={handlePickProfileImage} />
+          <ProfileImage uri={image?.uri} onCameraPress={handlePickProfileImage} />
 
           {nicknameMessage && (
             <Text

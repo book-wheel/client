@@ -110,8 +110,9 @@ export default function EditProfileModal({
 
     if (!permission.granted) {
       Alert.alert(
-        "사진 권한 필요",
+        "오류",
         "프로필 사진을 변경하려면 사진 접근 권한이 필요합니다.",
+          [{ text: "확인" }],
       );
       return;
     }

@@ -1,4 +1,4 @@
-import { getApiErrorMessage } from "@/api/axios";
+import { logApiError } from "@/api/axios";
 import { getPostGallery } from "@/api/books";
 import GalleryImageGrid from "@/components/books/GalleryImageGrid";
 import type { GalleryItem } from "@/components/books/types";
@@ -58,10 +58,7 @@ export default function Gallery() {
   useEffect(() => {
     if (!error) return;
 
-    console.error(
-      "갤러리 조회 실패:",
-      getApiErrorMessage(error, "갤러리 조회를 실패하였습니다."),
-    );
+    logApiError("갤러리 조회 실패:", error);
   }, [error]);
 
   const galleryItems = useMemo<GalleryItem[]>(
@@ -78,7 +75,7 @@ export default function Gallery() {
 
   const handleAddPhoto = () => {
     if (!isbn) {
-      Alert.alert("알림", "ISBN을 찾을 수 없습니다.");
+      Alert.alert("오류", "ISBN을 찾을 수 없습니다.", [{ text: "확인" }]);
       return;
     }
 

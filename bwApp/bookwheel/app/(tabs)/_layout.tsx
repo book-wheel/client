@@ -1,3 +1,4 @@
+import { headerOptions } from "@/constants/header";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { NotificationButton } from "@/components/home/HomeHeader";
@@ -24,16 +25,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#E4A54E",
         tabBarInactiveTintColor: "#513A11",
         headerShown: false,
-        headerTitleAlign: "left",
-        headerTitleStyle: {
-          color: "#513A11",
-          fontSize: 24,
-          fontWeight: "900",
-        },
-        headerStyle: {
-          backgroundColor: "#FFFFFF",
-        },
-        headerShadowVisible: false,
+        ...headerOptions,
         headerRightContainerStyle: {
           paddingRight: 16,
         },

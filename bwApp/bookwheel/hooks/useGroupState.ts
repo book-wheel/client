@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
-import { Alert } from "react-native";
+import { getApiErrorMessage, logApiError } from "@/api/axios";
 import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -34,6 +34,10 @@ type TokenPayload = {
 export function useGroupState() {
   const { id: rawId } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   // 대시보드 데이터
   const [dashboard, setDashboard] = useState<GroupDashboardData | null>(null);
@@ -76,6 +80,8 @@ export function useGroupState() {
     if (!id) return;
 
     const fetchData = async () => {
+      setErrorMessage("");
+      setIsLoading(true);
       try {
         const dashboardData = await getDashboard(id);
         const membersData = await getGroupMembers(id);
@@ -89,17 +95,16 @@ export function useGroupState() {
         setGroupMembers(membersData.members);
         setSchedule(scheduleData);
       } catch (error) {
-        console.error("모임 정보 조회 실패:", error);
+        logApiError("모임 정보 조회 실패:", error);
 
-        Alert.alert(
-          "모임 정보를 불러올 수 없습니다.",
-          "잠시 후 다시 시도해주세요.",
-        );
+        setErrorMessage(getApiErrorMessage(error, "모임 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요."));
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, retryCount]);
 
   // 현재 세션(진행 중인 라운드) 계산
   // 현재 회차
@@ -199,6 +204,9 @@ export function useGroupState() {
   const hasBook = dashboard?.myBookStep != null;
 
   return {
+    isLoading,
+    errorMessage,
+    retry: () => setRetryCount((count) => count + 1),
     id,
     session,
     members,

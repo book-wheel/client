@@ -1,3 +1,4 @@
+import { showApiError } from "@/api/axios";
 import { getPostDetail } from "@/api/posts";
 import type {
   NotificationNavigationPayload,
@@ -71,7 +72,7 @@ const openPost = async (postId: string) => {
       params: { isbn: post.isbn, postId },
     });
   } catch (error) {
-    console.error("알림 게시글 이동 실패:", error);
+    showApiError(error, "알림의 게시글을 불러오지 못했습니다.");
     router.push("/notifications");
   }
 };

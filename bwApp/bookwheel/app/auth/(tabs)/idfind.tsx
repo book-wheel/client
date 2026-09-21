@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "@/api/axios";
 import { View, Text, TouchableOpacity } from "react-native";
 import { router, Stack } from "expo-router";
 import React from "react";
@@ -7,6 +8,7 @@ import Button from "@/components/Button";
 import { sendRecoveryCode, verifyRecoveryId } from "@/api/auth";
 
 export default function IdFind() {
+  const [errorMessage, setErrorMessage] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [emailVerified, setEmailVerified] = React.useState(false);
   const [showCodeInput, setShowCodeInput] = React.useState(false);
@@ -16,10 +18,11 @@ export default function IdFind() {
   //메일 인증요청 로직
   const requestEmailVerification = async () => {
     if (!email) {
-      console.log("이메일 입력 필요");
+      setErrorMessage("이메일을 입력해주세요.");
       return;
     }
 
+    setErrorMessage("");
     try {
       const res = await sendRecoveryCode(email);
 
@@ -27,19 +30,20 @@ export default function IdFind() {
         setShowCodeInput(true);
         console.log("메일 발송 성공");
       } else {
-        console.log(res.data.error.message);
+        setErrorMessage(res.data.error?.message || "아이디 찾기에 실패했습니다.");
       }
     } catch (error: any) {
-      console.log("아이디 찾기 실패:", error?.response?.data || error);
+      setErrorMessage(getApiErrorMessage(error, "아이디 찾기에 실패했습니다. 다시 시도해주세요."));
     }
   };
 
   const handleVerifyEmail = async () => {
     if (!emailCode) {
-      console.log("인증번호 입력 필요");
+      setErrorMessage("인증번호를 입력해주세요.");
       return;
     }
 
+    setErrorMessage("");
     try {
       const res = await verifyRecoveryId(email, emailCode);
 
@@ -50,10 +54,10 @@ export default function IdFind() {
         setEmailVerified(true);
         setShowCodeInput(false);
       } else {
-        console.log(res.data.error.message);
+        setErrorMessage(res.data.error?.message || "아이디 찾기에 실패했습니다.");
       }
     } catch (error: any) {
-      console.log("아이디 찾기 실패:", error?.response?.data || error);
+      setErrorMessage(getApiErrorMessage(error, "아이디 찾기에 실패했습니다. 다시 시도해주세요."));
     }
   };
 
@@ -65,6 +69,7 @@ export default function IdFind() {
         }}
       />
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        {errorMessage ? <Text accessibilityRole="alert">{errorMessage}</Text> : null}
         {/* 이메일 인증 단계 */}
         {!emailVerified ? (
           <>

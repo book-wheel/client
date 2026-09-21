@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { getApiErrorMessage } from "@/api/axios";
+import { useCallback, useEffect, useState } from "react";
 
 import { Group } from "@/components/groups/MyGroupList";
 
@@ -10,23 +11,30 @@ export function useGroups() {
 
   const [groups, setGroups] = useState<Group[]>([]);
 
-  useEffect(() => {
-    const fetchMyGroups = async () => {
-      try {
-        const response = await getMyGroups();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-        console.log(JSON.stringify(response, null, 2));
+  const reload = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const response = await getMyGroups();
 
-        const mappedGroups = mapMyGroups(response);
+      console.log(JSON.stringify(response, null, 2));
 
-        setGroups(mappedGroups);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+      const mappedGroups = mapMyGroups(response);
 
-    fetchMyGroups();
+      setGroups(mappedGroups);
+    } catch (error) {
+      setError(getApiErrorMessage(error, "모임을 불러오지 못했습니다."));
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
 
   const activeGroups = groups.filter(
     (g) => g.status === "RECRUITING" || g.status === "IN_PROGRESS",
@@ -35,6 +43,9 @@ export function useGroups() {
   const otherGroups = groups.filter((g) => g.status === "COMPLETE");
 
   return {
+    error,
+    loading,
+    reload,
     open,
     setOpen,
     activeGroups,

@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "@/api/axios";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -10,7 +11,7 @@ import SocialButton from "@/components/Button/SocialButton";
 import AuthCard from "@/components/card";
 
 import { login } from "@/api/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveAuthTokens } from "@/utils/authTokens";
 
 import * as SecureStore from "expo-secure-store";
 import {
@@ -43,7 +44,7 @@ export default function Login() {
         password,
       });
 
-      if (!res.data.success) {
+      if (!res.data.success || !res.data.data) {
         setErrorMessage(
           res.data.error?.message || "아이디 또는 비밀번호가 올바르지 않습니다",
         );
@@ -53,8 +54,10 @@ export default function Login() {
 
       const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
-      await AsyncStorage.setItem("accessToken", accessToken);
-      await AsyncStorage.setItem("refreshToken", refreshToken);
+      await saveAuthTokens({
+        accessToken,
+        refreshToken: isProfileSet ? refreshToken : null,
+      });
 
       Toast.show({
         type: "success",
@@ -66,14 +69,8 @@ export default function Login() {
       } else {
         router.replace("/auth/profile");
       }
-    } catch {
-      Toast.show({
-        type: "error",
-        text1: "로그인 실패",
-        text2: "아이디 또는 비밀번호를 확인해주세요.",
-      });
-
-      setErrorMessage("아이디 또는 비밀번호가 올바르지 않습니다");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "아이디 또는 비밀번호를 확인해주세요."));
     } finally {
       setLoading(false);
     }
@@ -100,7 +97,7 @@ export default function Login() {
 
       await Linking.openURL(url);
     } catch (error) {
-      console.error("❌ 소셜 로그인 시작 실패:", error);
+      setErrorMessage(getApiErrorMessage(error, "소셜 로그인을 시작하지 못했습니다. 다시 시도해주세요."));
     }
   };
 

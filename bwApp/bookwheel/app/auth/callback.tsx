@@ -1,8 +1,9 @@
+import { logApiError } from "@/api/axios";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveAuthTokens } from "@/utils/authTokens";
 import Toast from "react-native-toast-message";
 
 import { exchangeOAuthCode } from "@/api/auth";
@@ -41,13 +42,17 @@ export default function OAuthCallback() {
           codeVerifier,
         });
 
-        console.log("✅ OAuth token response:", res.data);
+        if (!res.data.success || !res.data.data) {
+          throw new Error(res.data.error?.message || "소셜 로그인에 실패했습니다.");
+        }
 
         const { accessToken, refreshToken, isFirstLogin } = res.data.data;
 
         // 토큰 저장
-        await AsyncStorage.setItem("accessToken", accessToken);
-        await AsyncStorage.setItem("refreshToken", refreshToken);
+        await saveAuthTokens({
+          accessToken,
+          refreshToken: isFirstLogin ? null : refreshToken,
+        });
 
         // 사용한 verifier 즉시 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
@@ -64,14 +69,14 @@ export default function OAuthCallback() {
           router.replace("/(tabs)");
         }
       } catch (error) {
-        console.error("소셜 로그인 처리 실패:", error);
+        logApiError("소셜 로그인 처리 실패:", error);
 
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
 
         Toast.show({
           type: "error",
-          text1: "소셜 로그인 실패",
+          text1: "오류",
           text2: "잠시 후 다시 시도해주세요.",
         });
 

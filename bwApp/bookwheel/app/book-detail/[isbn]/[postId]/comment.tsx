@@ -1,4 +1,4 @@
-import { getApiErrorMessage } from "@/api/axios";
+import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
 import {
   createPostComment,
   deletePostComment,
@@ -17,7 +17,6 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -90,10 +89,7 @@ export default function CommentSheetScreen() {
   useEffect(() => {
     if (!error) return;
 
-    console.error(
-      "댓글 조회 실패:",
-      getApiErrorMessage(error, "댓글을 불러오지 못했습니다."),
-    );
+    logApiError("댓글 조회 실패:", error);
   }, [error]);
 
   // 서버 댓글 데이터를 댓글 컴포넌트가 사용하는 모양으로 변경
@@ -149,8 +145,8 @@ export default function CommentSheetScreen() {
         "댓글 작성에 실패했습니다.",
       );
 
-      console.error("댓글 작성 실패:", message);
-      Alert.alert("알림", message);
+      logApiError("댓글 작성 실패:", submitError);
+      showApiError(submitError, message);
     } finally {
       setIsSubmitting(false);
     }
@@ -182,8 +178,8 @@ export default function CommentSheetScreen() {
         "댓글 삭제에 실패했습니다.",
       );
 
-      console.error("댓글 삭제 실패:", message);
-      Alert.alert("알림", message);
+      logApiError("댓글 삭제 실패:", deleteError);
+      showApiError(deleteError, message);
     } finally {
       setDeletingCommentId(null);
     }
