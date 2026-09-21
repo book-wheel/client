@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { router, Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -17,6 +17,7 @@ import api from "@/api/axios";
 
 import useSignupForm from "@/hooks/useSignupForm";
 import { validateSignup } from "@/utils/signupValidation";
+import { matchesDisplayedPolicies } from "@/policies/documents";
 
 export default function Signup() {
   const { form, errors, setErrors, handleChange } = useSignupForm();
@@ -24,11 +25,13 @@ export default function Signup() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
 
-  const [agreeAll, setAgreeAll] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const agreeAll = agreeTerms && agreePrivacy;
   const [policies, setPolicies] = useState<ConsentPolicies | null>(null);
   const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
+  const [policyError, setPolicyError] = useState("");
+  const canAgree = !isLoadingPolicies && matchesDisplayedPolicies(policies);
 
   const [emailMessage, setEmailMessage] = useState("");
 
@@ -116,29 +119,35 @@ export default function Signup() {
     }
   };
 
-  // 현재 약관 버전 조회
-  useEffect(() => {
-    const fetchConsentPolicies = async () => {
-      try {
-        const res = await getCurrentConsentPolicies();
-
-        if (res.data.success) {
-          setPolicies(res.data.data);
-        }
-      } catch (error) {
-        console.log("약관 버전 조회 실패:", error);
-
-        setErrors((prev: typeof errors) => ({
-          ...prev,
-          terms: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
-        }));
-      } finally {
-        setIsLoadingPolicies(false);
+  // Only accept versions of the documents this app actually displays.
+  const fetchConsentPolicies = useCallback(async () => {
+    setIsLoadingPolicies(true);
+    setPolicies(null);
+    setAgreeTerms(false);
+    setAgreePrivacy(false);
+    setPolicyError("");
+    setErrors((prev: typeof errors) => ({ ...prev, terms: "" }));
+    try {
+      const res = await getCurrentConsentPolicies();
+      if (!res.data.success || !res.data.data) {
+        throw new Error("약관 조회 실패");
       }
-    };
+      if (!matchesDisplayedPolicies(res.data.data)) {
+        setPolicyError("현재 약관에 맞는 문서를 준비 중입니다. 앱을 업데이트하거나 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      setPolicies(res.data.data);
+    } catch (error) {
+      console.log("약관 버전 조회 실패:", error);
+      setPolicyError("약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsLoadingPolicies(false);
+    }
+  }, [setErrors]);
 
-    fetchConsentPolicies();
-  }, []);
+  useEffect(() => {
+    void fetchConsentPolicies();
+  }, [fetchConsentPolicies]);
 
   // 회원가입
   const handleSignup = async () => {
@@ -157,7 +166,7 @@ export default function Signup() {
       return;
     }
 
-    if (!policies) {
+    if (!canAgree || !policies) {
       setErrors((prev: typeof errors) => ({
         ...prev,
         terms: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
@@ -196,6 +205,14 @@ export default function Signup() {
 
       router.replace(isProfileSet ? "/" : "/auth/profile");
     } catch (error: any) {
+      if (error.response?.data?.error?.code === "AUTH_028") {
+        await fetchConsentPolicies();
+        setErrors((prev: typeof errors) => ({
+          ...prev,
+          terms: "약관 정보를 다시 확인했습니다. 내용을 확인하고 다시 동의해주세요.",
+        }));
+        return;
+      }
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error?.message ||
@@ -210,16 +227,11 @@ export default function Signup() {
     }
   };
 
-  // 전체동의 자동체크
-  useEffect(() => {
-    setAgreeAll(agreeTerms && agreePrivacy);
-  }, [agreeTerms, agreePrivacy]);
-
   return (
     <>
       <Stack.Screen options={{ title: "회원가입" }} />
 
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>회원가입</Text>
 
         {/* 아이디 */}
@@ -310,10 +322,10 @@ export default function Signup() {
 
         <View style={styles.termsBox}>
           <TouchableOpacity
-            style={styles.checkRow}
+            style={[styles.checkRow, { justifyContent: "flex-start" }]}
+            disabled={!canAgree || isSigningUp}
             onPress={() => {
               const next = !agreeAll;
-              setAgreeAll(next);
               setAgreeTerms(next);
               setAgreePrivacy(next);
             }}
@@ -325,6 +337,7 @@ export default function Signup() {
           <View style={styles.checkRow}>
             <TouchableOpacity
               style={styles.checkContent}
+              disabled={!canAgree || isSigningUp}
               onPress={() => setAgreeTerms(!agreeTerms)}
             >
               <View style={[styles.checkbox, agreeTerms && styles.checked]} />
@@ -340,21 +353,34 @@ export default function Signup() {
           <View style={styles.checkRow}>
             <TouchableOpacity
               style={styles.checkContent}
+              disabled={!canAgree || isSigningUp}
               onPress={() => setAgreePrivacy(!agreePrivacy)}
             >
               <View style={[styles.checkbox, agreePrivacy && styles.checked]} />
 
               <Text style={styles.checkText}>
-                개인정보 처리방침 동의 (필수)
+                개인정보 수집·이용 동의 (필수)
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push("/auth/privacy")}>
+            <TouchableOpacity onPress={() => router.push("/auth/collection-consent")}>
               <Text style={styles.linkText}>보기</Text>
             </TouchableOpacity>
           </View>
 
+
           {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
+          {policyError ? (
+            <>
+              <Text style={styles.errorText}>{policyError}</Text>
+              <TouchableOpacity
+                disabled={isLoadingPolicies || isSigningUp}
+                onPress={() => void fetchConsentPolicies()}
+              >
+                <Text style={styles.linkText}>약관 다시 확인</Text>
+              </TouchableOpacity>
+            </>
+          ) : null}
         </View>
 
         <Button
@@ -366,16 +392,17 @@ export default function Signup() {
                 : "회원가입"
           }
           onPress={handleSignup}
-          disabled={isLoadingPolicies || isSigningUp}
+          disabled={!canAgree || isSigningUp}
         />
-      </View>
+      </ScrollView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
+    paddingVertical: 24,
     justifyContent: "center",
     alignItems: "center",
   },
