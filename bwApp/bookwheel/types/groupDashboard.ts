@@ -84,8 +84,8 @@ export type GroupScheduleRound = {
 };
 
 export type GroupScheduleData = {
-  startDate: string;
-  readingPeriod: number;
+  startDate: string | null;
+  readingPeriod: number | null;
   endDate: string | null;
   excludedDates: string[];
   excludedDateRanges: {

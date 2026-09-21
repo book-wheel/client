@@ -368,8 +368,8 @@ export default function GroupSettings() {
     if (!form.groupName.trim()) return "모임 이름을 입력해주세요.";
     if (!form.groupComment.trim()) return "코멘트를 입력해주세요.";
     if (!form.groupRule.trim()) return "모임 규칙을 입력해주세요.";
-    if (group?.groupPublic && !form.groupPublic && !form.groupPassword.trim()) {
-      return "비공개 모임으로 바꾸려면 비밀번호를 입력해주세요.";
+    if (!form.groupPublic && !form.groupPassword.trim()) {
+      return "비공개 모임은 비밀번호를 입력해주세요.";
     }
     if (form.groupOffline && !form.groupRegion) {
       return "오프라인 모임의 지역을 선택해주세요.";
@@ -619,10 +619,10 @@ export default function GroupSettings() {
                 label="비밀번호 설정"
                 value={form.groupPassword}
                 onChangeText={(value) => updateForm("groupPassword", value)}
-                placeholder="새 비밀번호를 입력해주세요"
+                placeholder="비밀번호를 입력해주세요"
                 secureTextEntry
                 editable={canEdit && !busy}
-                helper="비공개 모임으로 바꿀 때만 새 비밀번호가 필요해요."
+                helper="비공개 모임 정보를 저장할 때 비밀번호가 필요해요."
               />
             ) : null}
           </View>

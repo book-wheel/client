@@ -59,6 +59,8 @@ export default function ScheduleSettings() {
   const [schedule, setSchedule] = useState<GroupScheduleData | null>(null);
   const [vacationStart, setVacationStart] = useState(new Date());
   const [vacationEnd, setVacationEnd] = useState(new Date());
+  const [vacationSelected, setVacationSelected] = useState(false);
+  const [readingPeriod, setReadingPeriod] = useState(1);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
   const [canEdit, setCanEdit] = useState(false);
   const [targetMemberCount, setTargetMemberCount] = useState(2);
@@ -78,19 +80,27 @@ export default function ScheduleSettings() {
       setSchedule(data);
       setCanEdit(group.bottomButtonType === "LEADER_SETTING");
       setTargetMemberCount(data.targetMemberCount ?? group.maxMembers);
+      setReadingPeriod(
+        Math.max(1, data.readingPeriod ?? group.readingPeriod ?? 1),
+      );
       const tomorrow = new Date();
       tomorrow.setHours(0, 0, 0, 0);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const savedScheduleStart = toDateOnly(data.startDate);
+      const savedScheduleStart = data.startDate
+        ? toDateOnly(data.startDate)
+        : tomorrow;
       const shouldAdjustStart =
         data.scheduleStatus !== "IN_PROGRESS" &&
+        Boolean(data.startDate) &&
         savedScheduleStart < tomorrow;
       setScheduleStartDate(shouldAdjustStart ? tomorrow : savedScheduleStart);
       setStartDateWasAdjusted(shouldAdjustStart);
-      const initialStart = data.excludedDateRanges?.at(-1)?.startDate;
-      const initialEnd = data.excludedDateRanges?.at(-1)?.endDate;
+      const latestRange = data.excludedDateRanges?.at(-1);
+      const initialStart = latestRange?.startDate;
+      const initialEnd = latestRange?.endDate;
       setVacationStart(initialStart ? toDateOnly(initialStart) : tomorrow);
       setVacationEnd(initialEnd ? toDateOnly(initialEnd) : tomorrow);
+      setVacationSelected(Boolean(latestRange));
     } catch (error) {
       Alert.alert(
         "일정 조회 실패",
@@ -111,6 +121,7 @@ export default function ScheduleSettings() {
     if (Platform.OS === "android") setPickerTarget(null);
     if (event.type !== "set" || !value) return;
 
+    setVacationSelected(true);
     if (pickerTarget === "start") {
       setVacationStart(value);
       if (value > vacationEnd) setVacationEnd(value);
@@ -121,7 +132,7 @@ export default function ScheduleSettings() {
 
   const handleSave = async () => {
     if (!id || !schedule || saving || !canEdit) return;
-    if (vacationStart > vacationEnd) {
+    if (vacationSelected && vacationStart > vacationEnd) {
       Alert.alert("날짜 확인", "종료일은 시작일보다 빠를 수 없습니다.");
       return;
     }
@@ -130,17 +141,19 @@ export default function ScheduleSettings() {
       return;
     }
 
-    const range = {
-      startDate: toIsoDate(vacationStart),
-      endDate: toIsoDate(vacationEnd),
-    };
-    const ranges = [
-      ...(schedule.excludedDateRanges ?? []).filter(
-        (item) =>
-          item.startDate !== range.startDate || item.endDate !== range.endDate,
-      ),
-      range,
-    ];
+    const savedRanges = schedule.excludedDateRanges ?? [];
+    const rangesWithoutEditedRange = savedRanges.length
+      ? savedRanges.slice(0, -1)
+      : savedRanges;
+    const ranges = vacationSelected
+      ? [
+          ...rangesWithoutEditedRange,
+          {
+            startDate: toIsoDate(vacationStart),
+            endDate: toIsoDate(vacationEnd),
+          },
+        ]
+      : rangesWithoutEditedRange;
     try {
       setSaving(true);
       if (schedule.scheduleStatus === "IN_PROGRESS") {
@@ -149,7 +162,7 @@ export default function ScheduleSettings() {
             schedule.minTotalRoundCount ?? 1,
             schedule.plannedRoundCount ?? 1,
           ),
-          readingPeriod: schedule.readingPeriod,
+          readingPeriod,
           ...(schedule.endDate ? { endDate: schedule.endDate } : {}),
           excludedDates: schedule.excludedDates ?? [],
           excludedDateRanges: ranges,
@@ -157,7 +170,7 @@ export default function ScheduleSettings() {
       } else {
         await createSchedule(id, {
           startDate: toIsoDate(scheduleStartDate),
-          readingPeriod: schedule.readingPeriod,
+          readingPeriod,
           ...(schedule.endDate ? { endDate: schedule.endDate } : {}),
           excludedDates: schedule.excludedDates ?? [],
           excludedDateRanges: ranges,
@@ -215,29 +228,63 @@ export default function ScheduleSettings() {
             ) : null}
 
             <View style={styles.section}>
+              <Text style={styles.sectionTitle}>독서 기간</Text>
+              <View style={styles.periodRow}>
+                <Text style={styles.periodLabel}>회차별 독서 기간</Text>
+                <View style={styles.periodControls}>
+                  <Pressable
+                    disabled={!canEdit || readingPeriod <= 1}
+                    onPress={() =>
+                      setReadingPeriod((current) => Math.max(1, current - 1))
+                    }
+                    hitSlop={8}
+                  >
+                    <Ionicons name="remove" size={20} color={COLORS.brown} />
+                  </Pressable>
+                  <Text style={styles.periodValue}>{readingPeriod}일</Text>
+                  <Pressable
+                    disabled={!canEdit}
+                    onPress={() => setReadingPeriod((current) => current + 1)}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add" size={20} color={COLORS.brown} />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>방학 가지기</Text>
               <View style={styles.dateRow}>
                 <DateField
                   label="시작일"
-                  value={displayDate(vacationStart)}
+                  value={vacationSelected ? displayDate(vacationStart) : "날짜 선택"}
                   disabled={!canEdit}
                   onPress={() => setPickerTarget("start")}
                 />
                 <DateField
                   label="종료일"
-                  value={displayDate(vacationEnd)}
+                  value={vacationSelected ? displayDate(vacationEnd) : "날짜 선택"}
                   disabled={!canEdit}
                   onPress={() => setPickerTarget("end")}
                 />
               </View>
-              <View style={styles.rangeSummaryRow}>
-                <Text style={styles.rangeSummary}>
-                  {toIsoDate(vacationStart)} ~ {toIsoDate(vacationEnd)}
-                </Text>
-                <Pressable disabled={!canEdit} onPress={() => setVacationEnd(vacationStart)}>
-                  <Ionicons name="close" size={13} color={COLORS.muted} />
-                </Pressable>
-              </View>
+              {vacationSelected ? (
+                <View style={styles.rangeSummaryRow}>
+                  <Text style={styles.rangeSummary}>
+                    {toIsoDate(vacationStart)} ~ {toIsoDate(vacationEnd)}
+                  </Text>
+                  <Pressable
+                    disabled={!canEdit}
+                    onPress={() => {
+                      setVacationSelected(false);
+                      setPickerTarget(null);
+                    }}
+                  >
+                    <Ionicons name="close" size={13} color={COLORS.muted} />
+                  </Pressable>
+                </View>
+              ) : null}
               <Text style={styles.helpText}>
                 선택한 날짜는 쉬어가는 날짜로, 일정에 포함하지 않아요.
               </Text>
@@ -369,6 +416,30 @@ const styles = StyleSheet.create({
     paddingBottom: 22,
   },
   sectionTitle: { color: COLORS.brown, fontSize: 14, fontWeight: "700", marginBottom: 12 },
+  periodRow: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  periodLabel: { color: COLORS.brown, fontSize: 12 },
+  periodControls: {
+    minWidth: 120,
+    height: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 21,
+    backgroundColor: COLORS.cream,
+    paddingHorizontal: 14,
+  },
+  periodValue: {
+    minWidth: 42,
+    color: COLORS.brown,
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
   dateRow: { flexDirection: "row", gap: 12 },
   dateFieldWrap: { flex: 1 },
   dateLabel: { marginBottom: 8, color: COLORS.brown, fontSize: 12, fontWeight: "600" },
