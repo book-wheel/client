@@ -1,4 +1,4 @@
-import { logApiError } from "@/api/axios";
+import { getApiErrorMessage, logApiError } from "@/api/axios";
 import { getPostGallery } from "@/api/books";
 import GalleryImageGrid from "@/components/books/GalleryImageGrid";
 import type { GalleryItem } from "@/components/books/types";
@@ -38,6 +38,7 @@ export default function Gallery() {
     items: galleryPosts,
     isLoading,
     error,
+    errorPage,
     loadInitial,
     loadMore,
     reset,
@@ -100,6 +101,8 @@ export default function Gallery() {
       <GalleryImageGrid
         items={galleryItems}
         isLoading={isLoading}
+        errorMessage={error ? getApiErrorMessage(error, "갤러리를 불러오지 못했습니다.") : undefined}
+        onRetry={errorPage === "more" ? loadMore : loadInitial}
         onEndReached={() => void loadMore()}
         onPressItem={(item) => handlePressGalleryItem(item.id)}
       />

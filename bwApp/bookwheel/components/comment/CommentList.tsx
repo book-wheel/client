@@ -1,3 +1,4 @@
+import ErrorNotice from "@/components/ErrorNotice";
 import { ThemedText } from '@/components/themed-text';
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import React from 'react';
@@ -20,6 +21,7 @@ interface Props {
     isLoading?: boolean;
     onEndReached?: () => void;
     errorMessage?: string;
+    onRetry?: () => void;
 }
 
 export default function CommentList({
@@ -29,6 +31,7 @@ export default function CommentList({
     isLoading = false,
     onEndReached,
     errorMessage,
+    onRetry,
 }: Props) {
     const keyExtractor = (item: CommentItem) => item.id;
 
@@ -47,12 +50,12 @@ export default function CommentList({
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
-            onEndReached={onEndReached}
+            onEndReached={errorMessage ? undefined : onEndReached}
             onEndReachedThreshold={0.4}
             ListEmptyComponent={
-                !isLoading ? (
+                !isLoading && !errorMessage ? (
                     <ThemedText style={styles.emptyText}>
-                        {errorMessage ?? '아직 댓글이 없습니다.'}
+                        아직 댓글이 없습니다.
                     </ThemedText>
                 ) : null
             }
@@ -61,6 +64,8 @@ export default function CommentList({
                     <View style={styles.loadingContainer}>
                         <ActivityIndicator color="#E4A54E" />
                     </View>
+                ) : errorMessage ? (
+                    <ErrorNotice message={errorMessage} onRetry={onRetry} />
                 ) : null
             }
         />

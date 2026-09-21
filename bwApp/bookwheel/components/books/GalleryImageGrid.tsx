@@ -1,3 +1,4 @@
+import ErrorNotice from "@/components/ErrorNotice";
 import {
   ActivityIndicator,
   Dimensions,
@@ -19,6 +20,8 @@ type Props = {
   items: GalleryItem[];
   isLoading?: boolean;
   onEndReached?: () => void;
+  errorMessage?: string;
+  onRetry?: () => void;
   onPressItem: (item: GalleryItem) => void;
 };
 
@@ -27,6 +30,8 @@ export default function GalleryImageGrid({
   isLoading = false,
   onEndReached,
   onPressItem,
+  errorMessage,
+  onRetry,
 }: Props) {
   return (
     <FlatList
@@ -63,13 +68,15 @@ export default function GalleryImageGrid({
       contentContainerStyle={styles.listContainer}
       columnWrapperStyle={styles.columnWrapper}
       showsVerticalScrollIndicator={false}
-      onEndReached={onEndReached}
+      onEndReached={errorMessage ? undefined : onEndReached}
       onEndReachedThreshold={0.4}
       ListFooterComponent={
         isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color="#E4A54E" />
           </View>
+        ) : errorMessage ? (
+          <ErrorNotice message={errorMessage} onRetry={onRetry} />
         ) : null
       }
     />

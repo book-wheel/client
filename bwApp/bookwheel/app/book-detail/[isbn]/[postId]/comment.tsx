@@ -67,6 +67,7 @@ export default function CommentSheetScreen() {
     totalElements,
     isLoading,
     error,
+    errorPage,
     loadInitial,
     loadMore,
     reset,
@@ -206,6 +207,7 @@ export default function CommentSheetScreen() {
                 onDelete={(commentId) => void handleDeleteComment(commentId)}
                 deletingCommentId={deletingCommentId}
                 isLoading={isLoading}
+                onRetry={errorPage === "more" ? loadMore : loadInitial}
                 onEndReached={() => void loadMore()}
                 errorMessage={
                   error

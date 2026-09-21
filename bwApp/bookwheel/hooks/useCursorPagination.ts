@@ -23,6 +23,7 @@ export type UseCursorPaginationResult<T> = {
   hasNext: boolean;
   isLoading: boolean;
   error: unknown;
+  errorPage: "initial" | "more" | null;
   loadInitial: () => Promise<void>;
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -41,6 +42,7 @@ export function useCursorPagination<T>({
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [errorPage, setErrorPage] = useState<"initial" | "more" | null>(null);
 
   // state는 갱신이 비동기이므로 ref로 연속 호출 차단
   const isLoadingRef = useRef(false);
@@ -55,6 +57,7 @@ export function useCursorPagination<T>({
       isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
+      setErrorPage(null);
 
       const requestId = ++requestIdRef.current;
 
@@ -94,6 +97,7 @@ export function useCursorPagination<T>({
       } catch (caughtError) {
         if (requestId === requestIdRef.current) {
           setError(caughtError);
+          setErrorPage(replaceItems ? "initial" : "more");
         }
       } finally {
         if (requestId === requestIdRef.current) {
@@ -128,6 +132,7 @@ export function useCursorPagination<T>({
     setHasNext(false);
     setIsLoading(false);
     setError(null);
+    setErrorPage(null);
   }, []);
 
   return {
@@ -136,6 +141,7 @@ export function useCursorPagination<T>({
     hasNext,
     isLoading,
     error,
+    errorPage,
     loadInitial,
     loadMore,
     refresh: loadInitial,

@@ -85,5 +85,6 @@ export function useHome() {
     myGroups,
     isLoading,
     error,
+    retry: fetchHome,
   };
 }

@@ -1,3 +1,4 @@
+import ErrorNotice from "@/components/ErrorNotice";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { HeaderBackButton } from "@react-navigation/elements";
 import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
@@ -19,7 +20,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 
@@ -32,6 +32,7 @@ export default function PostDetailScreen() {
     postId: string;
   }>();
 
+  const [retryCount, setRetryCount] = useState(0);
   const [post, setPost] = useState<PostDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,6 +61,7 @@ export default function PostDetailScreen() {
       return;
     }
 
+    let active = true;
     const loadPost = async () => {
       try {
         const response = await getPostDetail(postId);
@@ -71,19 +73,21 @@ export default function PostDetailScreen() {
           );
         }
 
-        setPost(result.data);
+        if (active) setPost(result.data);
       } catch (error) {
+        if (!active) return;
         logApiError("게시글 상세 조회 실패:", error);
         setErrorMessage(
           getApiErrorMessage(error, "게시글을 불러오지 못했습니다."),
         );
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     void loadPost();
-  }, [postIdParam]);
+    return () => { active = false; };
+  }, [postIdParam, retryCount]);
 
   const handleLikePress = async () => {
     if (!post || isLikeLoading) return;
@@ -170,7 +174,10 @@ export default function PostDetailScreen() {
         </View>
       ) : !post ? (
         <View style={styles.center}>
-          <Text style={styles.errorText}>{errorMessage}</Text>
+          <ErrorNotice
+            message={errorMessage}
+            onRetry={Number(postIdParam) > 0 ? () => setRetryCount((count) => count + 1) : undefined}
+          />
         </View>
       ) : (
         <ThemedView style={styles.container}>
@@ -232,10 +239,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-  },
-  errorText: {
-    color: "#777777",
-    textAlign: "center",
   },
   scrollContent: {
     paddingBottom: 40,
