@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 
 import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
+import { saveAuthTokens } from "@/utils/authTokens";
 import { uploadImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -112,9 +113,11 @@ export default function Profile() {
 
       const res = await setupProfile(payload);
 
-      console.log("📥 setup-profile response:", res.data);
-
       if (res.data.success) {
+        if (!res.data.data) {
+          throw new Error("프로필 설정 후 인증 정보를 받지 못했습니다. 다시 로그인해주세요.");
+        }
+        await saveAuthTokens(res.data.data);
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {
             text: "확인",
@@ -133,6 +136,7 @@ export default function Profile() {
       Alert.alert(
         "프로필 설정 실패",
         error.response?.data?.error?.message ??
+          error.message ??
           "프로필 설정 중 오류가 발생하였습니다.",
       );
     } finally {

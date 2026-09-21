@@ -4,6 +4,7 @@ import { Alert } from "react-native";
 import { router } from "expo-router";
 
 import type { ApiResponse } from "@/types/api";
+import { clearAuthTokens } from "@/utils/authTokens";
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -21,13 +22,11 @@ export const getApiErrorMessage = (error: unknown, fallbackMessage: string) => {
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
 
-  console.log("token:", token);
-
   if (token) {
     config.headers?.set("Authorization", `Bearer ${token}`);
+  } else {
+    config.headers?.delete("Authorization");
   }
-
-  console.log("Authorization:", config.headers?.get("Authorization"));
 
   return config;
 });
@@ -39,7 +38,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       console.log("401 에러 발생!");
 
-      await AsyncStorage.removeItem("accessToken");
+      await clearAuthTokens();
 
       Alert.alert(
         "세션 만료",

@@ -10,7 +10,7 @@ import SocialButton from "@/components/Button/SocialButton";
 import AuthCard from "@/components/card";
 
 import { login } from "@/api/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveAuthTokens } from "@/utils/authTokens";
 
 import * as SecureStore from "expo-secure-store";
 import {
@@ -53,8 +53,7 @@ export default function Login() {
 
       const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
-      await AsyncStorage.setItem("accessToken", accessToken);
-      await AsyncStorage.setItem("refreshToken", refreshToken);
+      await saveAuthTokens({ accessToken, refreshToken }, !isProfileSet);
 
       Toast.show({
         type: "success",

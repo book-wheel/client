@@ -1,5 +1,6 @@
 import api from "./axios";
 import type { ApiResponse } from "@/types/api";
+import type { AuthTokens } from "@/utils/authTokens";
 
 export type SocialProvider = "NONE" | "GOOGLE" | "KAKAO";
 
@@ -35,7 +36,7 @@ export const signup = (data: {
   marketingAgreed: boolean;
   marketingVersion: string | null;
 }) => {
-  return api.post("/auth/signup", data);
+  return api.post<ApiResponse<AuthTokens>>("/auth/signup", data);
 };
 
 // 현재 약관 버전 조회
@@ -73,7 +74,7 @@ export const setupProfile = (data: {
   nickname: string;
   comment: string;
 }) => {
-  return api.patch("/users/setup-profile", data);
+  return api.patch<ApiResponse<AuthTokens>>("/users/setup-profile", data);
 };
 
 // 닉네임 중복 확인

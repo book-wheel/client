@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { saveAuthTokens } from "@/utils/authTokens";
 import Toast from "react-native-toast-message";
 
 import { exchangeOAuthCode } from "@/api/auth";
@@ -41,13 +41,10 @@ export default function OAuthCallback() {
           codeVerifier,
         });
 
-        console.log("✅ OAuth token response:", res.data);
-
         const { accessToken, refreshToken, isFirstLogin } = res.data.data;
 
         // 토큰 저장
-        await AsyncStorage.setItem("accessToken", accessToken);
-        await AsyncStorage.setItem("refreshToken", refreshToken);
+        await saveAuthTokens({ accessToken, refreshToken }, isFirstLogin);
 
         // 사용한 verifier 즉시 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");

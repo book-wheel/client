@@ -7,13 +7,12 @@ import Input from "@/components/Input";
 
 import {
   signup,
-  login,
   sendEmail,
   verifyEmail,
   getCurrentConsentPolicies,
   type ConsentPolicies,
 } from "@/api/auth";
-import api from "@/api/axios";
+import { saveAuthTokens } from "@/utils/authTokens";
 
 import useSignupForm from "@/hooks/useSignupForm";
 import { validateSignup } from "@/utils/signupValidation";
@@ -192,18 +191,11 @@ export default function Signup() {
         marketingVersion: null,
       });
 
-      if (!signupRes.data.success) return;
-
-      const loginRes = await login({
-        loginId: form.loginId,
-        password: form.password,
-      });
-
-      const { accessToken, isProfileSet } = loginRes.data.data;
-
-      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
-
-      router.replace(isProfileSet ? "/" : "/auth/profile");
+      if (!signupRes.data.success || !signupRes.data.data) {
+        throw new Error(signupRes.data.error?.message || "회원가입에 실패했습니다.");
+      }
+      await saveAuthTokens(signupRes.data.data, true);
+      router.replace("/auth/profile");
     } catch (error: any) {
       if (error.response?.data?.error?.code === "AUTH_028") {
         await fetchConsentPolicies();
@@ -216,6 +208,7 @@ export default function Signup() {
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error?.message ||
+        error.message ||
         "회원가입에 실패했습니다.";
 
       setErrors((prev: typeof errors) => ({
