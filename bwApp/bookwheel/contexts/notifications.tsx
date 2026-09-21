@@ -38,10 +38,26 @@ const isLoggedOutRoute = (pathname: string) => {
   return (
     pathname === "/auth/login" ||
     pathname === "/auth/signup" ||
+    pathname === "/auth/callback" ||
+    pathname === "/auth/social-consent" ||
+    pathname === "/auth/profile" ||
     pathname === "/auth/idfind" ||
     pathname === "/auth/pwfind" ||
     pathname === "/intro"
   );
+};
+
+const getStoredSession = async () => {
+  const entries = await AsyncStorage.multiGet([
+    "accessToken",
+    "socialOnboardingStep",
+  ]);
+
+  return {
+    accessToken: entries[0][1],
+    isSocialOnboarding:
+      entries[1][1] === "consent" || entries[1][1] === "profile",
+  };
 };
 
 const getNotificationPayload = (
@@ -65,9 +81,9 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
   // 헤더 배지는 목록 개수가 아니라 서버의 미읽음 개수를 기준으로 맞춘다.
   const refreshUnreadCount = useCallback(async () => {
-    const accessToken = await AsyncStorage.getItem("accessToken");
+    const { accessToken, isSocialOnboarding } = await getStoredSession();
 
-    if (!accessToken) {
+    if (!accessToken || isSocialOnboarding) {
       setUnreadCount(0);
       return;
     }
@@ -132,13 +148,15 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
     try {
       const payload = getNotificationPayload(response);
-      const accessToken = await AsyncStorage.getItem("accessToken");
+      const { accessToken, isSocialOnboarding } = await getStoredSession();
 
       if (payload.type === "ACCOUNT_DEACTIVATED") {
         pendingResponseRef.current = null;
         await navigateFromNotification(payload);
         return;
       }
+
+      if (isSocialOnboarding) return;
 
       if (!accessToken) {
         router.replace("/auth/login");
@@ -190,14 +208,14 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     let isActive = true;
 
     const syncAuthenticatedNotifications = async () => {
-      const accessToken = await AsyncStorage.getItem("accessToken");
+      const { accessToken, isSocialOnboarding } = await getStoredSession();
 
       if (!isActive) return;
 
-      if (!accessToken) {
+      if (!accessToken || isSocialOnboarding) {
         registeredAccessTokenRef.current = null;
         setUnreadCount(0);
-        await processPendingResponse();
+        if (!isSocialOnboarding) await processPendingResponse();
         return;
       }
 
@@ -235,8 +253,8 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       );
 
     const pushTokenSubscription = Notifications.addPushTokenListener(() => {
-      void AsyncStorage.getItem("accessToken").then((accessToken) => {
-        if (!accessToken) return;
+      void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
+        if (!accessToken || isSocialOnboarding) return;
 
         void registerPushForUser(accessToken, true);
       });
@@ -263,8 +281,10 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       if (nextState === "active") {
         void refreshUnreadCount();
         void processPendingResponse();
-        void AsyncStorage.getItem("accessToken").then((accessToken) => {
-          if (accessToken) void registerPushForUser(accessToken, true);
+        void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
+          if (accessToken && !isSocialOnboarding) {
+            void registerPushForUser(accessToken, true);
+          }
         });
       }
     });
