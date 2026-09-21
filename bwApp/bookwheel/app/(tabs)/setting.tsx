@@ -34,8 +34,6 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    // The profile request resolves asynchronously and updates the screen state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMyInfo();
   }, []);
 

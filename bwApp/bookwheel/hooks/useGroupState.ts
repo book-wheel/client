@@ -21,7 +21,7 @@ export type MemberStatus = {
 type CurrentBook = {
   id: string;
   title: string;
-  owner: string;
+  senderNickname: string | null;
   image: {
     uri: string;
   };
@@ -130,30 +130,17 @@ export function useGroupState() {
 
   const currentReadingDay = Math.min(Math.max(elapsedDays, 0), readingPeriod);
 
-  // 남은 일수
-  const remainingDays = Math.max(readingPeriod - currentReadingDay, 0);
-
   // 현재 책 정보
-  const currentBook: CurrentBook | null = currentRound
+  const currentBook: CurrentBook | null = dashboard?.myStep
     ? {
-        id: currentRound.bookId,
-        title: currentRound.bookTitle,
-        owner: currentRound.senderNickname,
+        id: dashboard.myStep.bookId,
+        title: dashboard.myStep.bookTitle,
+        senderNickname: dashboard.myStep.senderNickname,
         image: {
-          uri: currentRound.coverImage,
+          uri: dashboard.myStep.coverImage ?? "",
         },
       }
-    : dashboard?.myStep
-      ? {
-          id: dashboard.myStep.bookId,
-          title: dashboard.myStep.bookTitle,
-          owner:
-            dashboard.myStep.ownerNickname ?? dashboard.myStep.senderNickname,
-          image: {
-            uri: dashboard.myStep.coverImage,
-          },
-        }
-      : null;
+    : null;
 
   // API 멤버 데이터를 화면에서 사용하는 MemberStatus 형태로 변환
   const members: MemberStatus[] = groupMembers.map((member) => {
@@ -230,8 +217,6 @@ export function useGroupState() {
     currentRound,
     readingPeriod,
     currentReadingDay,
-    remainingDays,
-
     canSetMemberOrder,
     isScheduleReady,
     isCompleted,

@@ -10,7 +10,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 
 import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
-import { uploadImage } from "@/api/images";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
@@ -22,6 +22,8 @@ export default function Profile() {
   const [nickname, setNickname] = React.useState("");
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
@@ -70,7 +72,11 @@ export default function Profile() {
 
     if (result.canceled) return;
 
-    setImageUri(result.assets[0].uri);
+    const asset = result.assets[0];
+
+    setImageUri(asset.uri);
+    setImageFileName(asset.fileName ?? null);
+    setImageMimeType(asset.mimeType ?? null);
   };
 
   //회원가입(프로필저장)로직
@@ -96,23 +102,22 @@ export default function Profile() {
 
     try {
       if (imageUri) {
-        const fileName = `profile_${Date.now()}.jpg`;
+        const { fileName, mimeType } = getImageFileInfo(
+          imageFileName,
+          imageMimeType,
+          `profile_${Date.now()}`,
+        );
 
-        const profileImageKey = await uploadImage(
+        const profileImageKey = await uploadProfileImage(
           imageUri,
           fileName,
-          "profiles",
-          "image/jpeg",
+          mimeType,
         );
 
         payload.profileImageKey = profileImageKey;
       }
 
-      console.log("📤 setup-profile payload:", payload);
-
       const res = await setupProfile(payload);
-
-      console.log("📥 setup-profile response:", res.data);
 
       if (res.data.success) {
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [

@@ -1,4 +1,5 @@
-import { createMaterialTopTabNavigator } from "expo-router/js-top-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { Tabs } from "expo-router";
 import Home from "./home";
 import State from "./state";
 import Setting from "./setting";

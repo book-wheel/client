@@ -8,6 +8,7 @@
     "backgroundColor": "#F7EDE0",
     "scheme": "bookwheel",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "kr.bookwheel.app",
@@ -22,6 +23,7 @@
         "backgroundImage": "./assets/images/transparent.png",
         "foregroundImage": "./assets/images/logo.png"
       },
+      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "kr.bookwheel.app"
     },
@@ -46,6 +48,7 @@
       "@react-native-community/datetimepicker",
       "expo-font",
       "expo-secure-store",
+      "expo-dev-client",
       [
         "expo-notifications",
         {
@@ -53,10 +56,7 @@
           "color": "#E4A54E",
           "defaultChannel": "default"
         }
-      ],
-      "expo-image",
-      "expo-status-bar",
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

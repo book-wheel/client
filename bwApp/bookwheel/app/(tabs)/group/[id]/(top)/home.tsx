@@ -10,6 +10,12 @@ import ApplicantDetailModal from "@/components/group/ApplicantDetailModal";
 import { updateMemberStatus } from "@/api/group";
 
 export default function Home() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  return <GroupHomeContent key={id} />;
+}
+
+function GroupHomeContent() {
   const {
     id,
     groupInfo,
