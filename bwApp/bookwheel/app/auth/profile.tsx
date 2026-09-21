@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   Alert,
   Text,
   View,
@@ -7,15 +8,29 @@ import {
 } from "react-native";
 
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isAxiosError } from "axios";
 
-import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
+import {
+  setupProfile,
+  checkNicknameDuplicate,
+  type ProfileSetupData,
+  type RequiredConsent,
+} from "@/api/auth";
 import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
 import ProfileImage from "@/components/profile/image";
 import * as ImagePicker from "expo-image-picker";
+import type { ApiResponse } from "@/types/api";
+import {
+  clearSocialOnboarding,
+  getSavedSocialConsent,
+  getSocialOnboardingStep,
+  restartSocialConsent,
+} from "@/utils/socialOnboarding";
 
 export default function Profile() {
   const [comment, setComment] = useState("");
@@ -28,6 +43,48 @@ export default function Profile() {
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [socialConsent, setSocialConsent] = useState<
+    RequiredConsent | null | undefined
+  >(undefined);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSocialConsent = async () => {
+      try {
+        const step = await getSocialOnboardingStep();
+
+        if (step === "consent") {
+          router.replace("/auth/social-consent");
+          return;
+        }
+
+        if (step !== "profile") {
+          if (isActive) setSocialConsent(null);
+          return;
+        }
+
+        const savedConsent = await getSavedSocialConsent();
+        if (!savedConsent) {
+          await restartSocialConsent();
+          router.replace("/auth/social-consent");
+          return;
+        }
+
+        if (isActive) setSocialConsent(savedConsent);
+      } catch (error) {
+        console.log("소셜 가입 동의 정보 확인 실패:", error);
+        await restartSocialConsent();
+        router.replace("/auth/social-consent");
+      }
+    };
+
+    void loadSocialConsent();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   // 닉네임 중복확인 로직
   const checkNickname = async () => {
@@ -81,7 +138,7 @@ export default function Profile() {
 
   //회원가입(프로필저장)로직
   const handleSetupProfile = async () => {
-    if (loading) return;
+    if (loading || socialConsent === undefined) return;
 
     if (!nickname.trim()) {
       console.log("닉네임 입력 필요");
@@ -95,9 +152,10 @@ export default function Profile() {
 
     setLoading(true);
 
-    const payload: any = {
+    const payload: ProfileSetupData = {
       nickname,
       comment: comment || "",
+      ...(socialConsent ?? {}),
     };
 
     try {
@@ -119,7 +177,18 @@ export default function Profile() {
 
       const res = await setupProfile(payload);
 
-      if (res.data.success) {
+      if (res.data.success && res.data.data) {
+        const { accessToken, refreshToken } = res.data.data;
+        if (!accessToken || !refreshToken) {
+          throw new Error("프로필 설정 후 인증 토큰이 누락되었습니다.");
+        }
+
+        await AsyncStorage.multiSet([
+          ["accessToken", accessToken],
+          ["refreshToken", refreshToken],
+        ]);
+        await clearSocialOnboarding();
+
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {
             text: "확인",
@@ -132,18 +201,55 @@ export default function Profile() {
           res.data.error?.message ?? "프로필 설정에 실패하였습니다.",
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log("프로필 설정 에러:", error);
+
+      if (
+        isAxiosError<ApiResponse<unknown>>(error) &&
+        error.response?.data?.error?.code === "AUTH_028"
+      ) {
+        await restartSocialConsent();
+        Alert.alert(
+          "약관 재확인 필요",
+          "약관이 변경되어 다시 확인과 동의가 필요합니다.",
+          [
+            {
+              text: "확인",
+              onPress: () => router.replace("/auth/social-consent"),
+            },
+          ],
+        );
+        return;
+      }
 
       Alert.alert(
         "프로필 설정 실패",
-        error.response?.data?.error?.message ??
+        (isAxiosError<ApiResponse<unknown>>(error)
+          ? error.response?.data?.error?.message
+          : error instanceof Error
+            ? error.message
+            : null) ??
           "프로필 설정 중 오류가 발생하였습니다.",
       );
     } finally {
       setLoading(false);
     }
   };
+
+  if (socialConsent === undefined) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#F7EDE0",
+        }}
+      >
+        <ActivityIndicator color="#E4A54E" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

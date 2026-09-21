@@ -20,6 +20,27 @@ export type ConsentPolicies = {
   marketingVersion: string;
 };
 
+export type RequiredConsent = {
+  termsAgreed: true;
+  privacyAgreed: true;
+  marketingAgreed: false;
+  termsVersion: string;
+  privacyVersion: string;
+  marketingVersion: null;
+};
+
+export type AuthSession = {
+  accessToken: string;
+  refreshToken: string | null;
+  isProfileSet: boolean;
+};
+
+export type ProfileSetupData = {
+  profileImageKey?: string;
+  nickname: string;
+  comment: string;
+} & Partial<RequiredConsent>;
+
 // ==================== AUTH ====================
 
 //회원가입
@@ -68,12 +89,8 @@ export const verifyEmail = (email: string, code: string) => {
 // ==================== USERS ====================
 
 //프로필 설정
-export const setupProfile = (data: {
-  profileImageKey?: string;
-  nickname: string;
-  comment: string;
-}) => {
-  return api.patch("/users/setup-profile", data);
+export const setupProfile = (data: ProfileSetupData) => {
+  return api.patch<ApiResponse<AuthSession>>("/users/setup-profile", data);
 };
 
 // 닉네임 중복 확인

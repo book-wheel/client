@@ -3,15 +3,35 @@ import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
+import type { SocialOnboardingStep } from "@/utils/socialOnboarding";
+
 export default function Index() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [initialRoute, setInitialRoute] = useState<
+    "/auth/login" | "/auth/social-consent" | "/auth/profile" | "/(tabs)" | null
+  >(null);
 
   // 저장된 세션이 있으면 앱 재실행·푸시 진입에서도 로그인을 유지
   useEffect(() => {
     let isActive = true;
 
-    void AsyncStorage.getItem("accessToken").then((accessToken) => {
-      if (isActive) setIsAuthenticated(Boolean(accessToken));
+    void AsyncStorage.multiGet([
+      "accessToken",
+      "socialOnboardingStep",
+    ]).then((entries) => {
+      if (!isActive) return;
+
+      const accessToken = entries[0][1];
+      const onboardingStep = entries[1][1] as SocialOnboardingStep | null;
+
+      if (!accessToken) {
+        setInitialRoute("/auth/login");
+      } else if (onboardingStep === "consent") {
+        setInitialRoute("/auth/social-consent");
+      } else if (onboardingStep === "profile") {
+        setInitialRoute("/auth/profile");
+      } else {
+        setInitialRoute("/(tabs)");
+      }
     });
 
     return () => {
@@ -19,7 +39,7 @@ export default function Index() {
     };
   }, []);
 
-  if (isAuthenticated === null) {
+  if (initialRoute === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E4A54E" />
@@ -27,7 +47,7 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isAuthenticated ? "/(tabs)" : "/auth/login"} />;
+  return <Redirect href={initialRoute} />;
 }
 
 const styles = StyleSheet.create({

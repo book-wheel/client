@@ -6,6 +6,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 
 import { exchangeOAuthCode } from "@/api/auth";
+import {
+  beginSocialOnboarding,
+  clearSocialOnboarding,
+} from "@/utils/socialOnboarding";
 
 export default function OAuthCallback() {
   console.log("🚨 OAuth CALLBACK 실행됨");
@@ -45,9 +49,21 @@ export default function OAuthCallback() {
 
         const { accessToken, refreshToken, isFirstLogin } = res.data.data;
 
-        // 토큰 저장
+        // 최초 소셜 가입자의 accessToken은 약관 동의·프로필 설정에만
+        // 사용할 수 있는 온보딩 토큰이다.
         await AsyncStorage.setItem("accessToken", accessToken);
-        await AsyncStorage.setItem("refreshToken", refreshToken);
+
+        if (isFirstLogin) {
+          await beginSocialOnboarding();
+        } else {
+          await clearSocialOnboarding();
+
+          if (refreshToken) {
+            await AsyncStorage.setItem("refreshToken", refreshToken);
+          } else {
+            await AsyncStorage.removeItem("refreshToken");
+          }
+        }
 
         // 사용한 verifier 즉시 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
@@ -59,7 +75,7 @@ export default function OAuthCallback() {
 
         // 로그인 후 이동
         if (isFirstLogin) {
-          router.replace("/auth/profile");
+          router.replace("/auth/social-consent");
         } else {
           router.replace("/(tabs)");
         }
@@ -68,6 +84,8 @@ export default function OAuthCallback() {
 
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
+        await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+        await clearSocialOnboarding();
 
         Toast.show({
           type: "error",
