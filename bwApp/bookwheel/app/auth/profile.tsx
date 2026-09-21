@@ -10,9 +10,8 @@ import {
 import { router } from "expo-router";
 import React, { useState } from "react";
 
-import { setupProfile, checkNicknameDuplicate, type ProfileSetupRequest } from "@/api/auth";
-import { uploadProfileImage } from "@/api/images";
-import { saveAuthTokens } from "@/utils/authTokens";
+import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
@@ -23,7 +22,9 @@ export default function Profile() {
   const [comment, setComment] = useState("");
   const [nickname, setNickname] = React.useState("");
   const [nicknameMessage, setNicknameMessage] = useState("");
-  const [image, setImage] = useState<ImagePicker.ImagePickerAsset>();
+  const [imageUri, setImageUri] = useState<string | undefined>();
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
@@ -72,7 +73,11 @@ export default function Profile() {
 
     if (result.canceled) return;
 
-    setImage(result.assets[0]);
+    const asset = result.assets[0];
+
+    setImageUri(asset.uri);
+    setImageFileName(asset.fileName ?? null);
+    setImageMimeType(asset.mimeType ?? null);
   };
 
   //회원가입(프로필저장)로직
@@ -91,24 +96,31 @@ export default function Profile() {
 
     setLoading(true);
 
-    const payload: ProfileSetupRequest = {
+    const payload: any = {
       nickname,
       comment: comment || "",
-      profileImageKey: null,
     };
 
     try {
-      if (image) {
-        payload.profileImageKey = await uploadProfileImage(image);
+      if (imageUri) {
+        const { fileName, mimeType } = getImageFileInfo(
+          imageFileName,
+          imageMimeType,
+          `profile_${Date.now()}`,
+        );
+
+        const profileImageKey = await uploadProfileImage(
+          imageUri,
+          fileName,
+          mimeType,
+        );
+
+        payload.profileImageKey = profileImageKey;
       }
 
       const res = await setupProfile(payload);
 
-      if (res.data.success && res.data.data) {
-        if (!res.data.data.accessToken || !res.data.data.refreshToken) {
-          throw new Error("프로필 설정 후 인증 토큰을 받지 못했습니다. 다시 로그인해주세요.");
-        }
-        await saveAuthTokens(res.data.data);
+      if (res.data.success) {
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {
             text: "확인",
@@ -154,7 +166,7 @@ export default function Profile() {
           >
             프로필 설정
           </Text>
-          <ProfileImage uri={image?.uri} onCameraPress={handlePickProfileImage} />
+          <ProfileImage uri={imageUri} onCameraPress={handlePickProfileImage} />
 
           {nicknameMessage && (
             <Text

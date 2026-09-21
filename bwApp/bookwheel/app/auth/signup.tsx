@@ -5,9 +5,8 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 
-import { signup, sendEmail, verifyEmail } from "@/api/auth";
-import { saveAuthTokens } from "@/utils/authTokens";
-import { getApiErrorMessage } from "@/api/axios";
+import { signup, login, sendEmail, verifyEmail } from "@/api/auth";
+import api, { getApiErrorMessage } from "@/api/axios";
 
 import useSignupForm from "@/hooks/useSignupForm";
 import { validateSignup } from "@/utils/signupValidation";
@@ -137,20 +136,22 @@ export default function Signup() {
         mail: form.email,
       });
 
-      if (!signupRes.data.success || !signupRes.data.data) {
-        throw new Error(signupRes.data.error?.message || "회원가입에 실패했습니다.");
-      }
+      if (!signupRes.data.success) return;
 
-      await saveAuthTokens({
-        accessToken: signupRes.data.data.accessToken,
-        refreshToken: null,
+      const loginRes = await login({
+        loginId: form.loginId,
+        password: form.password,
       });
-      router.replace("/auth/profile");
+
+      const { accessToken, isProfileSet } = loginRes.data.data;
+
+      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+      router.replace(isProfileSet ? "/" : "/auth/profile");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error?.message ||
-        error.message ||
         "회원가입에 실패했습니다.";
 
       setErrors((prev: typeof errors) => ({

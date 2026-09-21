@@ -3,8 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { router } from "expo-router";
 
-import { clearAuthTokens } from "@/utils/authTokens";
-
 import type { ApiResponse } from "@/types/api";
 
 const api = axios.create({
@@ -99,7 +97,7 @@ api.interceptors.response.use(
       if (expiredAuthorization !== authorization) {
         expiredAuthorization = authorization;
         try {
-          await clearAuthTokens();
+          await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
         } catch (storageError) {
           console.error("인증 정보 삭제 실패:", storageError);
         }

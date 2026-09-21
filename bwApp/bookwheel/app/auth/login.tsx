@@ -11,7 +11,7 @@ import SocialButton from "@/components/Button/SocialButton";
 import AuthCard from "@/components/card";
 
 import { login } from "@/api/auth";
-import { saveAuthTokens } from "@/utils/authTokens";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import * as SecureStore from "expo-secure-store";
 import {
@@ -44,7 +44,7 @@ export default function Login() {
         password,
       });
 
-      if (!res.data.success || !res.data.data) {
+      if (!res.data.success) {
         setErrorMessage(
           res.data.error?.message || "아이디 또는 비밀번호가 올바르지 않습니다",
         );
@@ -54,10 +54,8 @@ export default function Login() {
 
       const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
-      await saveAuthTokens({
-        accessToken,
-        refreshToken: isProfileSet ? refreshToken : null,
-      });
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("refreshToken", refreshToken);
 
       Toast.show({
         type: "success",
