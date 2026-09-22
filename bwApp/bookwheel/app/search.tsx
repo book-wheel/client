@@ -1,3 +1,6 @@
+import { HeaderBackButton } from "@react-navigation/elements";
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage, showApiError } from "@/api/axios";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
@@ -10,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import BookResultItem from "@/components/search/BookResultItem";
 import DateRangeModal from "@/components/search/DateRangeModal";
@@ -51,7 +53,6 @@ export default function Search() {
   }>();
   const from = getSingleParam(rawFrom);
   const id = getSingleParam(rawId);
-  const insets = useSafeAreaInsets();
   const searchRequestId = useRef(0);
   const loadingMoreRef = useRef(false);
   const interestRequestingRef = useRef(new Set<string>());
@@ -72,6 +73,7 @@ export default function Search() {
   const [totalCount, setTotalCount] = useState(0);
   const [isEnd, setIsEnd] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
 
   const handleGoBack = () => {
@@ -128,7 +130,7 @@ export default function Search() {
         ),
       );
     } catch (error) {
-      console.error("관심 도서 상태 변경 실패:", error);
+      showApiError(error, "관심 도서를 변경하지 못했습니다.");
     } finally {
       interestRequestingRef.current.delete(isbn);
     }
@@ -136,6 +138,7 @@ export default function Search() {
 
   const handleSubmitSearch = async () => {
     Keyboard.dismiss();
+    setSearchError("");
 
     const keyword = query.trim();
     const requestId = ++searchRequestId.current;
@@ -170,7 +173,9 @@ export default function Search() {
       setTotalCount(data?.totalCount ?? 0);
       setIsEnd(data?.isEnd ?? true);
     } catch (e) {
-      console.log(e);
+      if (requestId === searchRequestId.current) {
+        setSearchError(getApiErrorMessage(e, "도서를 불러오지 못했습니다. 다시 검색해주세요."));
+      }
     } finally {
       if (requestId === searchRequestId.current) setLoading(false);
     }
@@ -191,6 +196,7 @@ export default function Search() {
 
     loadingMoreRef.current = true;
     setLoadingMore(true);
+    setSearchError("");
 
     try {
       const res = await searchBooks(
@@ -209,7 +215,9 @@ export default function Search() {
       setTotalCount(data.totalCount);
       setIsEnd(data.isEnd);
     } catch (e) {
-      console.log(e);
+      if (requestId === searchRequestId.current) {
+        setSearchError(getApiErrorMessage(e, "도서를 불러오지 못했습니다. 다시 검색해주세요."));
+      }
     } finally {
       if (requestId === searchRequestId.current) {
         loadingMoreRef.current = false;
@@ -220,20 +228,21 @@ export default function Search() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <TouchableOpacity
-          accessibilityLabel="뒤로가기"
-          accessibilityRole="button"
-          activeOpacity={0.7}
-          onPress={handleGoBack}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={30} color="#513A11" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>도서 검색</Text>
-      </View>
+      <Stack.Screen
+        options={{
+          title: "도서 검색",
+          headerShown: true,
+          headerBackVisible: false,
+          headerLeft: (props) => (
+            <HeaderBackButton
+              {...props}
+              displayMode="minimal"
+              accessibilityLabel="뒤로가기"
+              onPress={handleGoBack}
+            />
+          ),
+        }}
+      />
 
       <View style={styles.searchWrap}>
         <TextInput
@@ -318,6 +327,7 @@ export default function Search() {
         )}
       </View>
 
+      {searchError && books.length > 0 ? <ErrorNotice message={searchError} onRetry={handleLoadMore} /> : null}
       <FlatList
         data={books}
         keyExtractor={(item) => item.isbn}
@@ -349,6 +359,8 @@ export default function Search() {
             <View style={styles.emptyBox}>
               <ActivityIndicator size="large" color="#E4A54E" />
             </View>
+          ) : searchError ? (
+            <ErrorNotice message={searchError} onRetry={handleSubmitSearch} />
           ) : (
             <View style={styles.emptyBox}>
               <Ionicons name="book-outline" size={40} color="#DCC9A5" />

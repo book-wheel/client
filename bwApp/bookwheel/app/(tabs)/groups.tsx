@@ -1,13 +1,19 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import ErrorNotice from "@/components/ErrorNotice";
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView } from "react-native";
 import GroupList from "@/components/groups/MyGroupList";
 import GroupsFab from "@/components/groups/GroupsFab";
 import { useGroups } from "@/hooks/useGroups";
 
 export default function Groups() {
-  const { open, setOpen, activeGroups, otherGroups } = useGroups();
+  const { open, setOpen, activeGroups, otherGroups, error, loading, reload } = useGroups();
 
   return (
     <View style={{ flex: 1 }}>
+      {loading ? (
+        <ActivityIndicator />
+      ) : error ? (
+        <ErrorNotice message={error} onRetry={reload} />
+      ) : (
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={{ alignItems: "center" }}>
           <View style={styles.section}>
@@ -27,6 +33,7 @@ export default function Groups() {
           ))}
         </View>
       </ScrollView>
+      )}
 
       <GroupsFab open={open} setOpen={setOpen} />
     </View>

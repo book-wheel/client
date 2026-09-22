@@ -1,3 +1,5 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage } from "@/api/axios";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,13 +23,18 @@ export default function BookHistory() {
     coverImage?: string;
   }>();
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [history, setHistory] = useState<BookHistoryData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id || !ownBookId) return;
 
+    let active = true;
     const fetchHistory = async () => {
+      setErrorMessage("");
+      setLoading(true);
       try {
         const data = await getBookHistory(id, ownBookId);
 
@@ -41,16 +48,19 @@ export default function BookHistory() {
           })),
         );
 
+        if (!active) return;
         setHistory(data);
       } catch (error) {
-        console.error("책 히스토리 조회 실패:", error);
+        if (!active) return;
+        setErrorMessage(getApiErrorMessage(error, "책 히스토리를 불러오지 못했습니다."));
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
-    fetchHistory();
-  }, [id, ownBookId]);
+    void fetchHistory();
+    return () => { active = false; };
+  }, [id, ownBookId, retryCount]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("ko-KR", {
@@ -59,6 +69,15 @@ export default function BookHistory() {
       day: "2-digit",
     });
   };
+
+  if (errorMessage) {
+    return (
+      <ErrorNotice
+        message={errorMessage}
+        onRetry={() => setRetryCount((count) => count + 1)}
+      />
+    );
+  }
 
   if (loading) {
     return (

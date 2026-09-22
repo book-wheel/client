@@ -1,3 +1,5 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
 import { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -18,6 +20,8 @@ type Member = {
 export default function MemberOrderEdit() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,10 +29,14 @@ export default function MemberOrderEdit() {
   useEffect(() => {
     if (!id) return;
 
+    let active = true;
     const fetchMembers = async () => {
+      setErrorMessage("");
+      setLoading(true);
       try {
         const response = await getGroupMembers(id);
 
+        if (!active) return;
         setMembers(
           response.members.map((member: Member) => ({
             memberId: member.memberId,
@@ -37,14 +45,16 @@ export default function MemberOrderEdit() {
           })),
         );
       } catch (error) {
-        console.error("멤버 조회 실패:", error);
+        if (!active) return;
+        setErrorMessage(getApiErrorMessage(error, "모임 멤버를 불러오지 못했습니다."));
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
-    fetchMembers();
-  }, [id]);
+    void fetchMembers();
+    return () => { active = false; };
+  }, [id, retryCount]);
 
   const handleRandomOrder = async () => {
     if (!id) return;
@@ -66,13 +76,9 @@ export default function MemberOrderEdit() {
 
       Alert.alert("순서 변경 완료", "읽기 순서가 변경되었습니다.");
     } catch (error: any) {
-      console.error("랜덤 순서 지정 실패:", error);
+      logApiError("랜덤 순서 지정 실패:", error);
 
-      Alert.alert(
-        "순서 지정 실패",
-        error?.response?.data?.error?.message ??
-          "읽기 순서를 변경하지 못했습니다.",
-      );
+      showApiError(error, "읽기 순서를 변경하지 못했습니다.");
     } finally {
       setSaving(false);
     }
@@ -125,17 +131,9 @@ export default function MemberOrderEdit() {
         },
       ]);
     } catch (error: any) {
-      console.error(
-        "읽기 순서/일정 생성 실패:",
-        error?.response?.status,
-        JSON.stringify(error?.response?.data, null, 2),
-      );
+      logApiError("읽기 순서/일정 생성 실패:", error);
 
-      Alert.alert(
-        "저장 실패",
-        error?.response?.data?.error?.message ??
-          "읽기 순서 또는 일정 저장에 실패했습니다.",
-      );
+      showApiError(error, "읽기 순서 또는 일정 저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -237,6 +235,15 @@ export default function MemberOrderEdit() {
       </TouchableOpacity>
     );
   };
+
+  if (errorMessage) {
+    return (
+      <ErrorNotice
+        message={errorMessage}
+        onRetry={() => setRetryCount((count) => count + 1)}
+      />
+    );
+  }
 
   if (loading) {
     return (

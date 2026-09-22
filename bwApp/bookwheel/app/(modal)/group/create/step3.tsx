@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { showApiError } from "@/api/axios";
+import { Alert, View, Text, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { common } from "@/styles/common";
 import { router } from "expo-router";
@@ -57,19 +58,19 @@ export default function Step3() {
   const handleCreateGroup = async () => {
     // 모임명 검사
     if (!groupName.trim()) {
-      alert("모임명을 입력해주세요.");
+      Alert.alert("오류", "모임명을 입력해주세요.", [{ text: "확인" }]);
       return;
     }
 
     // 오프라인인데 지역 선택 안한 경우
     if (groupOffline && !groupRegion) {
-      alert("지역을 선택해주세요.");
+      Alert.alert("오류", "지역을 선택해주세요.", [{ text: "확인" }]);
       return;
     }
 
     // 비공개인데 비밀번호 없음
     if (!groupPublic && !groupPassword.trim()) {
-      alert("비밀번호를 입력해주세요.");
+      Alert.alert("오류", "비밀번호를 입력해주세요.", [{ text: "확인" }]);
       return;
     }
 
@@ -101,11 +102,7 @@ export default function Step3() {
 
       router.replace(`/group/${groupId}/home`);
     } catch (error: any) {
-      console.log("응답 데이터:", error.response?.data);
-      console.log("상태 코드:", error.response?.status);
-      console.log("에러 메시지:", error.message);
-
-      console.error(error);
+      showApiError(error, "모임을 생성하지 못했습니다. 다시 시도해주세요.");
     }
   };
 

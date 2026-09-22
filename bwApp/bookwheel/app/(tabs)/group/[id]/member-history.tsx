@@ -1,3 +1,5 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage } from "@/api/axios";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
@@ -18,28 +20,45 @@ export default function MemberHistory() {
     ? rawMemberName[0]
     : rawMemberName;
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [history, setHistory] = useState<ReadingHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!groupId || !userPK) return;
 
+    let active = true;
     const fetchHistory = async () => {
+      setErrorMessage("");
+      setIsLoading(true);
       try {
         const data = await getReadingHistory(groupId, userPK);
 
         console.log("독서 내역:", data);
 
+        if (!active) return;
         setHistory(data);
       } catch (error) {
-        console.error("독서 내역 조회 실패:", error);
+        if (!active) return;
+        setErrorMessage(getApiErrorMessage(error, "독서 내역을 불러오지 못했습니다."));
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
-    fetchHistory();
-  }, [groupId, userPK]);
+    void fetchHistory();
+    return () => { active = false; };
+  }, [groupId, userPK, retryCount]);
+
+  if (errorMessage) {
+    return (
+      <ErrorNotice
+        message={errorMessage}
+        onRetry={() => setRetryCount((count) => count + 1)}
+      />
+    );
+  }
 
   if (isLoading) {
     return (

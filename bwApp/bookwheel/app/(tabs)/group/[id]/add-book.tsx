@@ -1,9 +1,11 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage, showApiError } from "@/api/axios";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { getBookDetail } from "@/api/books";
-import { getDashboard, registerBook } from "@/api/group-dashboard";
+import { registerBook } from "@/api/group-dashboard";
 import AddBookForm from "@/components/group/add-book/AddBookForm";
 import type { BookDetail } from "@/types/books";
 
@@ -13,12 +15,15 @@ export default function AddBook() {
   const groupId = Array.isArray(id) ? id[0] : id;
   const isbn = Array.isArray(rowIsbn) ? rowIsbn[0] : rowIsbn;
 
+  const [retryCount, setRetryCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
   const [selectedBook, setSelectedBook] = useState<BookDetail | null>(null);
 
   useEffect(() => {
     if (!isbn) return;
 
     let active = true;
+    setErrorMessage("");
 
     const fetchBook = async () => {
       try {
@@ -27,7 +32,7 @@ export default function AddBook() {
 
         if (active && book) setSelectedBook(book);
       } catch (e) {
-        console.log(e);
+        if (active) setErrorMessage(getApiErrorMessage(e, "도서 정보를 불러오지 못했습니다."));
       }
     };
 
@@ -36,7 +41,7 @@ export default function AddBook() {
     return () => {
       active = false;
     };
-  }, [isbn]);
+  }, [isbn, retryCount]);
 
   const handleRegister = async ({
     bookCondition,
@@ -60,18 +65,23 @@ export default function AddBook() {
         noteToReader,
       });
 
-      const dashboard = await getDashboard(groupId);
-      console.log("등록 직후 대시보드", JSON.stringify(dashboard, null, 2));
-
       router.replace({
         pathname: "/group/[id]/state",
         params: { id: groupId },
       });
     } catch (error: any) {
-      console.log("status", error.response?.status);
-      console.log("data", JSON.stringify(error.response?.data, null, 2));
+      showApiError(error, "도서를 등록하지 못했습니다. 다시 시도해주세요.");
     }
   };
+
+  if (errorMessage) {
+    return (
+      <ErrorNotice
+        message={errorMessage}
+        onRetry={() => setRetryCount((count) => count + 1)}
+      />
+    );
+  }
 
   if (!selectedBook) {
     return (

@@ -1,11 +1,11 @@
-import { getApiErrorMessage } from "@/api/axios";
+import { showApiError } from "@/api/axios";
 import NotificationList from "@/components/notifications/NotificationList";
 import { useNotificationContext } from "@/contexts/notifications";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { NotificationItem } from "@/types/notifications";
 import { navigateFromNotification } from "@/utils/notificationNavigation";
 import { Stack } from "expo-router";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Notification() {
   const { unreadCount } = useNotificationContext();
@@ -25,7 +25,7 @@ export default function Notification() {
   const handleNotificationMarkRead = (notification: NotificationItem) => {
     if (!notification.isRead) {
       void markRead(notification).catch((caughtError) => {
-        console.error("알림 읽음 처리 실패:", caughtError);
+        showApiError(caughtError, "알림을 읽음 처리하지 못했습니다.");
       });
     }
   };
@@ -46,10 +46,7 @@ export default function Notification() {
     try {
       await markAllRead();
     } catch (caughtError) {
-      Alert.alert(
-        "알림",
-        getApiErrorMessage(caughtError, "모두 읽음 처리에 실패했습니다."),
-      );
+      showApiError(caughtError, "모두 읽음 처리에 실패했습니다.");
     }
   };
 
@@ -60,11 +57,6 @@ export default function Notification() {
       <Stack.Screen
         options={{
           title: "알림",
-          headerTitleStyle: styles.headerTitle,
-          headerTintColor: "#513A11",
-          headerShadowVisible: false,
-          // 뒤로가기 화살표만 표시
-          headerBackButtonDisplayMode: "minimal",
           headerRight: () => (
             <Pressable
               accessibilityLabel="모든 알림 읽음 처리"
@@ -105,11 +97,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-  },
-  headerTitle: {
-    color: "#513A11",
-    fontSize: 20,
-    fontWeight: "800",
   },
   markAllText: {
     color: "#8A642B",
