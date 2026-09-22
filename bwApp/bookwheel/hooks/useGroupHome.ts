@@ -1,10 +1,10 @@
-import { getMyInfo } from "@/api/auth";
-import type { GroupMember } from "@/types/groupMembers";
 import { getApiErrorMessage } from "@/api/axios";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 
+import { getMyInfo } from "@/api/auth";
 import { getGroupMembers, getGroupRequests, getGroupDetail } from "@/api/group";
+import type { GroupMembersData } from "@/types/groupMembers";
 
 export type Applicant = {
   id: string;
@@ -37,6 +37,13 @@ export function useGroupHome() {
 
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLeader, setIsLeader] = useState(false);
+  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
+    intro: "",
+    rules: "",
+    currentMembers: 0,
+    maxMembers: 0,
+    isOffline: false,
+  });
 
   // 화면 타이틀
   useEffect(() => {
@@ -95,22 +102,20 @@ export function useGroupHome() {
       setMembersError("");
       try {
         const [memberData, profileResponse] = await Promise.all([
-          getGroupMembers(id),
+          getGroupMembers(id) as Promise<GroupMembersData>,
           getMyInfo(),
         ]);
+        if (!active) return;
+
         const profile = profileResponse.data.data;
         if (!profile) throw new Error("내 정보를 불러오지 못했습니다.");
 
-        if (!active) return;
-
-        const currentMember = memberData.members.find(
-          (member: GroupMember) => member.userPK === profile.userPK,
+        const leader = memberData.members.some(
+          (member) => member.role === "LEADER" && member.userPK === profile.userPK,
         );
-        const leader = currentMember?.role === "LEADER";
         setIsLeader(leader);
 
         if (leader) {
-
           const requestData = await getGroupRequests(id);
 
           if (!active) return;
@@ -128,7 +133,10 @@ export function useGroupHome() {
           setApplicants([]);
         }
       } catch (error) {
-        if (active) setMembersError(getApiErrorMessage(error, "모임 멤버와 가입 신청을 불러오지 못했습니다."));
+        if (!active) return;
+        setIsLeader(false);
+        setApplicants([]);
+        setMembersError(getApiErrorMessage(error, "모임 멤버와 가입 신청을 불러오지 못했습니다."));
       }
     };
 
@@ -138,16 +146,6 @@ export function useGroupHome() {
       active = false;
     };
   }, [id, retryCount]);
-
-  const [groupInfo, setGroupInfo] = useState<GroupInfo>({
-    intro: "",
-    rules: "",
-
-    currentMembers: 0,
-    maxMembers: 0,
-
-    isOffline: false,
-  });
 
   return {
     id,

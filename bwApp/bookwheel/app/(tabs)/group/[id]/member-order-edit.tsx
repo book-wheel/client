@@ -100,11 +100,19 @@ export default function MemberOrderEdit() {
       // 2. 현재 일정 정보 조회
       const schedule = await getGroupSchedule(id);
 
+      if (!schedule.startDate || !schedule.readingPeriod) {
+        Alert.alert(
+          "일정 설정 필요",
+          "시작일과 독서 기간을 먼저 설정해주세요.",
+        );
+        return;
+      }
+
       // 3. 현재 멤버 수를 목표 인원으로 사용해서 최초 일정 생성
       await createSchedule(id, {
         startDate: schedule.startDate,
         readingPeriod: schedule.readingPeriod,
-        endDate: schedule.endDate,
+        ...(schedule.endDate ? { endDate: schedule.endDate } : {}),
         excludedDates: schedule.excludedDates ?? [],
         excludedDateRanges: schedule.excludedDateRanges ?? [],
         targetMemberCount: schedule.currentMemberCount,

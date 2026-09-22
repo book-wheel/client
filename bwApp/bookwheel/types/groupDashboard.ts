@@ -15,6 +15,7 @@ export interface MyStep {
   bookTitle: string;
   coverImage: string | null;
   senderNickname: string | null;
+  ownerNickname?: string | null;
 }
 
 export interface MyBookStep {
@@ -61,7 +62,7 @@ export interface ExcludedDateRange {
 export type CreateScheduleRequest = {
   startDate: string;
   readingPeriod: number;
-  endDate: string;
+  endDate?: string;
   excludedDates: string[];
   excludedDateRanges: {
     startDate: string;
@@ -91,9 +92,9 @@ export type GroupScheduleRound = {
 };
 
 export type GroupScheduleData = {
-  startDate: string;
-  readingPeriod: number;
-  endDate: string;
+  startDate: string | null;
+  readingPeriod: number | null;
+  endDate: string | null;
   excludedDates: string[];
   excludedDateRanges: {
     startDate: string;
@@ -101,7 +102,7 @@ export type GroupScheduleData = {
   }[];
   scheduleStatus: string;
   scheduleReconfigurationStatus: string;
-  targetMemberCount: number;
+  targetMemberCount: number | null;
   currentMemberCount: number;
   canStart: boolean;
   blockingReasons: string[];
@@ -111,10 +112,10 @@ export type GroupScheduleData = {
   }[];
   plannedRoundCount: number;
   executableRoundCount: number;
-  plannedEndDate: string;
-  executableEndDate: string;
-  protectedRoundCount: number;
-  minTotalRoundCount: number;
+  plannedEndDate: string | null;
+  executableEndDate: string | null;
+  protectedRoundCount: number | null;
+  minTotalRoundCount: number | null;
   rounds: GroupScheduleRound[];
 };
 

@@ -83,7 +83,7 @@ export const getGroupSchedule = async (groupId: string) => {
 export type CreateFutureScheduleRequest = {
   totalRoundCount: number;
   readingPeriod: number;
-  endDate: string;
+  endDate?: string;
   excludedDates: string[];
   excludedDateRanges: {
     startDate: string;

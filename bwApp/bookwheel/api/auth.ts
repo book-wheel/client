@@ -14,6 +14,12 @@ export type MyProfile = {
   profileImageKey: string | null;
 };
 
+export type ConsentPolicies = {
+  termsVersion: string;
+  privacyVersion: string;
+  marketingVersion: string;
+};
+
 // ==================== AUTH ====================
 
 //회원가입
@@ -21,8 +27,22 @@ export const signup = (data: {
   loginId: string;
   password: string;
   mail: string;
+
+  termsAgreed: boolean;
+  privacyAgreed: boolean;
+  termsVersion: string;
+  privacyVersion: string;
+  marketingAgreed: boolean;
+  marketingVersion: string | null;
 }) => {
   return api.post("/auth/signup", data);
+};
+
+// 현재 약관 버전 조회
+export const getCurrentConsentPolicies = () => {
+  return api.get<ApiResponse<ConsentPolicies>>(
+    "/auth/consent-policies/current",
+  );
 };
 
 //로그인

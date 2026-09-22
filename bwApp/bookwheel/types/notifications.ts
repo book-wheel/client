@@ -79,6 +79,7 @@ export type NotificationPreferences = {
   groupEnabled: boolean;
   roundEnabled: boolean;
   communityEnabled: boolean;
+  chatEnabled: boolean;
   pushEnabled: boolean;
   expoPushToken: string | null;
 };
@@ -89,6 +90,7 @@ export type UpdateNotificationPreferencesRequest = Partial<
     | "groupEnabled"
     | "roundEnabled"
     | "communityEnabled"
+    | "chatEnabled"
     | "pushEnabled"
     | "expoPushToken"
   >

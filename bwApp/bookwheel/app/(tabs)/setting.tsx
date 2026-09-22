@@ -191,6 +191,20 @@ export default function Settings() {
             borderWidth: 1,
             borderColor: "#eee",
           }}
+          onPress={() => router.push("/(tabs)/notification-settings")}
+        >
+          <Text style={{ fontWeight: "500" }}>알림 설정</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{
+            padding: 16,
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: "#eee",
+          }}
           onPress={() => void handleLogout()}
         >
           <Text style={{ fontWeight: "500" }}>로그아웃</Text>

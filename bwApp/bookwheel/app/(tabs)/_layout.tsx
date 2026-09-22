@@ -45,6 +45,17 @@ export default function TabsLayout() {
       <Tabs.Screen name="groups" options={{ title: "모임" }} />
       <Tabs.Screen name="books" options={{ title: "책" }} />
       <Tabs.Screen name="setting" options={{ title: "설정" }} />
+      <Tabs.Screen
+        name="notification-settings"
+        options={{
+          href: null,
+          headerShown: true,
+          title: "알림 설정",
+          headerTintColor: "#513A11",
+          headerTitleStyle: { fontSize: 18, fontWeight: "800" },
+          headerShadowVisible: false,
+        }}
+      />
 
       <Tabs.Screen name="group" options={{ href: null }} />
     </Tabs>
