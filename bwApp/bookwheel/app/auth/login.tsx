@@ -90,11 +90,7 @@ export default function Login() {
     try {
       const codeVerifier = generateCodeVerifier();
 
-      console.log("🔐 codeVerifier:", codeVerifier);
-
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-      console.log("🔐 codeChallenge:", codeChallenge);
 
       await SecureStore.setItemAsync("oauth_code_verifier", codeVerifier);
 
@@ -102,11 +98,9 @@ export default function Login() {
         `${API_BASE_URL}/auth/authorize/${provider}` +
         `?codeChallenge=${encodeURIComponent(codeChallenge)}`;
 
-      console.log("🌐 OAuth URL:", url);
-
       await Linking.openURL(url);
-    } catch (error) {
-      console.error("❌ 소셜 로그인 시작 실패:", error);
+    } catch {
+      console.error("Social login could not be started.");
     }
   };
 

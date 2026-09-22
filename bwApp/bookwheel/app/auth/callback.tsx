@@ -12,11 +12,7 @@ import {
 } from "@/utils/socialOnboarding";
 
 export default function OAuthCallback() {
-  console.log("🚨 OAuth CALLBACK 실행됨");
-
   const { code } = useLocalSearchParams<{ code?: string }>();
-
-  console.log("🚨 받은 code:", code);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -36,16 +32,11 @@ export default function OAuthCallback() {
           throw new Error("codeVerifier가 없습니다.");
         }
 
-        console.log("🔑 code:", code);
-        console.log("🔐 codeVerifier:", codeVerifier);
-
         // 1회용 code를 accessToken / refreshToken으로 교환
         const res = await exchangeOAuthCode({
           code,
           codeVerifier,
         });
-
-        console.log("✅ OAuth token response:", res.data);
 
         const { accessToken, refreshToken, isFirstLogin } = res.data.data;
 
@@ -79,8 +70,8 @@ export default function OAuthCallback() {
         } else {
           router.replace("/(tabs)");
         }
-      } catch (error) {
-        console.error("소셜 로그인 처리 실패:", error);
+      } catch {
+        console.error("Social login could not be completed.");
 
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
