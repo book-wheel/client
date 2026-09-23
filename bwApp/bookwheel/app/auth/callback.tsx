@@ -1,3 +1,4 @@
+import { logApiError } from "@/api/axios";
 import { useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -97,8 +98,8 @@ export default function OAuthCallback() {
         } else {
           router.replace("/(tabs)");
         }
-      } catch {
-        console.error(`Social login failed at stage: ${stage}.`);
+      } catch (error) {
+        logApiError(`소셜 로그인 처리 실패 (${stage}):`, error);
 
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
@@ -107,7 +108,7 @@ export default function OAuthCallback() {
 
         Toast.show({
           type: "error",
-          text1: "소셜 로그인 실패",
+          text1: "오류",
           text2: __DEV__
             ? `실패 단계: ${stage}`
             : "잠시 후 다시 시도해주세요.",

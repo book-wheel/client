@@ -1,3 +1,4 @@
+import { showApiError } from "@/api/axios";
 import { useState } from "react";
 import { router } from "expo-router";
 import type { ImagePickerAsset } from "expo-image-picker";
@@ -60,23 +61,7 @@ export function useCompletedBooks(groupId: string, wheelStateId: string) {
         },
       });
     } catch (error: any) {
-      const message =
-        error.response?.data?.error?.message ?? "완독 인증에 실패했습니다.";
-
-      console.error("완독 인증 실패:", {
-        status: error.response?.status,
-        data: error.response?.data,
-        message,
-        url: error.config?.url,
-        method: error.config?.method,
-      });
-
-      // 실패 토스트
-      Toast.show({
-        type: "error",
-        text1: "완독 인증에 실패했어요.",
-        text2: message,
-      });
+      showApiError(error, "완독 인증에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsCompleting(false);
     }

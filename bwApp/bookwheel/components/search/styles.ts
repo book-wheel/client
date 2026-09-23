@@ -6,25 +6,8 @@ export const searchStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 18,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    marginLeft: 6,
-    color: "#513A11",
-    fontSize: 27,
-    fontWeight: "900",
-  },
   searchWrap: {
+    marginTop: 16,
     minHeight: 54,
     marginHorizontal: 20,
     borderWidth: 1,

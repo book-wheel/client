@@ -1,3 +1,4 @@
+import { showApiError } from "@/api/axios";
 import {
   ActivityIndicator,
   Alert,
@@ -116,7 +117,7 @@ export default function Profile() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("알림", "사진 접근 권한이 필요합니다.");
+      Alert.alert("오류", "사진 접근 권한이 필요합니다.", [{ text: "확인" }]);
       return;
     }
 
@@ -197,8 +198,9 @@ export default function Profile() {
         ]);
       } else {
         Alert.alert(
-          "프로필 설정 실패",
+          "오류",
           res.data.error?.message ?? "프로필 설정에 실패하였습니다.",
+          [{ text: "확인" }],
         );
       }
     } catch (error: unknown) {
@@ -222,15 +224,7 @@ export default function Profile() {
         return;
       }
 
-      Alert.alert(
-        "프로필 설정 실패",
-        (isAxiosError<ApiResponse<unknown>>(error)
-          ? error.response?.data?.error?.message
-          : error instanceof Error
-            ? error.message
-            : null) ??
-          "프로필 설정 중 오류가 발생하였습니다.",
-      );
+      showApiError(error, "프로필 설정 중 오류가 발생하였습니다.");
     } finally {
       setLoading(false);
     }

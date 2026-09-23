@@ -1,3 +1,4 @@
+import { logApiError, showApiError } from "@/api/axios";
 import {
   getUnreadNotificationCount,
   markNotificationRead,
@@ -36,13 +37,7 @@ const NotificationContext = createContext<NotificationContextValue | null>(
 
 const isLoggedOutRoute = (pathname: string) => {
   return (
-    pathname === "/auth/login" ||
-    pathname === "/auth/signup" ||
-    pathname === "/auth/callback" ||
-    pathname === "/auth/social-consent" ||
-    pathname === "/auth/profile" ||
-    pathname === "/auth/idfind" ||
-    pathname === "/auth/pwfind" ||
+    pathname.startsWith("/auth/") ||
     pathname === "/intro"
   );
 };
@@ -81,14 +76,12 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
   // 헤더 배지는 목록 개수가 아니라 서버의 미읽음 개수를 기준으로 맞춘다.
   const refreshUnreadCount = useCallback(async () => {
-    const { accessToken, isSocialOnboarding } = await getStoredSession();
-
-    if (!accessToken || isSocialOnboarding) {
-      setUnreadCount(0);
-      return;
-    }
-
     try {
+      const { accessToken, isSocialOnboarding } = await getStoredSession();
+      if (!accessToken || isSocialOnboarding) {
+        setUnreadCount(0);
+        return;
+      }
       const response = await getUnreadNotificationCount();
       const result = response.data;
 
@@ -96,7 +89,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
         setUnreadCount(Math.max(0, result.data.unreadCount));
       }
     } catch (error) {
-      console.error("읽지 않은 알림 개수 조회 실패:", error);
+      logApiError("읽지 않은 알림 개수 조회 실패:", error);
     }
   }, []);
 
@@ -130,7 +123,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
         await registerForPushNotifications();
       } catch (error) {
         registeredAccessTokenRef.current = null;
-        console.error("푸시 알림 등록 실패:", error);
+        logApiError("푸시 알림 등록 실패:", error);
       } finally {
         isRegisteringPushRef.current = false;
       }
@@ -168,14 +161,15 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
       if (Number.isInteger(notificationId) && notificationId > 0) {
         await markNotificationRead(notificationId).catch((error) => {
-          console.error("푸시 알림 읽음 처리 실패:", error);
+          logApiError("푸시 알림 읽음 처리 실패:", error);
         });
       }
 
       signalNotificationsChanged();
       await navigateFromNotification(payload);
     } catch (error) {
-      console.error("푸시 알림 이동 처리 실패:", error);
+      logApiError("푸시 알림 이동 처리 실패:", error);
+      showApiError(error, "알림을 열지 못했습니다. 다시 시도해주세요.");
     } finally {
       isProcessingResponseRef.current = false;
 
@@ -191,7 +185,9 @@ export function NotificationProvider({ children }: PropsWithChildren) {
   const queueNotificationResponse = useCallback(
     (response: Notifications.NotificationResponse) => {
       pendingResponseRef.current = response;
-      void Notifications.clearLastNotificationResponseAsync();
+      void Notifications.clearLastNotificationResponseAsync().catch((error) => {
+        logApiError("마지막 푸시 응답 초기화 실패:", error);
+      });
       void processPendingResponse();
     },
     [processPendingResponse],
@@ -226,7 +222,9 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       await processPendingResponse();
     };
 
-    void syncAuthenticatedNotifications();
+    void syncAuthenticatedNotifications().catch((error) => {
+      logApiError("알림 동기화 실패:", error);
+    });
 
     return () => {
       isActive = false;
@@ -256,13 +254,13 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
         if (!accessToken || isSocialOnboarding) return;
 
-        void registerPushForUser(accessToken, true);
-      });
+        return registerPushForUser(accessToken, true);
+      }).catch((error) => logApiError("푸시 토큰 동기화 실패:", error));
     });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) queueNotificationResponse(response);
-    });
+    }).catch((error) => logApiError("마지막 푸시 응답 조회 실패:", error));
 
     return () => {
       receivedSubscription.remove();
@@ -283,9 +281,9 @@ export function NotificationProvider({ children }: PropsWithChildren) {
         void processPendingResponse();
         void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
           if (accessToken && !isSocialOnboarding) {
-            void registerPushForUser(accessToken, true);
+            return registerPushForUser(accessToken, true);
           }
-        });
+        }).catch((error) => logApiError("푸시 토큰 동기화 실패:", error));
       }
     });
 

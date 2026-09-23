@@ -1,3 +1,5 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { getApiErrorMessage } from "@/api/axios";
 import { useEffect, useState } from "react";
 import { View, ScrollView } from "react-native";
 import SearchInput from "@/components/Input/search";
@@ -37,6 +39,7 @@ export default function Explore() {
   };
 
   //검색창
+  const [errorMessage, setErrorMessage] = useState("");
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,6 +50,7 @@ export default function Explore() {
   ) => {
     try {
       setIsLoading(true);
+      setErrorMessage("");
 
       const response = await getGroups({
         keyword,
@@ -57,7 +61,7 @@ export default function Explore() {
 
       setGroups(mappedGroups);
     } catch (error) {
-      console.error(error);
+      setErrorMessage(getApiErrorMessage(error, "모임을 불러오지 못했습니다."));
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +202,15 @@ export default function Explore() {
         showsVerticalScrollIndicator={false}
       >
         <View style={{ width: "100%", paddingHorizontal: 16 }}>
-          {filteredGroups.map((g) => (
+          {errorMessage ? (
+            <ErrorNotice
+              message={errorMessage}
+              onRetry={() => fetchGroups(
+                query,
+                filter === "online" ? "ONLINE" : filter === "offline" ? "OFFLINE" : undefined,
+              )}
+            />
+          ) : filteredGroups.map((g) => (
             <GroupListExtended
               key={g.id}
               group={g}

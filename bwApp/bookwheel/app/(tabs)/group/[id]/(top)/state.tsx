@@ -1,4 +1,5 @@
-import { ScrollView } from "react-native";
+import ErrorNotice from "@/components/ErrorNotice";
+import { ActivityIndicator, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { useGroupState } from "@/hooks/useGroupState";
 
@@ -11,6 +12,9 @@ import CompletedGroupDashboard from "@/components/group/state/CompletedGroupDash
 
 export default function State() {
   const {
+    isLoading,
+    errorMessage,
+    retry,
     id,
     members,
     groupMembers,
@@ -27,6 +31,10 @@ export default function State() {
     isScheduleReady,
     isLeader,
   } = useGroupState();
+
+  if (isLoading) return <ActivityIndicator color="#E4A54E" />;
+
+  if (errorMessage) return <ErrorNotice message={errorMessage} onRetry={retry} />;
 
   // 일정이 준비 완료 상태일 때
   if (isScheduleReady && schedule) {

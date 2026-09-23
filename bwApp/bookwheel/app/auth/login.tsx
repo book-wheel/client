@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "@/api/axios";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -72,14 +73,8 @@ export default function Login() {
       } else {
         router.replace("/auth/profile");
       }
-    } catch {
-      Toast.show({
-        type: "error",
-        text1: "로그인 실패",
-        text2: "아이디 또는 비밀번호를 확인해주세요.",
-      });
-
-      setErrorMessage("아이디 또는 비밀번호가 올바르지 않습니다");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "아이디 또는 비밀번호를 확인해주세요."));
     } finally {
       setLoading(false);
     }
@@ -99,8 +94,8 @@ export default function Login() {
         `?codeChallenge=${encodeURIComponent(codeChallenge)}`;
 
       await Linking.openURL(url);
-    } catch {
-      console.error("Social login could not be started.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "소셜 로그인을 시작하지 못했습니다. 다시 시도해주세요."));
     }
   };
 

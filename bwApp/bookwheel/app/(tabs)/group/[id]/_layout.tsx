@@ -1,6 +1,6 @@
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
-import { TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { HeaderBackButton } from "@react-navigation/elements";
+import { headerOptions } from "@/constants/header";
 
 export default function GroupIdLayout() {
   const router = useRouter();
@@ -8,15 +8,19 @@ export default function GroupIdLayout() {
   const groupTitle = name || "교환독서방";
 
   return (
-    <Stack screenOptions={{ headerShown: true }}>
+    <Stack screenOptions={{ ...headerOptions, headerShown: true, headerBackButtonDisplayMode: "minimal" }}>
       <Stack.Screen
         name="(top)"
         options={{
           title: groupTitle,
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.push("/(tabs)/groups")}>
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
+          headerBackVisible: false,
+          headerLeft: (props) => (
+            <HeaderBackButton
+              {...props}
+              displayMode="minimal"
+              accessibilityLabel="뒤로가기"
+              onPress={() => router.push("/(tabs)/groups")}
+            />
           ),
         }}
       />

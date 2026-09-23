@@ -13,7 +13,7 @@ import {
   getCurrentConsentPolicies,
   type ConsentPolicies,
 } from "@/api/auth";
-import api from "@/api/axios";
+import api, { getApiErrorMessage } from "@/api/axios";
 
 import useSignupForm from "@/hooks/useSignupForm";
 import { validateSignup } from "@/utils/signupValidation";
@@ -115,7 +115,10 @@ export default function Signup() {
         }));
       }
     } catch (error) {
-      console.log(error);
+      setErrors((prev: typeof errors) => ({
+        ...prev,
+        email: getApiErrorMessage(error, "이메일 인증에 실패했습니다. 다시 시도해주세요."),
+      }));
     }
   };
 

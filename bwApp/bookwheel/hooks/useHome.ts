@@ -1,3 +1,4 @@
+import { getApiErrorMessage, logApiError } from "@/api/axios";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { getMyInfo } from "@/api/auth";
@@ -63,8 +64,8 @@ export function useHome() {
         })),
       );
     } catch (fetchError) {
-      console.error("홈 화면 데이터 조회 실패", fetchError);
-      setError("홈 화면 정보를 불러오지 못했어요.");
+      logApiError("홈 화면 데이터 조회 실패", fetchError);
+      setError(getApiErrorMessage(fetchError, "홈 화면 정보를 불러오지 못했어요."));
     } finally {
       setIsLoading(false);
     }
@@ -84,5 +85,6 @@ export function useHome() {
     myGroups,
     isLoading,
     error,
+    retry: fetchHome,
   };
 }
