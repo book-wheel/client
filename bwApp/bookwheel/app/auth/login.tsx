@@ -18,6 +18,7 @@ import {
   generateCodeVerifier,
   generateCodeChallenge,
 } from "@/components/utils/pkce";
+import { clearSocialOnboarding } from "@/utils/socialOnboarding";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -55,7 +56,12 @@ export default function Login() {
       const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
       await AsyncStorage.setItem("accessToken", accessToken);
-      await AsyncStorage.setItem("refreshToken", refreshToken);
+      if (refreshToken) {
+        await AsyncStorage.setItem("refreshToken", refreshToken);
+      } else {
+        await AsyncStorage.removeItem("refreshToken");
+      }
+      await clearSocialOnboarding();
 
       Toast.show({
         type: "success",
@@ -79,19 +85,13 @@ export default function Login() {
     try {
       const codeVerifier = generateCodeVerifier();
 
-      console.log("🔐 codeVerifier:", codeVerifier);
-
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-      console.log("🔐 codeChallenge:", codeChallenge);
 
       await SecureStore.setItemAsync("oauth_code_verifier", codeVerifier);
 
       const url =
         `${API_BASE_URL}/auth/authorize/${provider}` +
         `?codeChallenge=${encodeURIComponent(codeChallenge)}`;
-
-      console.log("🌐 OAuth URL:", url);
 
       await Linking.openURL(url);
     } catch (error) {

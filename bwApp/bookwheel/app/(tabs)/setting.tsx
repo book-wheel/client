@@ -1,5 +1,12 @@
 import { router } from "expo-router";
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState, useEffect } from "react";
 import { logout, deleteAccount, getMyInfo, type MyProfile } from "@/api/auth";
@@ -8,6 +15,7 @@ import ProfileImage from "@/components/profile/image";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 import EditProfileModal from "@/components/profile/EditProfileModal";
 import { unregisterPushNotifications } from "@/services/pushNotifications";
+import { clearSocialOnboarding } from "@/utils/socialOnboarding";
 
 export default function Settings() {
   const [loadError, setLoadError] = useState("");
@@ -53,6 +61,7 @@ export default function Settings() {
       console.log("서버 로그아웃 실패", error);
     } finally {
       await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+      await clearSocialOnboarding();
       router.replace("/auth/login");
     }
   };
@@ -137,11 +146,13 @@ export default function Settings() {
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{
+        flexGrow: 1,
         paddingHorizontal: 20,
         paddingTop: 120,
+        paddingBottom: 40,
         backgroundColor: "#fff",
       }}
     >
@@ -182,6 +193,34 @@ export default function Settings() {
 
       {/* 로그아웃/회원탈퇴 액션 */}
       <View style={{ gap: 12 }}>
+        <TouchableOpacity
+          style={{
+            padding: 16,
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: "#eee",
+          }}
+          onPress={() => router.push("/auth/terms")}
+        >
+          <Text style={{ fontWeight: "500" }}>이용약관</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{
+            padding: 16,
+            backgroundColor: "#fff",
+            borderRadius: 12,
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: "#eee",
+          }}
+          onPress={() => router.push("/auth/privacy")}
+        >
+          <Text style={{ fontWeight: "500" }}>개인정보 처리방침</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={{
             padding: 16,
@@ -259,6 +298,6 @@ export default function Settings() {
         }}
         onConfirm={confirmDelete}
       />
-    </View>
+    </ScrollView>
   );
 }
