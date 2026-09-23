@@ -35,6 +35,12 @@ export type AuthSession = {
   isProfileSet: boolean;
 };
 
+export type OAuthSession = {
+  accessToken: string;
+  refreshToken: string | null;
+  isFirstLogin: boolean;
+};
+
 export type ProfileSetupData = {
   profileImageKey?: string;
   nickname: string;
@@ -154,5 +160,5 @@ export const exchangeOAuthCode = (data: {
   code: string;
   codeVerifier: string;
 }) => {
-  return api.post("/auth/oauth2/token", data);
+  return api.post<ApiResponse<OAuthSession>>("/auth/oauth2/token", data);
 };
