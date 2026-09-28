@@ -6,6 +6,7 @@ import type {
 } from "@/types/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { clearOnboardingState } from "@/utils/socialOnboarding";
 
 // 가입 관련 알림은 모임 홈, 진행 관련 알림은 모임 상태 화면으로 보낸다.
 const GROUP_HOME_TYPES = new Set<NotificationType>([
@@ -121,6 +122,7 @@ export const navigateFromNotification = async (
   if (type === "ACCOUNT_DEACTIVATED" || deepLink === "/account/recovery") {
     // 계정 비활성화는 로그인 화면 이동 전에 현재 세션을 명시적으로 끝낸다.
     await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+    await clearOnboardingState();
     router.replace("/auth/login");
     return;
   }

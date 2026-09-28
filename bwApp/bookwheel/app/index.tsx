@@ -3,15 +3,35 @@ import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
+import { getOnboardingState } from "@/utils/socialOnboarding";
+
 export default function Index() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [initialRoute, setInitialRoute] = useState<
+    "/auth/login" | "/auth/social-consent" | "/auth/profile" | "/(tabs)" | null
+  >(null);
 
   // 저장된 세션이 있으면 앱 재실행·푸시 진입에서도 로그인을 유지
   useEffect(() => {
     let isActive = true;
 
-    void AsyncStorage.getItem("accessToken").then((accessToken) => {
-      if (isActive) setIsAuthenticated(Boolean(accessToken));
+    void Promise.all([
+      AsyncStorage.getItem("accessToken"),
+      getOnboardingState(),
+    ]).then(([accessToken, onboardingState]) => {
+      if (!isActive) return;
+
+      if (!accessToken) {
+        setInitialRoute("/auth/login");
+      } else if (onboardingState.socialStep === "consent") {
+        setInitialRoute("/auth/social-consent");
+      } else if (
+        onboardingState.socialStep === "profile" ||
+        onboardingState.isLocalProfileOnboarding
+      ) {
+        setInitialRoute("/auth/profile");
+      } else {
+        setInitialRoute("/(tabs)");
+      }
     });
 
     return () => {
@@ -19,7 +39,7 @@ export default function Index() {
     };
   }, []);
 
-  if (isAuthenticated === null) {
+  if (initialRoute === null) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E4A54E" />
@@ -27,7 +47,7 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isAuthenticated ? "/(tabs)" : "/auth/login"} />;
+  return <Redirect href={initialRoute} />;
 }
 
 const styles = StyleSheet.create({
