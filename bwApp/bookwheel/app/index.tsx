@@ -3,7 +3,7 @@ import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
-import type { SocialOnboardingStep } from "@/utils/socialOnboarding";
+import { getOnboardingState } from "@/utils/socialOnboarding";
 
 export default function Index() {
   const [initialRoute, setInitialRoute] = useState<
@@ -14,20 +14,20 @@ export default function Index() {
   useEffect(() => {
     let isActive = true;
 
-    void AsyncStorage.multiGet([
-      "accessToken",
-      "socialOnboardingStep",
-    ]).then((entries) => {
+    void Promise.all([
+      AsyncStorage.getItem("accessToken"),
+      getOnboardingState(),
+    ]).then(([accessToken, onboardingState]) => {
       if (!isActive) return;
-
-      const accessToken = entries[0][1];
-      const onboardingStep = entries[1][1] as SocialOnboardingStep | null;
 
       if (!accessToken) {
         setInitialRoute("/auth/login");
-      } else if (onboardingStep === "consent") {
+      } else if (onboardingState.socialStep === "consent") {
         setInitialRoute("/auth/social-consent");
-      } else if (onboardingStep === "profile") {
+      } else if (
+        onboardingState.socialStep === "profile" ||
+        onboardingState.isLocalProfileOnboarding
+      ) {
         setInitialRoute("/auth/profile");
       } else {
         setInitialRoute("/(tabs)");

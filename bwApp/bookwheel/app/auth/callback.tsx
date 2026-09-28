@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 import { exchangeOAuthCode } from "@/api/auth";
 import {
   beginSocialOnboarding,
-  clearSocialOnboarding,
+  clearOnboardingState,
 } from "@/utils/socialOnboarding";
 
 export default function OAuthCallback() {
@@ -71,7 +71,7 @@ export default function OAuthCallback() {
         if (isFirstLogin) {
           await beginSocialOnboarding();
         } else {
-          await clearSocialOnboarding();
+          await clearOnboardingState();
 
           if (refreshToken) {
             await AsyncStorage.setItem("refreshToken", refreshToken);
@@ -104,7 +104,7 @@ export default function OAuthCallback() {
         // 실패해도 verifier는 삭제
         await SecureStore.deleteItemAsync("oauth_code_verifier");
         await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
-        await clearSocialOnboarding();
+        await clearOnboardingState();
 
         Toast.show({
           type: "error",

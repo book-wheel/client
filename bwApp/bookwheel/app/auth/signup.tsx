@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
@@ -13,11 +14,15 @@ import {
   getCurrentConsentPolicies,
   type ConsentPolicies,
 } from "@/api/auth";
-import api, { getApiErrorMessage } from "@/api/axios";
+import { getApiErrorMessage } from "@/api/axios";
 
 import useSignupForm from "@/hooks/useSignupForm";
 import { validateSignup } from "@/utils/signupValidation";
 import { matchesDisplayedPolicies } from "@/policies/documents";
+import {
+  beginLocalProfileOnboarding,
+  clearOnboardingState,
+} from "@/utils/socialOnboarding";
 
 export default function Signup() {
   const { form, errors, setErrors, handleChange } = useSignupForm();
@@ -202,9 +207,20 @@ export default function Signup() {
         password: form.password,
       });
 
-      const { accessToken, isProfileSet } = loginRes.data.data;
+      const { accessToken, refreshToken, isProfileSet } = loginRes.data.data;
 
-      api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+      await AsyncStorage.setItem("accessToken", accessToken);
+
+      if (isProfileSet) {
+        if (refreshToken) {
+          await AsyncStorage.setItem("refreshToken", refreshToken);
+        } else {
+          await AsyncStorage.removeItem("refreshToken");
+        }
+        await clearOnboardingState();
+      } else {
+        await beginLocalProfileOnboarding();
+      }
 
       router.replace(isProfileSet ? "/" : "/auth/profile");
     } catch (error: any) {

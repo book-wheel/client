@@ -18,7 +18,10 @@ import {
   generateCodeVerifier,
   generateCodeChallenge,
 } from "@/components/utils/pkce";
-import { clearSocialOnboarding } from "@/utils/socialOnboarding";
+import {
+  beginLocalProfileOnboarding,
+  clearOnboardingState,
+} from "@/utils/socialOnboarding";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -56,12 +59,17 @@ export default function Login() {
       const { accessToken, refreshToken, isProfileSet } = res.data.data;
 
       await AsyncStorage.setItem("accessToken", accessToken);
-      if (refreshToken) {
+      if (isProfileSet && refreshToken) {
         await AsyncStorage.setItem("refreshToken", refreshToken);
       } else {
         await AsyncStorage.removeItem("refreshToken");
       }
-      await clearSocialOnboarding();
+
+      if (isProfileSet) {
+        await clearOnboardingState();
+      } else {
+        await beginLocalProfileOnboarding();
+      }
 
       Toast.show({
         type: "success",

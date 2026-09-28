@@ -6,6 +6,7 @@ import {
 import { registerForPushNotifications } from "@/services/pushNotifications";
 import type { NotificationNavigationPayload } from "@/types/notifications";
 import { navigateFromNotification } from "@/utils/notificationNavigation";
+import { getOnboardingState } from "@/utils/socialOnboarding";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { router, usePathname } from "expo-router";
@@ -43,15 +44,16 @@ const isLoggedOutRoute = (pathname: string) => {
 };
 
 const getStoredSession = async () => {
-  const entries = await AsyncStorage.multiGet([
-    "accessToken",
-    "socialOnboardingStep",
+  const [accessToken, onboardingState] = await Promise.all([
+    AsyncStorage.getItem("accessToken"),
+    getOnboardingState(),
   ]);
 
   return {
-    accessToken: entries[0][1],
-    isSocialOnboarding:
-      entries[1][1] === "consent" || entries[1][1] === "profile",
+    accessToken,
+    isOnboarding:
+      onboardingState.socialStep !== null ||
+      onboardingState.isLocalProfileOnboarding,
   };
 };
 
@@ -77,8 +79,8 @@ export function NotificationProvider({ children }: PropsWithChildren) {
   // 헤더 배지는 목록 개수가 아니라 서버의 미읽음 개수를 기준으로 맞춘다.
   const refreshUnreadCount = useCallback(async () => {
     try {
-      const { accessToken, isSocialOnboarding } = await getStoredSession();
-      if (!accessToken || isSocialOnboarding) {
+      const { accessToken, isOnboarding } = await getStoredSession();
+      if (!accessToken || isOnboarding) {
         setUnreadCount(0);
         return;
       }
@@ -141,7 +143,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
     try {
       const payload = getNotificationPayload(response);
-      const { accessToken, isSocialOnboarding } = await getStoredSession();
+      const { accessToken, isOnboarding } = await getStoredSession();
 
       if (payload.type === "ACCOUNT_DEACTIVATED") {
         pendingResponseRef.current = null;
@@ -149,7 +151,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      if (isSocialOnboarding) return;
+      if (isOnboarding) return;
 
       if (!accessToken) {
         router.replace("/auth/login");
@@ -204,14 +206,14 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     let isActive = true;
 
     const syncAuthenticatedNotifications = async () => {
-      const { accessToken, isSocialOnboarding } = await getStoredSession();
+      const { accessToken, isOnboarding } = await getStoredSession();
 
       if (!isActive) return;
 
-      if (!accessToken || isSocialOnboarding) {
+      if (!accessToken || isOnboarding) {
         registeredAccessTokenRef.current = null;
         setUnreadCount(0);
-        if (!isSocialOnboarding) await processPendingResponse();
+        if (!isOnboarding) await processPendingResponse();
         return;
       }
 
@@ -251,8 +253,8 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       );
 
     const pushTokenSubscription = Notifications.addPushTokenListener(() => {
-      void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
-        if (!accessToken || isSocialOnboarding) return;
+      void getStoredSession().then(({ accessToken, isOnboarding }) => {
+        if (!accessToken || isOnboarding) return;
 
         return registerPushForUser(accessToken, true);
       }).catch((error) => logApiError("푸시 토큰 동기화 실패:", error));
@@ -279,8 +281,8 @@ export function NotificationProvider({ children }: PropsWithChildren) {
       if (nextState === "active") {
         void refreshUnreadCount();
         void processPendingResponse();
-        void getStoredSession().then(({ accessToken, isSocialOnboarding }) => {
-          if (accessToken && !isSocialOnboarding) {
+        void getStoredSession().then(({ accessToken, isOnboarding }) => {
+          if (accessToken && !isOnboarding) {
             return registerPushForUser(accessToken, true);
           }
         }).catch((error) => logApiError("푸시 토큰 동기화 실패:", error));

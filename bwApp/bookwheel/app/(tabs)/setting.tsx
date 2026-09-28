@@ -15,7 +15,7 @@ import ProfileImage from "@/components/profile/image";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 import EditProfileModal from "@/components/profile/EditProfileModal";
 import { unregisterPushNotifications } from "@/services/pushNotifications";
-import { clearSocialOnboarding } from "@/utils/socialOnboarding";
+import { clearOnboardingState } from "@/utils/socialOnboarding";
 
 export default function Settings() {
   const [loadError, setLoadError] = useState("");
@@ -61,7 +61,7 @@ export default function Settings() {
       console.log("서버 로그아웃 실패", error);
     } finally {
       await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
-      await clearSocialOnboarding();
+      await clearOnboardingState();
       router.replace("/auth/login");
     }
   };
@@ -86,6 +86,7 @@ export default function Settings() {
       }
 
       await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+      await clearOnboardingState();
       setPassword("");
       setModalVisible(false);
       setUser(null);

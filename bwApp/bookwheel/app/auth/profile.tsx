@@ -27,7 +27,7 @@ import ProfileImage from "@/components/profile/image";
 import * as ImagePicker from "expo-image-picker";
 import type { ApiResponse } from "@/types/api";
 import {
-  clearSocialOnboarding,
+  clearOnboardingState,
   getSavedSocialConsent,
   getSocialOnboardingStep,
   restartSocialConsent,
@@ -188,7 +188,7 @@ export default function Profile() {
           ["accessToken", accessToken],
           ["refreshToken", refreshToken],
         ]);
-        await clearSocialOnboarding();
+        await clearOnboardingState();
 
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {

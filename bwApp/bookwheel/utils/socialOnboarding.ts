@@ -4,8 +4,14 @@ import type { ConsentPolicies, RequiredConsent } from "@/api/auth";
 
 const SOCIAL_ONBOARDING_STEP_KEY = "socialOnboardingStep";
 const SOCIAL_CONSENT_KEY = "socialConsent";
+const LOCAL_PROFILE_ONBOARDING_KEY = "localProfileOnboarding";
 
 export type SocialOnboardingStep = "consent" | "profile";
+
+export type OnboardingState = {
+  socialStep: SocialOnboardingStep | null;
+  isLocalProfileOnboarding: boolean;
+};
 
 const isSocialOnboardingStep = (
   value: string | null,
@@ -28,13 +34,39 @@ const isRequiredConsent = (value: unknown): value is RequiredConsent => {
 };
 
 export const beginSocialOnboarding = async () => {
-  await AsyncStorage.multiRemove(["refreshToken", SOCIAL_CONSENT_KEY]);
+  await AsyncStorage.multiRemove([
+    "refreshToken",
+    SOCIAL_CONSENT_KEY,
+    LOCAL_PROFILE_ONBOARDING_KEY,
+  ]);
   await AsyncStorage.setItem(SOCIAL_ONBOARDING_STEP_KEY, "consent");
+};
+
+export const beginLocalProfileOnboarding = async () => {
+  await AsyncStorage.multiRemove([
+    "refreshToken",
+    SOCIAL_ONBOARDING_STEP_KEY,
+    SOCIAL_CONSENT_KEY,
+  ]);
+  await AsyncStorage.setItem(LOCAL_PROFILE_ONBOARDING_KEY, "profile");
 };
 
 export const getSocialOnboardingStep = async () => {
   const step = await AsyncStorage.getItem(SOCIAL_ONBOARDING_STEP_KEY);
   return isSocialOnboardingStep(step) ? step : null;
+};
+
+export const getOnboardingState = async (): Promise<OnboardingState> => {
+  const entries = await AsyncStorage.multiGet([
+    SOCIAL_ONBOARDING_STEP_KEY,
+    LOCAL_PROFILE_ONBOARDING_KEY,
+  ]);
+
+  const socialStep = entries[0][1];
+  return {
+    socialStep: isSocialOnboardingStep(socialStep) ? socialStep : null,
+    isLocalProfileOnboarding: entries[1][1] === "profile",
+  };
 };
 
 export const saveSocialConsent = async (
@@ -49,6 +81,7 @@ export const saveSocialConsent = async (
     marketingVersion: null,
   };
 
+  await AsyncStorage.removeItem(LOCAL_PROFILE_ONBOARDING_KEY);
   await AsyncStorage.multiSet([
     [SOCIAL_CONSENT_KEY, JSON.stringify(consent)],
     [SOCIAL_ONBOARDING_STEP_KEY, "profile"],
@@ -70,13 +103,17 @@ export const getSavedSocialConsent = async () => {
 };
 
 export const restartSocialConsent = async () => {
-  await AsyncStorage.removeItem(SOCIAL_CONSENT_KEY);
+  await AsyncStorage.multiRemove([
+    SOCIAL_CONSENT_KEY,
+    LOCAL_PROFILE_ONBOARDING_KEY,
+  ]);
   await AsyncStorage.setItem(SOCIAL_ONBOARDING_STEP_KEY, "consent");
 };
 
-export const clearSocialOnboarding = async () => {
+export const clearOnboardingState = async () => {
   await AsyncStorage.multiRemove([
     SOCIAL_ONBOARDING_STEP_KEY,
     SOCIAL_CONSENT_KEY,
+    LOCAL_PROFILE_ONBOARDING_KEY,
   ]);
 };

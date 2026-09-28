@@ -4,6 +4,7 @@ import { Alert } from "react-native";
 import { router } from "expo-router";
 
 import type { ApiResponse } from "@/types/api";
+import { clearOnboardingState } from "@/utils/socialOnboarding";
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
@@ -98,6 +99,7 @@ api.interceptors.response.use(
         expiredAuthorization = authorization;
         try {
           await AsyncStorage.multiRemove(["accessToken", "refreshToken"]);
+          await clearOnboardingState();
         } catch (storageError) {
           console.error("인증 정보 삭제 실패:", storageError);
         }
