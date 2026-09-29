@@ -1,6 +1,6 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState, useEffect } from "react";
-import { Alert } from "react-native";
+import { getApiErrorMessage, logApiError } from "@/api/axios";
 import { jwtDecode } from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -11,6 +11,7 @@ import { GroupDashboardData, GroupScheduleData } from "@/types/groupDashboard";
 
 export type MemberStatus = {
   id: string;
+  userPK: string;
   name: string;
   bookTitle: string;
   role: "leader" | "vice" | "member";
@@ -20,27 +21,10 @@ export type MemberStatus = {
 type CurrentBook = {
   id: string;
   title: string;
-  owner: string;
+  senderNickname: string | null;
   image: {
     uri: string;
   };
-};
-
-type GroupSchedule = {
-  scheduleStatus:
-    | "NOT_CONFIGURED"
-    | "CONFIGURED"
-    | "READY"
-    | "RESCHEDULE_REQUIRED"
-    | "IN_PROGRESS"
-    | "COMPLETE";
-  targetMemberCount: number;
-  currentMemberCount: number;
-  canStart: boolean;
-  missingBookMembers: {
-    userPK: string;
-    nickname: string;
-  }[];
 };
 
 type TokenPayload = {
@@ -48,20 +32,18 @@ type TokenPayload = {
 };
 
 export function useGroupState() {
-  const { id: rawId, memberId, newStatus } = useLocalSearchParams();
+  const { id: rawId } = useLocalSearchParams();
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   // 대시보드 데이터
   const [dashboard, setDashboard] = useState<GroupDashboardData | null>(null);
 
   // 그룹 멤버 데이터
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
-
-  // 멤버별 상태
-  // 현재 멤버 API에는 status가 없기 때문에 상태만 임시로 관리
-  const [memberStatuses, setMemberStatuses] = useState<
-    Record<string, MemberStatus["status"]>
-  >({});
 
   const [currentUserPK, setCurrentUserPK] = useState<string | null>(null);
 
@@ -98,6 +80,8 @@ export function useGroupState() {
     if (!id) return;
 
     const fetchData = async () => {
+      setErrorMessage("");
+      setIsLoading(true);
       try {
         const dashboardData = await getDashboard(id);
         const membersData = await getGroupMembers(id);
@@ -111,17 +95,16 @@ export function useGroupState() {
         setGroupMembers(membersData.members);
         setSchedule(scheduleData);
       } catch (error) {
-        console.error("모임 정보 조회 실패:", error);
+        logApiError("모임 정보 조회 실패:", error);
 
-        Alert.alert(
-          "모임 정보를 불러올 수 없습니다.",
-          "잠시 후 다시 시도해주세요.",
-        );
+        setErrorMessage(getApiErrorMessage(error, "모임 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요."));
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, retryCount]);
 
   // 현재 세션(진행 중인 라운드) 계산
   // 현재 회차
@@ -152,60 +135,58 @@ export function useGroupState() {
 
   const currentReadingDay = Math.min(Math.max(elapsedDays, 0), readingPeriod);
 
-  // 남은 일수
-  const remainingDays = Math.max(readingPeriod - currentReadingDay, 0);
-
   // 현재 책 정보
-  const currentBook: CurrentBook | null = currentRound
+  const currentBook: CurrentBook | null = dashboard?.myStep
     ? {
-        id: currentRound.bookId,
-        title: currentRound.bookTitle,
-        owner: currentRound.senderNickname,
+        id: dashboard.myStep.bookId,
+        title: dashboard.myStep.bookTitle,
+        senderNickname: dashboard.myStep.senderNickname,
         image: {
-          uri: currentRound.coverImage,
+          uri: dashboard.myStep.coverImage ?? "",
         },
       }
-    : dashboard?.myStep
-      ? {
-          id: dashboard.myStep.bookId,
-          title: dashboard.myStep.bookTitle,
-          owner: dashboard.myStep.senderNickname,
-          image: {
-            uri: dashboard.myStep.coverImage,
-          },
-        }
-      : null;
+    : null;
 
   // API 멤버 데이터를 화면에서 사용하는 MemberStatus 형태로 변환
-  const members: MemberStatus[] = groupMembers.map((member) => ({
-    id: member.memberId,
-    name: member.nickname,
-    bookTitle: "",
-    role:
-      member.role === "LEADER"
-        ? "leader"
-        : member.role === "VICE"
-          ? "vice"
-          : "member",
-    status: memberStatuses[member.memberId] ?? "ready",
-  }));
+  const members: MemberStatus[] = groupMembers.map((member) => {
+    const assignment = member.currentRoundAssignment;
+
+    let status: MemberStatus["status"] = "ready";
+
+    if (assignment?.readingStatus === "COMPLETED") {
+      status = "completed";
+    } else if (assignment?.readingStatus === "READING") {
+      status = "reading";
+    } else if (assignment?.readingStatus === "READY") {
+      status = "ready";
+    }
+
+    return {
+      id: member.memberId,
+      userPK: member.userPK,
+      name: member.nickname,
+      bookTitle: assignment?.bookTitle ?? "",
+      role:
+        member.role === "LEADER"
+          ? "leader"
+          : member.role === "SUB_LEADER" || member.role === "VICE"
+            ? "vice"
+            : "member",
+      status,
+    };
+  });
 
   // 멤버 순서 지정 가능 여부
   const canSetMemberOrder =
     schedule != null && schedule.missingBookMembers.length === 0;
 
   const isScheduleReady = schedule?.scheduleStatus === "READY";
-
-  // 멤버 상태 변경
-  const updateMemberStatus = (id: string, status: MemberStatus["status"]) => {
-    setMemberStatuses((prev) => ({
-      ...prev,
-      [id]: status,
-    }));
-  };
+  const isCompleted = schedule?.scheduleStatus === "COMPLETE";
 
   // 현재 사용자
-  const currentMember = members.find((m) => m.id === "1");
+  const currentMember = members.find(
+    (member) => member.userPK === currentUserPK,
+  );
 
   // 전체 멤버 수
   const totalMembers = members.length;
@@ -215,56 +196,6 @@ export function useGroupState() {
     (m) => m.status === "completed",
   ).length;
 
-  // 현재 책 카드 버튼
-  const handleCardButtonPress = () => {
-    if (!currentMember) return;
-
-    if (currentMember.status === "reading") {
-      router.push({
-        pathname: "/group/[id]/completed-books",
-        params: {
-          id,
-          memberId: "1",
-        },
-      });
-    } else if (currentMember.status === "completed") {
-      updateMemberStatus("1", "ready");
-    } else if (currentMember.status === "ready") {
-      router.push({
-        pathname: "/group/[id]/this-session",
-        params: { id },
-      });
-    }
-  };
-
-  // 현재 책 카드 버튼 텍스트
-  const getButtonText = () => {
-    if (!currentMember) return "완독 인증 하기";
-
-    switch (currentMember.status) {
-      case "reading":
-        return "완독 인증 하기";
-
-      case "completed":
-        return "전달 완료";
-
-      case "ready":
-        return "준비 완료";
-
-      default:
-        return "완독 인증 하기";
-    }
-  };
-
-  // completed-books에서 돌아왔을 때 상태 변경
-  useEffect(() => {
-    if (memberId && newStatus) {
-      const targetMemberId = Array.isArray(memberId) ? memberId[0] : memberId;
-
-      updateMemberStatus(targetMemberId, newStatus as MemberStatus["status"]);
-    }
-  }, [memberId, newStatus]);
-
   // 일정이 시작되었는지 여부
   const isStarted =
     schedule?.scheduleStatus === "IN_PROGRESS" ||
@@ -273,6 +204,9 @@ export function useGroupState() {
   const hasBook = dashboard?.myBookStep != null;
 
   return {
+    isLoading,
+    errorMessage,
+    retry: () => setRetryCount((count) => count + 1),
     id,
     session,
     members,
@@ -281,21 +215,19 @@ export function useGroupState() {
     completedMembers,
     currentMember,
     currentBook,
-    handleCardButtonPress,
-    getButtonText,
     isStarted,
     hasBook,
     dashboard,
 
-    // 일정
+    currentUserPK,
+
     schedule,
     currentRound,
     readingPeriod,
     currentReadingDay,
-    remainingDays,
-
     canSetMemberOrder,
     isScheduleReady,
+    isCompleted,
     isLeader,
   };
 }

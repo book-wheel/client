@@ -1,4 +1,6 @@
+import { showApiError } from "@/api/axios";
 import {
+  ActivityIndicator,
   Alert,
   Text,
   View,
@@ -7,25 +9,83 @@ import {
 } from "react-native";
 
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isAxiosError } from "axios";
 
-import { setupProfile, checkNicknameDuplicate } from "@/api/auth";
-import { uploadImage } from "@/api/images";
+import {
+  setupProfile,
+  checkNicknameDuplicate,
+  type ProfileSetupData,
+  type RequiredConsent,
+} from "@/api/auth";
+import { getImageFileInfo, uploadProfileImage } from "@/api/images";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import AuthCard from "@/components/card";
 import ProfileImage from "@/components/profile/image";
 import * as ImagePicker from "expo-image-picker";
+import type { ApiResponse } from "@/types/api";
+import {
+  clearOnboardingState,
+  getSavedSocialConsent,
+  getSocialOnboardingStep,
+  restartSocialConsent,
+} from "@/utils/socialOnboarding";
 
 export default function Profile() {
   const [comment, setComment] = useState("");
   const [nickname, setNickname] = React.useState("");
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [imageUri, setImageUri] = useState<string | undefined>();
+  const [imageFileName, setImageFileName] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string | null>(null);
 
   const [nicknameChecked, setNicknameChecked] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [socialConsent, setSocialConsent] = useState<
+    RequiredConsent | null | undefined
+  >(undefined);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadSocialConsent = async () => {
+      try {
+        const step = await getSocialOnboardingStep();
+
+        if (step === "consent") {
+          router.replace("/auth/social-consent");
+          return;
+        }
+
+        if (step !== "profile") {
+          if (isActive) setSocialConsent(null);
+          return;
+        }
+
+        const savedConsent = await getSavedSocialConsent();
+        if (!savedConsent) {
+          await restartSocialConsent();
+          router.replace("/auth/social-consent");
+          return;
+        }
+
+        if (isActive) setSocialConsent(savedConsent);
+      } catch (error) {
+        console.log("소셜 가입 동의 정보 확인 실패:", error);
+        await restartSocialConsent();
+        router.replace("/auth/social-consent");
+      }
+    };
+
+    void loadSocialConsent();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   // 닉네임 중복확인 로직
   const checkNickname = async () => {
@@ -57,7 +117,7 @@ export default function Profile() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("알림", "사진 접근 권한이 필요합니다.");
+      Alert.alert("오류", "사진 접근 권한이 필요합니다.", [{ text: "확인" }]);
       return;
     }
 
@@ -70,12 +130,16 @@ export default function Profile() {
 
     if (result.canceled) return;
 
-    setImageUri(result.assets[0].uri);
+    const asset = result.assets[0];
+
+    setImageUri(asset.uri);
+    setImageFileName(asset.fileName ?? null);
+    setImageMimeType(asset.mimeType ?? null);
   };
 
   //회원가입(프로필저장)로직
   const handleSetupProfile = async () => {
-    if (loading) return;
+    if (loading || socialConsent === undefined) return;
 
     if (!nickname.trim()) {
       console.log("닉네임 입력 필요");
@@ -89,32 +153,43 @@ export default function Profile() {
 
     setLoading(true);
 
-    const payload: any = {
+    const payload: ProfileSetupData = {
       nickname,
       comment: comment || "",
+      ...(socialConsent ?? {}),
     };
 
     try {
       if (imageUri) {
-        const fileName = `profile_${Date.now()}.jpg`;
+        const { fileName, mimeType } = getImageFileInfo(
+          imageFileName,
+          imageMimeType,
+          `profile_${Date.now()}`,
+        );
 
-        const profileImageKey = await uploadImage(
+        const profileImageKey = await uploadProfileImage(
           imageUri,
           fileName,
-          "profiles",
-          "image/jpeg",
+          mimeType,
         );
 
         payload.profileImageKey = profileImageKey;
       }
 
-      console.log("📤 setup-profile payload:", payload);
-
       const res = await setupProfile(payload);
 
-      console.log("📥 setup-profile response:", res.data);
+      if (res.data.success && res.data.data) {
+        const { accessToken, refreshToken } = res.data.data;
+        if (!accessToken || !refreshToken) {
+          throw new Error("프로필 설정 후 인증 토큰이 누락되었습니다.");
+        }
 
-      if (res.data.success) {
+        await AsyncStorage.multiSet([
+          ["accessToken", accessToken],
+          ["refreshToken", refreshToken],
+        ]);
+        await clearOnboardingState();
+
         Alert.alert("완료", "프로필 설정이 완료되었습니다.", [
           {
             text: "확인",
@@ -123,22 +198,52 @@ export default function Profile() {
         ]);
       } else {
         Alert.alert(
-          "프로필 설정 실패",
+          "오류",
           res.data.error?.message ?? "프로필 설정에 실패하였습니다.",
+          [{ text: "확인" }],
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log("프로필 설정 에러:", error);
 
-      Alert.alert(
-        "프로필 설정 실패",
-        error.response?.data?.error?.message ??
-          "프로필 설정 중 오류가 발생하였습니다.",
-      );
+      if (
+        isAxiosError<ApiResponse<unknown>>(error) &&
+        error.response?.data?.error?.code === "AUTH_028"
+      ) {
+        await restartSocialConsent();
+        Alert.alert(
+          "약관 재확인 필요",
+          "약관이 변경되어 다시 확인과 동의가 필요합니다.",
+          [
+            {
+              text: "확인",
+              onPress: () => router.replace("/auth/social-consent"),
+            },
+          ],
+        );
+        return;
+      }
+
+      showApiError(error, "프로필 설정 중 오류가 발생하였습니다.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (socialConsent === undefined) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#F7EDE0",
+        }}
+      >
+        <ActivityIndicator color="#E4A54E" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

@@ -23,16 +23,6 @@ export default function ScheduleReadyDashboard({
     });
   };
 
-  const handleBookRegister = () => {
-    router.push({
-      pathname: "/group/[id]/add-book",
-      params: {
-        id,
-        mode: "edit",
-      },
-    });
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: "#FFF" }}>
       <ScrollView
@@ -109,7 +99,11 @@ export default function ScheduleReadyDashboard({
 
             <SummaryItem
               label="독서 기간"
-              value={`${schedule.readingPeriod}일`}
+              value={
+                schedule.readingPeriod
+                  ? `${schedule.readingPeriod}일`
+                  : "미설정"
+              }
             />
 
             <SummaryItem

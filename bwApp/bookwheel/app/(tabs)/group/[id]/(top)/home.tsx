@@ -1,3 +1,5 @@
+import ErrorNotice from "@/components/ErrorNotice";
+import { showApiError } from "@/api/axios";
 import { View, ScrollView } from "react-native";
 import { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
@@ -10,9 +12,18 @@ import ApplicantDetailModal from "@/components/group/ApplicantDetailModal";
 import { updateMemberStatus } from "@/api/group";
 
 export default function Home() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  return <GroupHomeContent key={id} />;
+}
+
+function GroupHomeContent() {
   const {
     id,
     groupInfo,
+    detailError,
+    membersError,
+    retry,
     applicants: initialApplicants,
     isLeader,
   } = useGroupHome();
@@ -44,7 +55,7 @@ export default function Home() {
       setModalOpen(false);
       setSelectedApplicant(null);
     } catch (error) {
-      console.error(error);
+      showApiError(error, "가입 신청을 처리하지 못했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -59,6 +70,9 @@ export default function Home() {
       showsVerticalScrollIndicator={false}
     >
       <View>
+        {detailError ? (
+          <ErrorNotice message={detailError} onRetry={retry} />
+        ) : (
         <GroupIntro
           intro={groupInfo.intro}
           rules={groupInfo.rules}
@@ -66,10 +80,13 @@ export default function Home() {
           maxMembers={groupInfo.maxMembers}
           isOffline={groupInfo.isOffline}
         />
+        )}
       </View>
 
       <View style={{ paddingBottom: 12, alignItems: "center" }}>
-        {isLeader && (
+        {membersError ? (
+          <ErrorNotice message={membersError} onRetry={retry} />
+        ) : isLeader && (
           <ApplicantList
             applicants={applicants}
             onSelectApplicant={(applicant) => {

@@ -1,19 +1,31 @@
+import type { ApiResponse } from "@/types/api";
+
+export type WheelStatus =
+  | "PLANNED"
+  | "WAITING"
+  | "READY"
+  | "READING"
+  | "COMPLETED"
+  | "UNFINISHED";
+
 export interface MyStep {
-  wheelStateId: string;
+  wheelStateId: string | null;
   bookId: string;
-  status: string;
+  status: WheelStatus;
   bookTitle: string;
-  coverImage: string;
-  senderNickname: string;
+  coverImage: string | null;
+  senderNickname: string | null;
+  ownerNickname?: string | null;
 }
 
 export interface MyBookStep {
   bookId: string;
   bookTitle: string;
-  holderNickname: string;
-  status: string;
-  location: string;
-  coverImage: string;
+  coverImage: string | null;
+  author: string | null;
+  holderNickname: string | null;
+  status: WheelStatus | null;
+  location: string | null;
 }
 
 export interface GroupDashboardData {
@@ -28,10 +40,7 @@ export interface GroupDashboardData {
   myBookStep: MyBookStep | null;
 }
 
-export interface GroupDashboardResponse {
-  success: boolean;
-  data: GroupDashboardData;
-}
+export type GroupDashboardApiResponse = ApiResponse<GroupDashboardData>;
 
 export interface RegisterBookRequest {
   isbn: string;
@@ -53,7 +62,7 @@ export interface ExcludedDateRange {
 export type CreateScheduleRequest = {
   startDate: string;
   readingPeriod: number;
-  endDate: string;
+  endDate?: string;
   excludedDates: string[];
   excludedDateRanges: {
     startDate: string;
@@ -74,6 +83,7 @@ export type GroupScheduleRound = {
   endDate: string;
   executable: boolean;
   wheelStateId: string;
+  ownBookId: string;
   wheelStatus: string;
   bookId: string;
   bookTitle: string;
@@ -82,9 +92,9 @@ export type GroupScheduleRound = {
 };
 
 export type GroupScheduleData = {
-  startDate: string;
-  readingPeriod: number;
-  endDate: string;
+  startDate: string | null;
+  readingPeriod: number | null;
+  endDate: string | null;
   excludedDates: string[];
   excludedDateRanges: {
     startDate: string;
@@ -92,7 +102,7 @@ export type GroupScheduleData = {
   }[];
   scheduleStatus: string;
   scheduleReconfigurationStatus: string;
-  targetMemberCount: number;
+  targetMemberCount: number | null;
   currentMemberCount: number;
   canStart: boolean;
   blockingReasons: string[];
@@ -102,9 +112,55 @@ export type GroupScheduleData = {
   }[];
   plannedRoundCount: number;
   executableRoundCount: number;
-  plannedEndDate: string;
-  executableEndDate: string;
-  protectedRoundCount: number;
-  minTotalRoundCount: number;
+  plannedEndDate: string | null;
+  executableEndDate: string | null;
+  protectedRoundCount: number | null;
+  minTotalRoundCount: number | null;
   rounds: GroupScheduleRound[];
+};
+
+export interface ReadingHistory {
+  wheelStateId: string;
+  ownBookId: string;
+  bookTitle: string;
+  coverImageUrl: string;
+  roundNumber: number;
+  authImageUrls: string[];
+  reviewText: string;
+  reviewAt: string;
+}
+
+export interface ReadingHistoryResponse {
+  success: boolean;
+  data: ReadingHistory[];
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export type BookHistory = {
+  wheelStateId: string;
+  roundNumber: number;
+  readerName: string;
+  authImageUrls: string[];
+  reviewText: string;
+  completedAt: string;
+};
+
+export type BookHistoryData = {
+  ownBookId: string;
+  bookTitle: string;
+  author: string;
+  coverImageUrl: string;
+  histories: BookHistory[];
+};
+
+export type BookHistoryResponse = {
+  success: boolean;
+  data: BookHistoryData;
+  error: {
+    code: string;
+    message: string;
+  } | null;
 };

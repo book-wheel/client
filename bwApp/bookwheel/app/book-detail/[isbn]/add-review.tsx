@@ -1,8 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
+import { HeaderBackButton } from "@react-navigation/elements";
+import { showApiError } from "@/api/axios";
 import * as ImagePicker from "expo-image-picker";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Linking, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, View } from "react-native";
 
 import { getBookDetail } from "@/api/books";
 import { uploadImageToS3 } from "@/api/images";
@@ -95,12 +96,7 @@ export default function AddReview() {
       } catch (error) {
         if (!isActive) return;
 
-        Alert.alert(
-          "오류",
-          error instanceof Error
-            ? error.message
-            : "도서 정보를 불러오지 못했습니다.",
-        );
+        showApiError(error, "도서 정보를 불러오지 못했습니다.");
       }
     };
 
@@ -118,7 +114,7 @@ export default function AddReview() {
 
     if (!permission.granted) {
       Alert.alert(
-        "알림",
+        "오류",
         permission.canAskAgain
           ? "사진을 선택하려면 접근 권한이 필요합니다."
           : "휴대폰 설정에서 사진 접근 권한을 허용해 주세요.",
@@ -141,7 +137,7 @@ export default function AddReview() {
     const remainingCount = MAX_IMAGE_COUNT - images.length;
 
     if (remainingCount <= 0) {
-      Alert.alert("알림", "사진은 최대 5장까지 선택할 수 있습니다.");
+      Alert.alert("오류", "사진은 최대 5장까지 선택할 수 있습니다.", [{ text: "확인" }]);
       return;
     }
 
@@ -171,17 +167,17 @@ export default function AddReview() {
     if (submitLockRef.current) return;
 
     if (review.trim().length < 20) {
-      Alert.alert("알림", "감상평을 최소 20자 이상 작성해 주세요.");
+      Alert.alert("오류", "감상평을 최소 20자 이상 작성해 주세요.", [{ text: "확인" }]);
       return;
     }
 
     if (images.length === 0) {
-      Alert.alert("알림", "사진을 한 장 이상 등록해 주세요.");
+      Alert.alert("오류", "사진을 한 장 이상 등록해 주세요.", [{ text: "확인" }]);
       return;
     }
 
     if (!book) {
-      Alert.alert("알림", "도서 정보를 불러온 뒤 다시 시도해 주세요.");
+      Alert.alert("오류", "도서 정보를 불러온 뒤 다시 시도해 주세요.", [{ text: "확인" }]);
       return;
     }
 
@@ -246,12 +242,7 @@ export default function AddReview() {
         },
       ]);
     } catch (error) {
-      Alert.alert(
-        "오류",
-        error instanceof Error
-          ? error.message
-          : "게시글 등록에 실패했습니다.",
-      );
+      showApiError(error, "게시글 등록에 실패했습니다.");
     } finally {
       submitLockRef.current = false;
       setIsSubmitting(false);
@@ -275,16 +266,13 @@ export default function AddReview() {
           title: "도서 리뷰 등록",
           headerShown: true,
           headerBackVisible: false,
-          headerLeft: () => (
-            <TouchableOpacity
+          headerLeft: (props) => (
+            <HeaderBackButton
+              {...props}
+              displayMode="minimal"
               accessibilityLabel="뒤로가기"
-              accessibilityRole="button"
-              activeOpacity={0.7}
-              hitSlop={10}
               onPress={handleGoBack}
-            >
-              <Ionicons name="chevron-back" size={28} color="#513A11" />
-            </TouchableOpacity>
+            />
           ),
         }}
       />

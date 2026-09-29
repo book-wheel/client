@@ -1,4 +1,51 @@
 import api from "./axios";
+import type { ApiResponse } from "@/types/api";
+
+export type SocialProvider = "NONE" | "GOOGLE" | "KAKAO";
+
+export type MyProfile = {
+  userPK: string;
+  loginId: string;
+  nickname: string;
+  mail: string;
+  social: SocialProvider;
+  comment: string | null;
+  // GET /users/me에서는 object key가 아닌 표시용 Presigned URL이 내려온다.
+  profileImageKey: string | null;
+};
+
+export type ConsentPolicies = {
+  termsVersion: string;
+  privacyVersion: string;
+  marketingVersion: string;
+};
+
+export type RequiredConsent = {
+  termsAgreed: true;
+  privacyAgreed: true;
+  marketingAgreed: false;
+  termsVersion: string;
+  privacyVersion: string;
+  marketingVersion: null;
+};
+
+export type AuthSession = {
+  accessToken: string;
+  refreshToken: string | null;
+  isProfileSet: boolean;
+};
+
+export type OAuthSession = {
+  accessToken: string;
+  refreshToken: string | null;
+  isFirstLogin: boolean;
+};
+
+export type ProfileSetupData = {
+  profileImageKey?: string;
+  nickname: string;
+  comment: string;
+} & Partial<RequiredConsent>;
 
 // ==================== AUTH ====================
 
@@ -7,8 +54,22 @@ export const signup = (data: {
   loginId: string;
   password: string;
   mail: string;
+
+  termsAgreed: boolean;
+  privacyAgreed: boolean;
+  termsVersion: string;
+  privacyVersion: string;
+  marketingAgreed: boolean;
+  marketingVersion: string | null;
 }) => {
   return api.post("/auth/signup", data);
+};
+
+// 현재 약관 버전 조회
+export const getCurrentConsentPolicies = () => {
+  return api.get<ApiResponse<ConsentPolicies>>(
+    "/auth/consent-policies/current",
+  );
 };
 
 //로그인
@@ -34,12 +95,8 @@ export const verifyEmail = (email: string, code: string) => {
 // ==================== USERS ====================
 
 //프로필 설정
-export const setupProfile = (data: {
-  profileImageKey?: string;
-  nickname: string;
-  comment: string;
-}) => {
-  return api.patch("/users/setup-profile", data);
+export const setupProfile = (data: ProfileSetupData) => {
+  return api.patch<ApiResponse<AuthSession>>("/users/setup-profile", data);
 };
 
 // 닉네임 중복 확인
@@ -87,14 +144,15 @@ export const logout = () => {
 
 //내 정보 조회
 export const getMyInfo = () => {
-  return api.get("/users/me");
+  return api.get<ApiResponse<MyProfile>>("/users/me");
 };
 
 //회원탈퇴
-export const deleteAccount = (password: string) => {
-  return api.delete("/users/me", {
-    data: { password },
-  });
+export const deleteAccount = (password?: string) => {
+  return api.delete<ApiResponse<null>>(
+    "/users/me",
+    password ? { data: { password } } : undefined,
+  );
 };
 
 //토큰교환
@@ -102,5 +160,5 @@ export const exchangeOAuthCode = (data: {
   code: string;
   codeVerifier: string;
 }) => {
-  return api.post("/auth/oauth2/token", data);
+  return api.post<ApiResponse<OAuthSession>>("/auth/oauth2/token", data);
 };

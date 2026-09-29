@@ -1,11 +1,10 @@
-import { Ionicons } from "@expo/vector-icons";
+import { HeaderBackButton } from "@react-navigation/elements";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { router, Stack, useLocalSearchParams, withLayoutContext } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StyleSheet, View } from "react-native";
 
-import { getApiErrorMessage } from "@/api/axios";
+import { getApiErrorMessage, showApiError, logApiError } from "@/api/axios";
 import { getBookDetail, toggleBookLike } from "@/api/books";
 import BookDetailHero from "@/components/books/BookDetailHero";
 import { BookDetailContext } from "@/contexts/book-detail";
@@ -15,7 +14,6 @@ const Tab = createMaterialTopTabNavigator();
 const TopTabs = withLayoutContext(Tab.Navigator);
 
 export default function BookDetailTabsLayout() {
-  const insets = useSafeAreaInsets();
   const { isbn: rawIsbn } = useLocalSearchParams<{
     isbn?: string | string[];
   }>();
@@ -53,10 +51,7 @@ export default function BookDetailTabsLayout() {
 
     setIsInterested(result.data.liked);
     } catch (error) {
-      console.error(
-        "관심 도서 상태 변경 실패:",
-        getApiErrorMessage(error, "관심 도서 상태 변경에 실패했습니다."),
-      );
+      showApiError(error, "관심 도서 상태 변경에 실패했습니다.");
     } finally {
       interestRequestingRef.current = false;
       setIsInterestLoading(false);
@@ -98,7 +93,7 @@ export default function BookDetailTabsLayout() {
           "도서 정보를 불러오지 못했습니다.",
         );
 
-        console.error("도서 정보 조회 실패:", message);
+        logApiError("도서 정보 조회 실패:", fetchError);
         setError(new Error(message));
       } finally {
         if (isActive) setIsLoading(false);
@@ -115,20 +110,21 @@ export default function BookDetailTabsLayout() {
   return (
     <BookDetailContext.Provider value={{ book, isLoading, error, isbn }}>
       <View style={styles.container}>
-        <Stack.Screen options={{ headerShown: false }} />
-
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <TouchableOpacity
-            accessibilityLabel="뒤로가기"
-            accessibilityRole="button"
-            activeOpacity={0.7}
-            onPress={handleGoBack}
-            style={styles.backButton}
-          >
-            <Ionicons name="chevron-back" size={30} color="#513A11" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>도서 조회</Text>
-        </View>
+        <Stack.Screen
+          options={{
+            title: "도서 조회",
+            headerShown: true,
+            headerBackVisible: false,
+            headerLeft: (props) => (
+              <HeaderBackButton
+                {...props}
+                displayMode="minimal"
+                accessibilityLabel="뒤로가기"
+                onPress={handleGoBack}
+              />
+            ),
+          }}
+        />
 
         <BookDetailHero
           title={book?.title ?? "도서 정보"}
@@ -174,24 +170,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 18,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    marginLeft: 6,
-    color: "#513A11",
-    fontSize: 27,
-    fontWeight: "900",
   },
   tabsContainer: {
     flex: 1,

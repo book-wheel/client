@@ -1,14 +1,36 @@
 import { View, Text } from "react-native";
+import { router } from "expo-router";
+
 import MemberRow from "@/components/member/MemberRow";
 import { MemberStatus } from "@/hooks/useGroupState";
 
 type Props = {
+  id: string | undefined;
   members: MemberStatus[];
 };
 
-export default function MemberStatusList({ members }: Props) {
+export default function MemberStatusList({ id, members }: Props) {
+  const handleMemberPress = (member: MemberStatus) => {
+    if (!id || !member.userPK) return;
+
+    router.push({
+      pathname: "/group/[id]/member-history",
+      params: {
+        id,
+        userPK: member.userPK,
+        memberName: member.name,
+      },
+    });
+  };
+
   return (
-    <View style={{ paddingHorizontal: 20, marginTop: 32, marginBottom: 40 }}>
+    <View
+      style={{
+        paddingHorizontal: 20,
+        marginTop: 32,
+        marginBottom: 40,
+      }}
+    >
       <Text
         style={{
           fontSize: 18,
@@ -30,7 +52,7 @@ export default function MemberStatusList({ members }: Props) {
             status={member.status}
             buttonText=""
             variant="status"
-            onPress={() => {}}
+            onPress={() => handleMemberPress(member)}
           />
         </View>
       ))}

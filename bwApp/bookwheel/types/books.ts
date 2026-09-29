@@ -143,19 +143,6 @@ export type ExchangeRecommendationContent = {
 export type ExchangeRecommendationResponse =
   ApiResponse<ExchangeRecommendationContent>;
 
-export type CurrentReadingBookContent = {
-  groupId: string;
-  title: string;
-  coverImageUrl: string;
-};
-
-export type CurrentReadingBooksContent = {
-  books: CurrentReadingBookContent[];
-};
-
-export type CurrentReadingBooksResponse =
-  ApiResponse<CurrentReadingBooksContent>;
-
 export type BookSearchSort = "accuracy" | "latest";
 
 export type BookSearchItem = {

@@ -29,7 +29,7 @@ export default function GroupListExtended({
   isOwner,
 }: Props) {
   const config = STATUS_CONFIG[group.status];
-  const statusText = config.label(group.dday);
+  const statusText = config.label(group.dday ?? undefined);
 
   return (
     <Pressable

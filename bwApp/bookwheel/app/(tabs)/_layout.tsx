@@ -1,5 +1,7 @@
+import { headerOptions } from "@/constants/header";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { NotificationButton } from "@/components/home/HomeHeader";
 
 export default function TabsLayout() {
   return (
@@ -23,16 +25,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#E4A54E",
         tabBarInactiveTintColor: "#513A11",
         headerShown: false,
-        headerTitleAlign: "left",
-        headerTitleStyle: {
-          color: "#513A11",
-          fontSize: 24,
-          fontWeight: "900",
-        },
-        headerStyle: {
-          backgroundColor: "#FFFFFF",
-        },
-        headerShadowVisible: false,
+        ...headerOptions,
         headerRightContainerStyle: {
           paddingRight: 16,
         },
@@ -41,10 +34,28 @@ export default function TabsLayout() {
         },
       })}
     >
-      <Tabs.Screen name="index" options={{ title: "홈", headerShown: true }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "홈",
+          headerShown: true,
+          headerRight: () => <NotificationButton />,
+        }}
+      />
       <Tabs.Screen name="groups" options={{ title: "모임" }} />
       <Tabs.Screen name="books" options={{ title: "책" }} />
       <Tabs.Screen name="setting" options={{ title: "설정" }} />
+      <Tabs.Screen
+        name="notification-settings"
+        options={{
+          href: null,
+          headerShown: true,
+          title: "알림 설정",
+          headerTintColor: "#513A11",
+          headerTitleStyle: { fontSize: 18, fontWeight: "800" },
+          headerShadowVisible: false,
+        }}
+      />
 
       <Tabs.Screen name="group" options={{ href: null }} />
     </Tabs>

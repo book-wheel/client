@@ -21,3 +21,20 @@ export type CursorParams = {
   cursor?: string | null;
   size?: number;
 };
+
+export type PageParams = {
+  page?: number;
+  size?: number;
+};
+
+export type NumberPage<T> = {
+  content: T[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+};

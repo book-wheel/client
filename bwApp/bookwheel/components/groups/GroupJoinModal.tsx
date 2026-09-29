@@ -1,3 +1,4 @@
+import { showApiError } from "@/api/axios";
 import {
   Modal,
   StyleSheet,
@@ -6,7 +7,6 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  Alert,
 } from "react-native";
 import { joinGroup } from "@/api/group";
 
@@ -127,13 +127,7 @@ export default function GroupJoinModal({
 
                           setStep(3);
                         } catch (error: any) {
-                          const message =
-                            error.response?.data?.error?.message ||
-                            "가입 요청에 실패했습니다.";
-
-                          Alert.alert("오류", message);
-
-                          handleClose();
+                          showApiError(error, "가입 요청에 실패했습니다.");
                         }
                       }}
                     >

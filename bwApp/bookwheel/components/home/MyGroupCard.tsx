@@ -1,8 +1,12 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
+import type { MyGroupStatus } from "@/types/group";
 
 type Props = {
-  dday: number;
+  id: string;
+  status: MyGroupStatus;
+  dday: number | null;
+  startDate: string | null;
   name: string;
   memberCount: string;
   type: string;
@@ -11,27 +15,51 @@ type Props = {
 };
 
 export default function ReadingCard({
+  id,
+  status,
   dday,
+  startDate,
   name,
   memberCount,
   type,
   regen,
   info,
 }: Props) {
+  const isRescheduleRequired = status === "reschedule_required";
+  const statusText =
+    status === "active"
+      ? "진행 중"
+      : status === "done"
+        ? "종료"
+        : isRescheduleRequired
+          ? "일정 재설정 필요"
+          : startDate == null
+            ? "시작일 미정"
+          : dday === 0
+            ? "D-Day"
+            : `D-${dday ?? "?"}`;
+
   return (
     <Pressable
       style={styles.card}
       onPress={() =>
         router.push({
           pathname: "/(tabs)/group/[id]/(top)/home",
-          params: { id: "3" },
+          params: { id, name },
         })
       }
     >
       {/* 상단 */}
       <View style={styles.topColumn}>
         <View style={styles.ddayBadge}>
-          <Text style={styles.ddayText}>D-{dday}</Text>
+          <Text
+            style={[
+              styles.ddayText,
+              isRescheduleRequired && styles.rescheduleText,
+            ]}
+          >
+            {statusText}
+          </Text>
         </View>
 
         <Text style={styles.title}>{`< ${name} >`}</Text>
@@ -94,6 +122,10 @@ const styles = StyleSheet.create({
     color: "#E4A54E",
     fontWeight: "600",
     alignSelf: "center",
+  },
+
+  rescheduleText: {
+    fontSize: 13,
   },
 
   title: {

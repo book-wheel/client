@@ -9,15 +9,25 @@ type Props = {
 export default function ReviewInput({ review, setReview }: Props) {
   return (
     <View style={styles.sectionBox}>
-      <Text style={styles.sectionTitle}>감상평 남기기 (최소 20자)</Text>
+      <Text style={styles.sectionTitle}>감상평</Text>
+
+      <Text style={styles.sectionDescription}>
+        읽고 난 뒤의 생각을 자유롭게 남겨주세요
+      </Text>
 
       <TextInput
         style={styles.reviewInput}
-        placeholder="이번 책을 읽고 느낀 점을 작성해주세요."
+        placeholder="기억에 남는 장면이나 문장을 적어보세요."
+        placeholderTextColor="#B8A47F"
         multiline
         value={review}
         onChangeText={setReview}
+        textAlignVertical="top"
       />
+
+      {review.length > 0 && (
+        <Text style={styles.reviewCount}>{review.length}자</Text>
+      )}
     </View>
   );
 }
