@@ -76,6 +76,9 @@ export type PostDetailResponse = ApiResponse<PostDetailData>;
 export type DeletePostResponse = ApiResponse<null>;
 export type TogglePostLikeResponse = ApiResponse<string>;
 
+export type PostReportReason = "SPAM" | "ABUSE" | "PORNOGRAPHY" | "COPYRIGHT" | "OTHER";
+export type ReportPostResponse = ApiResponse<string>;
+
 export type PostCommentData = {
   commentId: number;
   postId: number;

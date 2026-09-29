@@ -10,8 +10,13 @@ import type {
   SavePostRequest,
   SavePostResponse,
   TogglePostLikeResponse,
+  PostReportReason,
+  ReportPostResponse,
 } from "@/types/posts";
 import api from "./axios";
+
+export const reportPost = (postId: number, reason: PostReportReason) =>
+  api.post<ReportPostResponse>(`/posts/${postId}/reports`, { reason });
 
 export const savePost = (
   isbn: string,

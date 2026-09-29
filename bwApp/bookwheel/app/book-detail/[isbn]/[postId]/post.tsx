@@ -8,6 +8,7 @@ import {
   togglePostLike,
 } from "@/api/posts";
 import PostActionBar from "@/components/post/PostActionBar";
+import PostReportModal from "@/components/post/PostReportModal";
 import PostAuthorSection from "@/components/post/PostAuthorSection";
 import PostContentSection from "@/components/post/PostContentSection";
 import PostImageSection from "@/components/post/PostImageSection";
@@ -18,6 +19,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   View,
@@ -38,6 +40,8 @@ export default function PostDetailScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reportTarget, setReportTarget] = useState<number | null>(null);
+  const [reportedPostId, setReportedPostId] = useState<number | null>(null);
 
   const handleGoBack = () => {
     if (router.canGoBack()) {
@@ -52,6 +56,7 @@ export default function PostDetailScreen() {
     const postId = Number(postIdParam);
 
     setPost(null);
+    setReportTarget(null);
     setErrorMessage("");
     setIsLoading(true);
 
@@ -203,6 +208,8 @@ export default function PostDetailScreen() {
             />
 
             <PostActionBar
+              onReportPress={post.isMine ? undefined : () => setReportTarget(post.postId)}
+              isReported={reportedPostId === post.postId}
               isLiked={post.isLikedByMe}
               likeCount={post.likeCount}
               commentCount={post.commentCount}
@@ -220,6 +227,18 @@ export default function PostDetailScreen() {
             />
           </ScrollView>
         </ThemedView>
+      )}
+      {reportTarget !== null && (
+        <PostReportModal
+          key={reportTarget}
+          postId={reportTarget}
+          onClose={() => setReportTarget(null)}
+          onSuccess={() => {
+            setReportedPostId(reportTarget);
+            setReportTarget(null);
+            Alert.alert("신고 완료", "신고가 접수되었습니다.");
+          }}
+        />
       )}
     </SafeAreaView>
   );

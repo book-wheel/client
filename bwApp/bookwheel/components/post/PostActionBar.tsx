@@ -9,6 +9,8 @@ interface Props {
     commentCount: number;
     onLikePress: () => void;
     onCommentPress: () => void;
+    onReportPress?: () => void;
+    isReported?: boolean;
 }
 
 export default function PostActionBar({
@@ -17,6 +19,8 @@ export default function PostActionBar({
                                           commentCount,
                                           onLikePress,
                                           onCommentPress,
+                                          onReportPress,
+                                          isReported = false,
                                       }: Props) {
     return (
         <View style={styles.interactionSection}>
@@ -36,9 +40,11 @@ export default function PostActionBar({
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity>
-                <ThemedText style={styles.reportText}>신고</ThemedText>
-            </TouchableOpacity>
+            {onReportPress && (
+                <TouchableOpacity accessibilityRole="button" onPress={onReportPress} disabled={isReported}>
+                    <ThemedText style={styles.reportText}>{isReported ? '신고 완료' : '신고'}</ThemedText>
+                </TouchableOpacity>
+            )}
         </View>
     );
 }
